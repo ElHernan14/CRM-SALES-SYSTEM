@@ -1,0 +1,147 @@
+/*--------------------------------------------TABLAS AUTENTICACIÓN--------------------------------------------*/
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE rol (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL, -- admin, seller, buyer, etc
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE permission (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(150) UNIQUE NOT NULL, -- ej: "create_product"
+    description TEXT
+);
+
+CREATE TABLE user_rol (
+    user_id INT NOT NULL,
+    role_id INT NOT NULL,
+
+    PRIMARY KEY (user_id, role_id),
+
+    FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY (role_id)
+        REFERENCES rol(id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE role_permission (
+    role_id INT NOT NULL,
+    permission_id INT NOT NULL,
+
+    PRIMARY KEY (role_id, permission_id),
+
+    CONSTRAINT fk_role_permission_role
+        FOREIGN KEY (role_id)
+        REFERENCES rol(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_role_permission_permission
+        FOREIGN KEY (permission_id)
+        REFERENCES permission(id)
+        ON DELETE CASCADE
+);
+/*--------------------------------------------TABLAS SISTEMA--------------------------------------------*/
+CREATE TABLE client (
+    id SERIAL PRIMARY KEY,
+    user_id INT UNIQUE, -- 1 a 1 opcional
+    company_id INT,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    email VARCHAR(255),
+    phone VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL,
+    status INT DEFAULT 1, -- 1 activo, 0 inactivo
+
+    CONSTRAINT fk_user
+        FOREIGN KEY(user_id)
+        REFERENCES users(id)
+        ON DELETE SET NULL
+);
+
+CREATE TABLE company (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL,
+    status INT DEFAULT 1 -- 1 activo, 0 inactivo
+);
+
+ALTER TABLE client
+ADD CONSTRAINT fk_company
+FOREIGN KEY (company_id)
+REFERENCES company(id)
+ON DELETE SET NULL;
+
+CREATE TABLE product (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    type VARCHAR(20), -- product | service
+    price NUMERIC(10,2) NOT NULL,
+    stock INT DEFAULT 0,
+    company_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL,
+    status INT DEFAULT 1, -- 1 activo, 0 inactivo
+
+    CONSTRAINT fk_product_company
+        FOREIGN KEY (company_id)
+        REFERENCES company(id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE invoice (
+    id SERIAL PRIMARY KEY,
+    buyer_client_id INT NOT NULL,
+    seller_company_id INT NOT NULL,
+    created_by_user_id INT NOT NULL,
+    total_amount NUMERIC(10,2) NOT NULL,
+    status_invoice VARCHAR(50) NOT NULL, -- pending, paid, cancelled
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL,
+    status INT DEFAULT 1, -- 1 activo, 0 inactivo
+
+    CONSTRAINT fk_invoice_buyer
+        FOREIGN KEY (buyer_client_id)
+        REFERENCES client(id),
+
+    CONSTRAINT fk_invoice_seller_company
+        FOREIGN KEY (seller_company_id)
+        REFERENCES company(id),
+
+    CONSTRAINT fk_invoice_created_by
+        FOREIGN KEY (created_by_user_id)
+        REFERENCES users(id)
+);
+
+CREATE TABLE invoice_item (
+    id SERIAL PRIMARY KEY,
+    invoice_id INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity INT NOT NULL,
+    price NUMERIC(10,2) NOT NULL,
+
+    CONSTRAINT fk_invoice
+        FOREIGN KEY(invoice_id)
+        REFERENCES invoice(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_product
+        FOREIGN KEY(product_id)
+        REFERENCES product(id)
+);
+
+CREATE INDEX idx_client_user_id ON client(user_id);
+CREATE INDEX idx_product_company_id ON product(company_id);
+CREATE INDEX idx_invoice_buyer ON invoice(buyer_client_id);
