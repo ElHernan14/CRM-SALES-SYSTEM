@@ -5,12 +5,21 @@ import (
 	"net/http"
 	"strings"
 
+	"crm-system-sales/internal/utils"
+
 	"github.com/golang-jwt/jwt/v5"
 )
 
+type TenantContext struct {
+	UserID      int
+	Email       string
+	CompanyID   *int
+	Permissions []string
+}
+
 type contextKey string
 
-const UserContextKey contextKey = "user"
+const TenantContextKey contextKey = "tenant"
 
 var jwtSecret = []byte("super_secret_key")
 
@@ -18,7 +27,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		authHeader := r.Header.Get("Authorization")
-
 		if authHeader == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
@@ -26,20 +34,25 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		claims := &utils.Claims{}
+
+		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 			return jwtSecret, nil
 		})
 
 		if err != nil || !token.Valid {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			http.Error(w, "Token inválido", http.StatusUnauthorized)
 			return
 		}
 
-		claims := token.Claims.(jwt.MapClaims)
+		tenant := TenantContext{
+			UserID:      claims.UserID,
+			CompanyID:   claims.CompanyID,
+			Permissions: claims.Permissions,
+			Email:       claims.Email,
+		}
 
-		// guardar en contexto
-		ctx := context.WithValue(r.Context(), UserContextKey, claims)
-
+		ctx := context.WithValue(r.Context(), TenantContextKey, tenant)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

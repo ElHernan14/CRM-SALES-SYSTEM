@@ -15,8 +15,8 @@ func NewAuthService(userRepo *users.UserRepository) *AuthService {
 	return &AuthService{UserRepo: userRepo}
 }
 
-func (s *AuthService) Login(email, password string) (*models.User, error) {
-	user, err := s.UserRepo.GetByEmail(email)
+func (s *AuthService) Login(email, password string) (*models.UserLogin, error) {
+	user, err := s.UserRepo.GetUserLogin(email)
 	if err != nil {
 		return nil, errors.New("invalid credentials")
 	}

@@ -16,6 +16,7 @@ func SetupRoutes(r *mux.Router, db *sql.DB) {
 
 	//auth (público)
 	authRouter := api.PathPrefix("/auth").Subrouter()
+
 	auth.RegisterAuthRoutes(authRouter, db)
 
 	// rutas protegidos

@@ -32,7 +32,7 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := utils.GenerateJWT(user.ID, user.Email, user.Permissions)
+	token, err := utils.GenerateJWT(user, user.Permissions)
 	if err != nil {
 		http.Error(w, "Error generating token", http.StatusInternalServerError)
 		return

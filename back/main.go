@@ -13,6 +13,17 @@ import (
 	"github.com/gorilla/mux"
 )
 
+//
+//	-- Departamentos de Ventas, Servicio de Atención al Cliente, Marketing y Medios de Comunicación (historial de compras del cliente,
+// 	el estado de sus pedidos, los problemas pendientes del servicio de atención al cliente, etc),
+// 	y un panel de administración para gestionar productos, pedidos, clientes, etc. cada uno de estos con su propio conjunto de rutas y controladores.
+//
+//	- Gestión de Clientes: CRUD de clientes, historial de compras, preferencias, etc.
+//	- Gestión de Productos: CRUD de productos, categorías, precios, etc.
+//	- Gestión de Pedidos: CRUD de pedidos, seguimiento, estado, etc.
+//	- Gestión de Inventario: CRUD de inventario, niveles de stock, alertas, etc.
+//	- Gestión de Usuarios y Roles: CRUD de usuarios, asignación de roles, permisos, etc.
+
 func main() {
 	cfg := config.LoadConfig()
 

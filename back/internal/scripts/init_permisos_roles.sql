@@ -1,23 +1,28 @@
-INSERT INTO permissions (name) VALUES
--- clients
+INSERT INTO permission (name) VALUES
+
+-- ===== CLIENTS =====
+('client:view'),
 ('client:create'),
 ('client:read'),
 ('client:update'),
 ('client:delete'),
 
--- companies
+-- ===== COMPANIES =====
+('company:view'),
 ('company:create'),
 ('company:read'),
 ('company:update'),
 ('company:delete'),
 
--- products
+-- ===== PRODUCTS =====
+('product:view'),
 ('product:create'),
 ('product:read'),
 ('product:update'),
 ('product:delete'),
 
--- invoices
+-- ===== INVOICES =====
+('invoice:view'),
 ('invoice:create'),
 ('invoice:read'),
 ('invoice:update'),
@@ -25,32 +30,59 @@ INSERT INTO permissions (name) VALUES
 ('invoice:pay'),
 ('invoice:cancel'),
 
--- invoice items
+-- ===== INVOICE ITEMS =====
+('invoice_item:view'),
 ('invoice_item:create'),
 ('invoice_item:read'),
 ('invoice_item:update'),
 ('invoice_item:delete');
 
-INSERT INTO roles (name) VALUES
-('admin'),
-('manager'),
-('user');
+-- ===== rol =====
+INSERT INTO rol (name) VALUES
+('super_admin'),
+('company_user'),
+('individual_user');
 
 
-/*Asignar todos los permisos al rol admin*/
-INSERT INTO role_permissions (role_id, permission_id)
+-- ===== Asignar todos los permisos al rol super_admin =====
+INSERT INTO role_permission (role_id, permission_id)
 SELECT r.id, p.id
-FROM roles r
-JOIN permissions p ON 1=1
-WHERE r.name = 'admin';
+FROM rol r
+JOIN permission p ON 1=1
+WHERE r.name = 'super_admin';
 
-/*Asigar permisos al rol manager*/
-INSERT INTO role_permissions (role_id, permission_id)
+-- ===== Asignar permisos al rol company_user =====
+INSERT INTO role_permission (role_id, permission_id)
 SELECT r.id, p.id
-FROM roles r
-JOIN permissions p ON p.name IN (
-    'product:create','product:read','product:update',
-    'invoice:create','invoice:read','invoice:update','invoice:pay',
-    'invoice_item:create','invoice_item:read','invoice_item:update'
+FROM rol r
+JOIN permission p ON p.name IN (
+
+    -- CLIENTS
+    'client:view','client:create','client:read','client:update',
+
+    -- PRODUCTS
+    'product:view','product:create','product:read','product:update',
+
+    -- INVOICES
+    'invoice:view','invoice:create','invoice:read','invoice:update','invoice:pay',
+
+    -- INVOICE ITEMS
+    'invoice_item:view','invoice_item:create','invoice_item:read','invoice_item:update'
+
 )
-WHERE r.name = 'manager';
+WHERE r.name = 'company_user';
+
+-- ===== Asignar permisos al rol individual_user =====
+INSERT INTO role_permission (role_id, permission_id)
+SELECT r.id, p.id
+FROM rol r
+JOIN permission p ON p.name IN (
+
+    -- PRODUCTS
+    'product:view','product:read',
+
+    -- INVOICES
+    'invoice:view','invoice:create','invoice:read'
+
+)
+WHERE r.name = 'individual_user';
