@@ -9,6 +9,11 @@ import (
 )
 
 func RegisterUserRoutes(r *mux.Router, db *sql.DB) {
-	r.HandleFunc("/users", GetUsers).Methods("GET")
-	r.HandleFunc("/create", middleware.RequirePermission("user:create")(CreateUser)).Methods("POST")
+	userRepository := NewUserRepository(db)
+	userService := NewUserService(userRepository)
+	userController := NewUserController(userService)
+
+	r.HandleFunc("/me", userController.Me).Methods("GET")
+	r.HandleFunc("/users", userController.GetUsers).Methods("GET")
+	r.HandleFunc("/create", middleware.RequirePermission("user:create")(userController.CreateUser)).Methods("POST")
 }

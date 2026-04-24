@@ -22,6 +22,7 @@ func (r *UserRepository) GetUserLogin(email string) (*models.UserLogin, error) {
 			u.email,
 			u.password_hash,
 			c.company_id,
+			COALESCE(ARRAY_AGG(DISTINCT r.name) FILTER (WHERE r.name IS NOT NULL), '{}') AS roles,
 			COALESCE(ARRAY_AGG(DISTINCT p.name) FILTER (WHERE p.name IS NOT NULL), '{}') AS permissions
 		FROM users u
 		LEFT JOIN clients c ON c.user_id = u.id
@@ -45,6 +46,7 @@ func (r *UserRepository) GetUserLogin(email string) (*models.UserLogin, error) {
 		&user.CreatedAt,
 		&companyID,
 		pq.Array(&user.Permissions),
+		pq.Array(&user.Roles),
 	)
 
 	if err != nil {

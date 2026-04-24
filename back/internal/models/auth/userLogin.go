@@ -10,7 +10,7 @@ type UserLogin struct {
 
 	CompanyID *int `json:"company_id,omitempty"` // Para clientes, puede ser nulo
 
-	Roles []Role `json:"roles"` //Para traer roles completos
+	Roles []string `json:"roles"` //Para traer roles completos
 
 	Permissions []string `json:"permissions"` //para traer solo name permisos
 }

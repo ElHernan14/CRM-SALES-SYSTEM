@@ -9,21 +9,23 @@ import (
 )
 
 type Claims struct {
-	UserID      int      `json:"user_id"`
-	Email       string   `json:"email"`
-	CompanyID   *int     `json:"company_id,omitempty"`
-	Permissions []string `json:"permissions"`
+	UserID      int       `json:"user_id"`
+	Email       string    `json:"email"`
+	CompanyID   *int      `json:"company_id,omitempty"`
+	Roles       *[]string `json:"roles,omitempty"`
+	Permissions *[]string `json:"permissions"`
 	jwt.RegisteredClaims
 }
 
 var jwtSecret = []byte("super_secret_key") // después va a .env
 
-func GenerateJWT(user *models.UserLogin, permissions []string) (string, error) {
+func GenerateJWT(user *models.UserLogin, permissions []string, roles []string) (string, error) {
 	claims := Claims{
 		UserID:      user.ID,
 		Email:       user.Email,
 		CompanyID:   user.CompanyID,
-		Permissions: permissions,
+		Roles:       &roles,
+		Permissions: &permissions,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

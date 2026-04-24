@@ -5,21 +5,12 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/golang-jwt/jwt/v5"
+
 	"crm-system-sales/internal/utils"
 
-	"github.com/golang-jwt/jwt/v5"
+	"crm-system-sales/internal/core"
 )
-
-type TenantContext struct {
-	UserID      int
-	Email       string
-	CompanyID   *int
-	Permissions []string
-}
-
-type contextKey string
-
-const TenantContextKey contextKey = "tenant"
 
 var jwtSecret = []byte("super_secret_key")
 
@@ -45,14 +36,15 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		tenant := TenantContext{
+		tenant := &core.TenantContext{
 			UserID:      claims.UserID,
 			CompanyID:   claims.CompanyID,
-			Permissions: claims.Permissions,
 			Email:       claims.Email,
+			Roles:       *claims.Roles,
+			Permissions: *claims.Permissions,
 		}
 
-		ctx := context.WithValue(r.Context(), TenantContextKey, tenant)
+		ctx := context.WithValue(r.Context(), core.TenantContextKey, tenant)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

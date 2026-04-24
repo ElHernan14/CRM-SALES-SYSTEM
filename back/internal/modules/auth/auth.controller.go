@@ -22,19 +22,19 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	user, err := c.AuthService.Login(req.Email, req.Password)
 	if err != nil {
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
-	token, err := utils.GenerateJWT(user, user.Permissions)
+	token, err := utils.GenerateJWT(user, user.Permissions, user.Roles)
 	if err != nil {
-		http.Error(w, "Error generating token", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 

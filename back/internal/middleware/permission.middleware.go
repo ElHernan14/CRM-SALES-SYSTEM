@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"crm-system-sales/internal/utils"
+
+	"crm-system-sales/internal/core"
 )
 
 func RequirePermission(permission string) func(http.HandlerFunc) http.HandlerFunc {
@@ -11,7 +13,7 @@ func RequirePermission(permission string) func(http.HandlerFunc) http.HandlerFun
 
 		return func(w http.ResponseWriter, r *http.Request) {
 
-			tenant, ok := r.Context().Value(TenantContextKey).(TenantContext)
+			tenant, ok := r.Context().Value(core.TenantContextKey).(core.TenantContext)
 			if !ok {
 				http.Error(w, "Forbidden", http.StatusForbidden)
 				return
@@ -22,7 +24,9 @@ func RequirePermission(permission string) func(http.HandlerFunc) http.HandlerFun
 				return
 			}
 
-			http.Error(w, "Acceso denegado, usuario no autorizado por falta de permisos.", http.StatusForbidden)
+			ctxTenant := core.GetTenant(r.Context())
+
+			http.Error(w, "Acceso denegado, usuario no autorizado por falta de permisos."+ctxTenant.Email, http.StatusForbidden)
 		}
 	}
 }
