@@ -1,19 +1,12 @@
 package auth
 
 import (
-	"database/sql"
-
-	"crm-system-sales/internal/modules/users"
+	"crm-system-sales/internal/middleware"
 
 	"github.com/gorilla/mux"
 )
 
-func RegisterAuthRoutes(r *mux.Router, db *sql.DB) {
-	// dependency injection
-	userRepository := users.NewUserRepository(db)
-	authService := NewAuthService(userRepository)
-	authController := NewAuthController(authService)
-
+func RegisterAuthRoutes(r *mux.Router, authController *AuthController) {
 	// routes
-	r.HandleFunc("/login", authController.Login).Methods("POST")
+	r.HandleFunc("/login", middleware.ErrorMiddleware(authController.Login)).Methods("POST")
 }

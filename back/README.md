@@ -11,7 +11,7 @@ Permite que empresas publiquen productos y usuarios compren tanto como individuo
 
 # 🏗️ Arquitectura
 
-## 🔹 Stack
+##  Stack
 
 * **Backend:** Go (net/http + gorilla/mux)
 * **DB:** PostgreSQL
@@ -20,7 +20,7 @@ Permite que empresas publiquen productos y usuarios compren tanto como individuo
 
 ---
 
-## 🔹 Capas
+##  Capas
 
 ```text
 controller (handler)
@@ -32,7 +32,7 @@ repository (acceso a datos)
 
 ---
 
-## 🔹 Estructura de carpetas (recomendada)
+##  Estructura de carpetas (recomendada)
 
 ```text
 internal/
@@ -68,7 +68,7 @@ internal/
 
 # 🔐 Autenticación
 
-## 🔹 JWT Claims
+##  JWT Claims
 
 ```go
 type Claims struct {
@@ -83,7 +83,7 @@ type Claims struct {
 
 ---
 
-## 🔹 Flujo de Login
+##  Flujo de Login
 
 ```text
 Login → validar password (bcrypt)
@@ -93,7 +93,7 @@ Login → validar password (bcrypt)
 
 ---
 
-## 🔹 Generación de Token
+##  Generación de Token
 
 * Incluye:
 
@@ -107,7 +107,7 @@ Login → validar password (bcrypt)
 
 # 🧠 Contexto de Usuario (Multi-Tenant)
 
-## 🔹 TenantContext
+##  TenantContext
 
 ```go
 type TenantContext struct {
@@ -121,7 +121,7 @@ type TenantContext struct {
 
 ---
 
-## 🔹 Middleware de Auth
+##  Middleware de Auth
 
 Responsabilidades:
 
@@ -132,7 +132,7 @@ Responsabilidades:
 
 ---
 
-## 🔹 Acceso al contexto
+##  Acceso al contexto
 
 ```go
 tenant := GetTenant(ctx)
@@ -142,7 +142,7 @@ tenant := GetTenant(ctx)
 
 # 🔑 Permisos
 
-## 🔹 Formato
+##  Formato
 
 ```text
 entity:action
@@ -159,7 +159,7 @@ invoice:pay
 
 ---
 
-## 🔹 Tipos de permisos
+##  Tipos de permisos
 
 | Tipo                    | Uso               |
 | ----------------------- | ----------------- |
@@ -170,7 +170,7 @@ invoice:pay
 
 ---
 
-## 🔹 Regla clave
+##  Regla clave
 
 ```text
 Permisos → permiten ejecutar acción
@@ -189,7 +189,7 @@ individual_user
 
 ---
 
-## 🔹 Descripción
+##  Descripción
 
 | Rol             | Descripción             |
 | --------------- | ----------------------- |
@@ -201,7 +201,7 @@ individual_user
 
 # 🏢 Multi-Tenant
 
-## 🔹 Tipos
+##  Tipos
 
 ### 🧩 B2B (empresa)
 
@@ -215,7 +215,7 @@ individual_user
 
 ---
 
-## 🔹 Regla clave
+##  Regla clave
 
 ```text
 ❌ NO filtrar en middleware
@@ -253,7 +253,7 @@ GET /clients/{id}/invoices
 
 ---
 
-## 🔹 Middleware
+##  Middleware
 
 ```go
 RequirePermission("invoice:read")
@@ -261,7 +261,7 @@ RequirePermission("invoice:read")
 
 ---
 
-## 🔹 Service (control real)
+##  Service (control real)
 
 ```go
 if super_admin → acceso total

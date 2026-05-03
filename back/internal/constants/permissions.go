@@ -2,11 +2,13 @@ package constants
 
 // ===== CLIENTS =====
 const (
-	ClientView   = "client:view"
-	ClientCreate = "client:create"
-	ClientRead   = "client:read"
-	ClientUpdate = "client:update"
-	ClientDelete = "client:delete"
+	ClientView        = "client:view"
+	ClientViewAll     = "client:view:all"
+	ClientViewCompany = "client:view:company"
+	ClientCreate      = "client:create"
+	ClientRead        = "client:read"
+	ClientUpdate      = "client:update"
+	ClientDelete      = "client:delete"
 )
 
 // ===== COMPANIES =====

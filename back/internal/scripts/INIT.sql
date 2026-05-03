@@ -145,3 +145,6 @@ CREATE TABLE invoice_item (
 CREATE INDEX idx_client_user_id ON client(user_id);
 CREATE INDEX idx_product_company_id ON product(company_id);
 CREATE INDEX idx_invoice_buyer ON invoice(buyer_client_id);
+
+ALTER TABLE user_rol
+ADD CONSTRAINT user_role_unique UNIQUE (user_id, role_id);

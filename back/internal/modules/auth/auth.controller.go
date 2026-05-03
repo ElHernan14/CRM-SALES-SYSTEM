@@ -2,46 +2,68 @@ package auth
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
+	errorHandler "crm-system-sales/internal/core/error"
+	response "crm-system-sales/internal/core/response"
+	coreUtils "crm-system-sales/internal/core/utils"
+	validatorx "crm-system-sales/internal/core/validator"
 	"crm-system-sales/internal/dto"
 	"crm-system-sales/internal/utils"
 )
 
 type AuthController struct {
-	AuthService *AuthService
+	AuthService AuthService
 }
 
-func NewAuthController(authService *AuthService) *AuthController {
+func NewAuthController(authService AuthService) *AuthController {
 	return &AuthController{AuthService: authService}
 }
 
 // Login method
-func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
+func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) error {
 	var req dto.LoginRequest
+	var err error
+	defer func() {
+		coreUtils.Trace(r.Context(), "CONTROLLER Login")(err)
+	}()
 
-	err := json.NewDecoder(r.Body).Decode(&req)
+	err = json.NewDecoder(r.Body).Decode(&req)
+	log.Println("Received login request: ", req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		log.Println("Error decoding login request: ", err)
+		err = errorHandler.NewAppError(http.StatusBadRequest, "Invalid request payload")
+		return err
 	}
 
-	user, err := c.AuthService.Login(req.Email, req.Password)
+	msg, validate := validatorx.ValidateStruct(req)
+	if validate {
+		log.Printf("Invalid Request: %s", msg)
+		err = errorHandler.NewAppError(http.StatusBadRequest, msg)
+		return err
+	}
+
+	user, err := c.AuthService.Login(r, req.Email, req.Password)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
+		log.Println("Error logging in user: ", err)
+		err = errorHandler.NewAppError(http.StatusUnauthorized, "invalid credentials")
+		return err
 	}
 
 	token, err := utils.GenerateJWT(user, user.Permissions, user.Roles)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		log.Println("Error generating JWT: ", err)
+		err = errorHandler.NewAppError(http.StatusInternalServerError, "internal server error")
+		return err
 	}
 
-	response := map[string]interface{}{
+	res := map[string]interface{}{
 		"token": token,
 	}
 
+	log.Print("Login success")
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(response.Success(res))
+	return nil
 }

@@ -7,11 +7,12 @@ import (
 	"crm-system-sales/internal/config"
 	"crm-system-sales/internal/controllers"
 	"crm-system-sales/internal/db"
+	"crm-system-sales/internal/middleware"
 
 	"crm-system-sales/routes"
 
 	"github.com/gorilla/mux"
-)
+	/*"golang.org/x/crypto/bcrypt"*/)
 
 //
 //	-- Departamentos de Ventas, Servicio de Atención al Cliente, Marketing y Medios de Comunicación (historial de compras del cliente,
@@ -46,8 +47,15 @@ func main() {
 	// Health check route
 	r.HandleFunc("/health", healthHandler.Check).Methods("GET")
 
+	//Tracing middleware
+	r.Use(middleware.ObservabilityMiddleware)
+
 	routes.SetupRoutes(r, database)
 
+	// hash, _ := bcrypt.GenerateFromPassword([]byte("asd123"), bcrypt.DefaultCost)
+	// log.Println(string(hash))
+
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.Println("Server running on :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }

@@ -1,9 +1,9 @@
 package constants
 
 const (
-	RoleAdmin   = "admin"
-	RoleManager = "manager"
-	RoleUser    = "user"
+	RoleAdmin   = "super_admin"
+	RoleManager = "company_user"
+	RoleUser    = "individual_user"
 )
 
 var RolePermissions = map[string][]string{

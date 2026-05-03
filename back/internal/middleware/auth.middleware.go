@@ -45,6 +45,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		ctx := context.WithValue(r.Context(), core.TenantContextKey, tenant)
+
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

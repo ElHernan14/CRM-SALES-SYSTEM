@@ -86,3 +86,28 @@ JOIN permission p ON p.name IN (
 
 )
 WHERE r.name = 'individual_user';
+
+-- CLIENTS VIEW SCOPES
+INSERT INTO permission (name) VALUES
+('client:view:all'),
+('client:view:company');
+
+-- 🔥 ADMIN → acceso total
+INSERT INTO role_permission (role_id, permission_id)
+SELECT r.id, p.id
+FROM rol r
+JOIN permission p ON p.name IN (
+    'client:view:all',
+    'client:view:company'
+)
+WHERE r.name = 'admin';
+
+
+-- 🏢 MANAGER → solo su empresa
+INSERT INTO role_permission (role_id, permission_id)
+SELECT r.id, p.id
+FROM rol r
+JOIN permission p ON p.name IN (
+    'client:view:company'
+)
+WHERE r.name = 'manager';

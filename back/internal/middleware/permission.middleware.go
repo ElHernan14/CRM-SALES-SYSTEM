@@ -13,9 +13,10 @@ func RequirePermission(permission string) func(http.HandlerFunc) http.HandlerFun
 
 		return func(w http.ResponseWriter, r *http.Request) {
 
-			tenant, ok := r.Context().Value(core.TenantContextKey).(core.TenantContext)
-			if !ok {
-				http.Error(w, "Forbidden", http.StatusForbidden)
+			val := r.Context().Value(core.TenantContextKey)
+			tenant, ok := val.(*core.TenantContext)
+			if !ok || tenant == nil {
+				http.Error(w, "Acceso denegado, usuario no autorizado por falta de permisosasd", http.StatusForbidden)
 				return
 			}
 

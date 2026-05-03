@@ -1,9 +1,21 @@
 package users
 
-type UserService struct {
-	UserRepository *UserRepository
+import (
+	users "crm-system-sales/internal/models/users"
+)
+
+type UserService interface {
+	GetUsers() ([]users.User, error)
 }
 
-func NewUserService(userRepo *UserRepository) *UserService {
-	return &UserService{UserRepository: userRepo}
+type userService struct {
+	repo UserRepository
+}
+
+func NewUserService(repo UserRepository) UserService {
+	return &userService{repo: repo}
+}
+
+func (s *userService) GetUsers() ([]users.User, error) {
+	return s.repo.GetAll()
 }

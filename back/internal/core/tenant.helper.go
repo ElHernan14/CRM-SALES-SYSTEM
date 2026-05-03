@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"log"
 )
 
 type TenantContext struct {
@@ -17,9 +18,10 @@ type contextKey string
 const TenantContextKey contextKey = "tenant"
 
 func GetTenant(ctx context.Context) *TenantContext {
-	tenant, ok := ctx.Value(TenantContextKey).(TenantContext)
-	if !ok {
+	tenant, ok := ctx.Value(TenantContextKey).(*TenantContext)
+	if !ok || tenant == nil {
+		log.Printf("No tenant found in context")
 		return nil
 	}
-	return &tenant
+	return tenant
 }
