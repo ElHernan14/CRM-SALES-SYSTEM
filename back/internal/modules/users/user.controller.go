@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"crm-system-sales/internal/core"
+	tenantHelper "crm-system-sales/internal/core/tenant"
 )
 
 type UserController struct {
@@ -18,7 +18,7 @@ func NewUserController(UserService UserService) *UserController {
 }
 
 func (c *UserController) Me(w http.ResponseWriter, r *http.Request) {
-	tenant := core.GetTenant(r.Context())
+	tenant := tenantHelper.GetTenant(r.Context())
 
 	response := map[string]interface{}{
 		"id":          tenant.UserID,

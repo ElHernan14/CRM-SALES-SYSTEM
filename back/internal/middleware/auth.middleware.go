@@ -7,9 +7,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
-	"crm-system-sales/internal/utils"
-
-	"crm-system-sales/internal/core"
+	authcore "crm-system-sales/internal/core/auth"
+	tenantHelper "crm-system-sales/internal/core/tenant"
 )
 
 var jwtSecret = []byte("super_secret_key")
@@ -25,7 +24,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
-		claims := &utils.Claims{}
+		claims := &authcore.Claims{}
 
 		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 			return jwtSecret, nil
@@ -36,7 +35,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		tenant := &core.TenantContext{
+		tenant := &tenantHelper.TenantContext{
 			UserID:      claims.UserID,
 			CompanyID:   claims.CompanyID,
 			Email:       claims.Email,
@@ -44,7 +43,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			Permissions: *claims.Permissions,
 		}
 
-		ctx := context.WithValue(r.Context(), core.TenantContextKey, tenant)
+		ctx := context.WithValue(r.Context(), tenantHelper.TenantContextKey, tenant)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

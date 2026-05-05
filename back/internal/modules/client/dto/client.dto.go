@@ -1,4 +1,6 @@
-package dto
+package clientdto
+
+import "crm-system-sales/internal/core/dto"
 
 type CreateClientRequest struct {
 	FirstName string `json:"first_name" validate:"required,min=2,max=100"`
@@ -10,11 +12,14 @@ type CreateClientRequest struct {
 }
 
 type ClientResponse struct {
-	ID        int    `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Email     string `json:"email"`
-	CompanyID *int   `json:"company_id,omitempty"`
+	ID        int     `json:"id"`
+	FirstName string  `json:"first_name"`
+	LastName  string  `json:"last_name"`
+	Email     string  `json:"email"`
+	CompanyID *int    `json:"company_id,omitempty"`
+	Phone     string  `json:"phone"`
+	Status    int     `json:"status,omitempty"`
+	DeletedAt *string `json:"deleted_at,omitempty"`
 }
 
 type GetClientsRequest struct {
@@ -25,14 +30,14 @@ type GetClientsRequest struct {
 	Limit     int    `validate:"gte=1,lte=100"`
 }
 
-type Meta struct {
-	Page       int `json:"page"`
-	Limit      int `json:"limit"`
-	Total      int `json:"total"`
-	TotalPages int `json:"total_pages"`
-}
-
 type GetClientsResponse struct {
 	Clients []ClientResponse `json:"clients"`
-	Meta    Meta             `json:"meta"`
+	Meta    dto.Meta         `json:"meta"`
+}
+
+type UpdateClientRequest struct {
+	FirstName *string `json:"first_name" validate:"omitempty,min=2,max=100"`
+	LastName  *string `json:"last_name" validate:"omitempty,min=2,max=100"`
+	Email     *string `json:"email" validate:"omitempty,email"`
+	Phone     *string `json:"phone" validate:"omitempty,min=6,max=20"`
 }

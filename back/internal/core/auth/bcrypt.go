@@ -1,4 +1,4 @@
-package utils
+package authcore
 
 import "golang.org/x/crypto/bcrypt"
 

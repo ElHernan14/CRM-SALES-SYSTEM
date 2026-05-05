@@ -1,11 +1,11 @@
 package auth
 
 import (
+	authcore "crm-system-sales/internal/core/auth"
 	errorHandler "crm-system-sales/internal/core/error"
 	coreUtils "crm-system-sales/internal/core/utils"
 	models "crm-system-sales/internal/models/auth"
 	"crm-system-sales/internal/modules/users"
-	"crm-system-sales/internal/utils"
 	"log"
 	"net/http"
 )
@@ -34,7 +34,7 @@ func (s *authService) Login(r *http.Request, email, password string) (*models.Us
 		return nil, err
 	}
 
-	err = utils.CheckPassword(password, user.PasswordHash)
+	err = authcore.CheckPassword(password, user.PasswordHash)
 	if err != nil {
 		log.Println("Error checking password: ", err)
 		err = errorHandler.NewAppError(http.StatusUnauthorized, "invalid credentials")

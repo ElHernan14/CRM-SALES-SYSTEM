@@ -13,6 +13,9 @@ type ClientRepository interface {
 	Create(tx *sql.Tx, client *client.Client) error
 	EmailExists(email string) (bool, error)
 	GetClients(ctx context.Context, companyID *int, search string, email string, limit int, offset int) ([]*client.Client, int, error)
+	GetByID(ctx context.Context, id int) (*client.Client, error)
+	Update(ctx context.Context, c *client.Client) error
+	SoftDeleteTx(tx *sql.Tx, clientID int) error
 }
 
 type clientRepository struct {
@@ -101,7 +104,7 @@ func (r *clientRepository) GetClients(
 	}
 
 	dataQuery := `
-		SELECT id, first_name, last_name, email, company_id
+		SELECT id, first_name, last_name, email, company_id, phone, status, deleted_at
 	` + baseQuery + `
 		ORDER BY last_name DESC
 		LIMIT $` + fmt.Sprint(i) + ` OFFSET $` + fmt.Sprint(i+1)
@@ -125,6 +128,9 @@ func (r *clientRepository) GetClients(
 			&c.LastName,
 			&c.Email,
 			&c.CompanyID,
+			&c.Phone,
+			&c.Status,
+			&c.DeletedAt,
 		); err != nil {
 			return nil, 0, err
 		}
@@ -133,4 +139,78 @@ func (r *clientRepository) GetClients(
 	}
 
 	return clients, total, nil
+}
+
+func (r *clientRepository) GetByID(ctx context.Context, id int) (*client.Client, error) {
+
+	var err error
+	defer func() {
+		utils.Trace(ctx, "REPO GetClientByID")(err)
+	}()
+
+	query := `
+		SELECT id, first_name, last_name, email, user_id, company_id, phone, status, deleted_at
+		FROM client
+		WHERE id = $1
+	`
+
+	var c client.Client
+
+	err = r.db.QueryRowContext(ctx, query, id).Scan(
+		&c.ID,
+		&c.FirstName,
+		&c.LastName,
+		&c.Email,
+		&c.UserID,
+		&c.CompanyID,
+		&c.Phone,
+		&c.Status,
+		&c.DeletedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &c, nil
+}
+
+func (r *clientRepository) Update(ctx context.Context, c *client.Client) error {
+
+	query := `
+		UPDATE client
+		SET first_name = $1,
+			last_name = $2,
+			email = $3,
+			phone = $4
+		WHERE id = $5
+	`
+
+	_, err := r.db.ExecContext(
+		ctx,
+		query,
+		c.FirstName,
+		c.LastName,
+		c.Email,
+		c.Phone,
+		c.ID,
+	)
+
+	return err
+}
+
+func (r *clientRepository) SoftDeleteTx(tx *sql.Tx, clientID int) error {
+
+	query := `
+		UPDATE client
+		SET deleted_at = NOW(),
+		    status = 0
+		WHERE id = $1
+	`
+
+	_, err := tx.Exec(query, clientID)
+	return err
 }

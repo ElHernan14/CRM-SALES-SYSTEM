@@ -5,12 +5,12 @@ import (
 	"log"
 	"net/http"
 
+	authcore "crm-system-sales/internal/core/auth"
 	errorHandler "crm-system-sales/internal/core/error"
 	response "crm-system-sales/internal/core/response"
 	coreUtils "crm-system-sales/internal/core/utils"
 	validatorx "crm-system-sales/internal/core/validator"
-	"crm-system-sales/internal/dto"
-	"crm-system-sales/internal/utils"
+	authdto "crm-system-sales/internal/modules/auth/dto"
 )
 
 type AuthController struct {
@@ -23,7 +23,7 @@ func NewAuthController(authService AuthService) *AuthController {
 
 // Login method
 func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) error {
-	var req dto.LoginRequest
+	var req authdto.LoginRequest
 	var err error
 	defer func() {
 		coreUtils.Trace(r.Context(), "CONTROLLER Login")(err)
@@ -51,7 +51,7 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	token, err := utils.GenerateJWT(user, user.Permissions, user.Roles)
+	token, err := authcore.GenerateJWT(user, user.Permissions, user.Roles)
 	if err != nil {
 		log.Println("Error generating JWT: ", err)
 		err = errorHandler.NewAppError(http.StatusInternalServerError, "internal server error")

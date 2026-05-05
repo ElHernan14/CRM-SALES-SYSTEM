@@ -12,4 +12,5 @@ type Client struct {
 	Phone     string
 	CreatedAt time.Time
 	Status    int
+	DeletedAt *time.Time
 }

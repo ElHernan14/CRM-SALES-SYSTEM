@@ -148,3 +148,7 @@ CREATE INDEX idx_invoice_buyer ON invoice(buyer_client_id);
 
 ALTER TABLE user_rol
 ADD CONSTRAINT user_role_unique UNIQUE (user_id, role_id);
+
+ALTER TABLE users
+ADD COLUMN status SMALLINT DEFAULT 1,
+ADD COLUMN deleted_at TIMESTAMP NULL;

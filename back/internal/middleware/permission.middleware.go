@@ -1,11 +1,14 @@
 package middleware
 
 import (
+	"encoding/json"
+	"log"
 	"net/http"
 
-	"crm-system-sales/internal/utils"
+	authcore "crm-system-sales/internal/core/auth"
+	"crm-system-sales/internal/core/response"
 
-	"crm-system-sales/internal/core"
+	tenantHelper "crm-system-sales/internal/core/tenant"
 )
 
 func RequirePermission(permission string) func(http.HandlerFunc) http.HandlerFunc {
@@ -13,21 +16,25 @@ func RequirePermission(permission string) func(http.HandlerFunc) http.HandlerFun
 
 		return func(w http.ResponseWriter, r *http.Request) {
 
-			val := r.Context().Value(core.TenantContextKey)
-			tenant, ok := val.(*core.TenantContext)
+			val := r.Context().Value(tenantHelper.TenantContextKey)
+			tenant, ok := val.(*tenantHelper.TenantContext)
 			if !ok || tenant == nil {
-				http.Error(w, "Acceso denegado, usuario no autorizado por falta de permisosasd", http.StatusForbidden)
+				log.Printf("Tenant no encontrado en el contexto")
+				w.WriteHeader(http.StatusForbidden)
+				json.NewEncoder(w).Encode(response.Error(http.StatusForbidden, "Acceso denegado, usuario no autorizado por falta de permiso"))
 				return
 			}
 
-			if utils.HasPermission(tenant.Permissions, permission) {
+			if authcore.HasPermission(tenant.Permissions, permission) {
 				next(w, r)
 				return
 			}
 
-			ctxTenant := core.GetTenant(r.Context())
+			ctxTenant := tenantHelper.GetTenant(r.Context())
 
-			http.Error(w, "Acceso denegado, usuario no autorizado por falta de permisos."+ctxTenant.Email, http.StatusForbidden)
+			log.Printf("Acceso denegado, usuario no autorizado por falta de permisos: %s", ctxTenant.Email)
+			w.WriteHeader(http.StatusForbidden)
+			json.NewEncoder(w).Encode(response.Error(http.StatusForbidden, "Acceso denegado, usuario no autorizado por falta de permisos. "+ctxTenant.Email))
 		}
 	}
 }

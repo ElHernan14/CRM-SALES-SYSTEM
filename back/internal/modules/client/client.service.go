@@ -3,18 +3,21 @@ package client
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 
 	constants "crm-system-sales/internal/constants"
-	core "crm-system-sales/internal/core"
 	"crm-system-sales/internal/core/access"
 	errorHandler "crm-system-sales/internal/core/error"
+	tenant "crm-system-sales/internal/core/tenant"
+	transaction "crm-system-sales/internal/core/transaction"
 	"crm-system-sales/internal/core/utils"
 	validatorx "crm-system-sales/internal/core/validator"
 
-	clientdto "crm-system-sales/internal/dto"
+	metadto "crm-system-sales/internal/core/dto"
 	clientModel "crm-system-sales/internal/models/client"
+	clientdto "crm-system-sales/internal/modules/client/dto"
 
 	userModel "crm-system-sales/internal/models/users"
 	"crm-system-sales/internal/modules/auth"
@@ -26,6 +29,9 @@ import (
 type ClientService interface {
 	Create(ctx context.Context, req *clientdto.CreateClientRequest) (*clientdto.ClientResponse, error)
 	GetClients(ctx context.Context, req *clientdto.GetClientsRequest) (*clientdto.GetClientsResponse, error)
+	GetClientByID(ctx context.Context, id int) (*clientdto.ClientResponse, error)
+	UpdateClient(ctx context.Context, id int, req *clientdto.UpdateClientRequest) (*clientdto.ClientResponse, error)
+	DeleteClient(ctx context.Context, id int) error
 }
 
 type clientService struct {
@@ -71,7 +77,7 @@ func (s *clientService) Create(ctx context.Context, req *clientdto.CreateClientR
 	}
 
 	//  contexto multi-tenant
-	tenant := core.GetTenant(ctx)
+	tenant := tenant.GetTenant(ctx)
 	var companyID *int
 	if tenant != nil && tenant.CompanyID != nil {
 		companyID = tenant.CompanyID
@@ -83,7 +89,7 @@ func (s *clientService) Create(ctx context.Context, req *clientdto.CreateClientR
 	var clientResp *clientdto.ClientResponse
 
 	//  transacción centralizada
-	err = core.RunInTransaction(ctx, s.db, func(tx *sql.Tx) error {
+	err = transaction.RunInTransaction(ctx, s.db, func(tx *sql.Tx) error {
 		// crear user
 		hash, _ := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 		user := &userModel.User{
@@ -145,6 +151,7 @@ func (s *clientService) Create(ctx context.Context, req *clientdto.CreateClientR
 			LastName:  client.LastName,
 			Email:     client.Email,
 			CompanyID: client.CompanyID,
+			Phone:     client.Phone,
 		}
 		return nil
 	})
@@ -163,7 +170,7 @@ func (s *clientService) GetClients(ctx context.Context, req *clientdto.GetClient
 		utils.Trace(ctx, "SERVICE GetClients")(err)
 	}()
 
-	tenant := core.GetTenant(ctx)
+	tenant := tenant.GetTenant(ctx)
 
 	companyID, err := access.ResolveClientScope(tenant, req.CompanyID)
 	if err != nil {
@@ -186,7 +193,7 @@ func (s *clientService) GetClients(ctx context.Context, req *clientdto.GetClient
 
 	resp := &clientdto.GetClientsResponse{
 		Clients: []clientdto.ClientResponse{},
-		Meta: clientdto.Meta{
+		Meta: metadto.Meta{
 			Page:  req.Page,
 			Limit: req.Limit,
 			Total: total,
@@ -205,8 +212,210 @@ func (s *clientService) GetClients(ctx context.Context, req *clientdto.GetClient
 			LastName:  c.LastName,
 			Email:     c.Email,
 			CompanyID: c.CompanyID,
+			Phone:     c.Phone,
+			Status:    c.Status,
+			DeletedAt: func() *string {
+				if c.DeletedAt != nil {
+					deletedAt := c.DeletedAt.Format("2006-01-02 15:04:05")
+					return &deletedAt
+				}
+				return nil
+			}(),
 		})
 	}
 
 	return resp, nil
+}
+
+func (s *clientService) GetClientByID(ctx context.Context, id int) (*clientdto.ClientResponse, error) {
+
+	var err error
+	defer func() {
+		utils.Trace(ctx, "SERVICE GetClientByID")(err)
+	}()
+
+	tenant := tenant.GetTenant(ctx)
+
+	client, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if client == nil {
+		err = errorHandler.NewAppError(http.StatusNotFound, fmt.Sprintf("client not found with given id %d", id))
+		return nil, err
+	}
+
+	companyID, err := access.ResolveClientScope(tenant, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if companyID != nil {
+		if client.CompanyID == nil || *client.CompanyID != *companyID {
+			err = errorHandler.NewAppError(http.StatusForbidden, "access denied to this client")
+			return nil, err
+		}
+	}
+
+	resp := &clientdto.ClientResponse{
+		ID:        client.ID,
+		FirstName: client.FirstName,
+		LastName:  client.LastName,
+		Email:     client.Email,
+		CompanyID: client.CompanyID,
+		Phone:     client.Phone,
+		Status:    client.Status,
+		DeletedAt: func() *string {
+			if client.DeletedAt != nil {
+				deletedAt := client.DeletedAt.Format("2006-01-02 15:04:05")
+				return &deletedAt
+			}
+			return nil
+		}(),
+	}
+
+	return resp, nil
+}
+
+func (s *clientService) UpdateClient(
+	ctx context.Context,
+	id int,
+	req *clientdto.UpdateClientRequest,
+) (*clientdto.ClientResponse, error) {
+
+	var err error
+	defer func() {
+		utils.Trace(ctx, "SERVICE UpdateClient")(err)
+	}()
+
+	tenant := tenant.GetTenant(ctx)
+
+	client, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if client == nil {
+		err = errorHandler.NewAppError(http.StatusNotFound, fmt.Sprintf("client not found with given id %d", id))
+		return nil, err
+	}
+
+	companyID, err := access.ResolveClientScope(tenant, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if companyID != nil {
+		if client.CompanyID == nil || *client.CompanyID != *companyID {
+			err = errorHandler.NewAppError(http.StatusForbidden, "access denied to this client")
+			return nil, err
+		}
+	}
+
+	if req.Email != nil && *req.Email != client.Email {
+
+		exists, err := s.repo.EmailExists(*req.Email)
+		if err != nil {
+			return nil, err
+		}
+		if exists {
+			err = errorHandler.NewAppError(http.StatusConflict, "email already exists")
+			return nil, err
+		}
+	}
+
+	if req.FirstName != nil {
+		client.FirstName = *req.FirstName
+	}
+	if req.LastName != nil {
+		client.LastName = *req.LastName
+	}
+	if req.Email != nil {
+		client.Email = *req.Email
+	}
+	if req.Phone != nil {
+		client.Phone = *req.Phone
+	}
+
+	err = s.repo.Update(ctx, client)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &clientdto.ClientResponse{
+		ID:        client.ID,
+		FirstName: client.FirstName,
+		LastName:  client.LastName,
+		Email:     client.Email,
+		CompanyID: client.CompanyID,
+		Phone:     client.Phone,
+		Status:    client.Status,
+		DeletedAt: func() *string {
+			if client.DeletedAt != nil {
+				deletedAt := client.DeletedAt.Format("2006-01-02 15:04:05")
+				return &deletedAt
+			}
+			return nil
+		}(),
+	}
+
+	return resp, nil
+}
+
+func (s *clientService) DeleteClient(ctx context.Context, id int) error {
+
+	var err error
+	defer func() {
+		utils.Trace(ctx, "SERVICE DeleteClient")(err)
+	}()
+
+	tenant := tenant.GetTenant(ctx)
+
+	client, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if client == nil {
+		err = errorHandler.NewAppError(http.StatusNotFound, fmt.Sprintf("client not found with given id %d", id))
+		return err
+	}
+
+	companyID, err := access.ResolveClientScope(tenant, nil)
+	if err != nil {
+		return err
+	}
+
+	if companyID != nil {
+		if client.CompanyID == nil || *client.CompanyID != *companyID {
+			err = errorHandler.NewAppError(http.StatusForbidden, "access denied to this client")
+			return err
+		}
+	}
+
+	if client.DeletedAt != nil || client.Status == 0 {
+		err = errorHandler.NewAppError(http.StatusConflict, "client already deleted")
+		return err
+	}
+
+	err = transaction.RunInTransaction(ctx, s.db, func(tx *sql.Tx) error {
+
+		if err := s.repo.SoftDeleteTx(tx, client.ID); err != nil {
+			return err
+		}
+
+		if client.UserID != nil {
+			if err := s.userRepo.SoftDeleteByIDTx(tx, *client.UserID); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	log.Println("Client + User soft deleted:", id)
+
+	return nil
 }

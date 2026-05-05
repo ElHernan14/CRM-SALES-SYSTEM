@@ -15,6 +15,7 @@ type UserRepository interface {
 	GetByID(id int) (*users.User, error)
 	GetAll() ([]users.User, error)
 	Create(tx *sql.Tx, user *users.User) (*users.User, error)
+	SoftDeleteByIDTx(tx *sql.Tx, userID int) error
 }
 
 type userRepository struct {
@@ -40,7 +41,7 @@ func (r *userRepository) GetUserLogin(email string) (*auth.UserLogin, error) {
 		LEFT JOIN rol r ON r.id = ur.role_id
 		LEFT JOIN role_permission rp ON rp.role_id = r.id
 		LEFT JOIN permission p ON p.id = rp.permission_id
-		WHERE u.email = $1
+		WHERE u.email = $1 AND u.status = 1
 		GROUP BY u.id, u.email, u.password_hash, c.company_id;
 	`
 
@@ -101,4 +102,17 @@ func (r *userRepository) GetByID(id int) (*users.User, error) {
 
 func (r *userRepository) GetAll() ([]users.User, error) {
 	return nil, nil
+}
+
+func (r *userRepository) SoftDeleteByIDTx(tx *sql.Tx, userID int) error {
+
+	query := `
+		UPDATE users
+		SET status = 0,
+			deleted_at = NOW()
+		WHERE id = $1
+	`
+
+	_, err := tx.Exec(query, userID)
+	return err
 }

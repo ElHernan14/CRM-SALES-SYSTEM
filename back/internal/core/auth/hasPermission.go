@@ -1,4 +1,4 @@
-package utils
+package authcore
 
 func HasPermission(perms []string, permission string) bool {
 	for _, p := range perms {

@@ -3,7 +3,7 @@ package helper
 import (
 	errorHandler "crm-system-sales/internal/core/error"
 	validatorx "crm-system-sales/internal/core/validator"
-	clientdto "crm-system-sales/internal/dto"
+	clientdto "crm-system-sales/internal/modules/client/dto"
 
 	"net/http"
 	"strconv"

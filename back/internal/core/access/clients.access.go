@@ -2,25 +2,30 @@ package access
 
 import (
 	"crm-system-sales/internal/constants"
-	"crm-system-sales/internal/core"
+	authcore "crm-system-sales/internal/core/auth"
 	errorHandler "crm-system-sales/internal/core/error"
-	utilsx "crm-system-sales/internal/utils"
+	tenant "crm-system-sales/internal/core/tenant"
+	"net/http"
 )
 
-func ResolveClientScope(tenant *core.TenantContext, reqCompanyID *int) (*int, error) {
-	if utilsx.HasPermission(tenant.Permissions, constants.ClientViewAll) {
+func ResolveClientScope(tenant *tenant.TenantContext, reqCompanyID *int) (*int, error) {
+	var err error
+	if authcore.HasPermission(tenant.Permissions, constants.ClientViewAll) {
 		return reqCompanyID, nil
 	}
-	if utilsx.HasPermission(tenant.Permissions, constants.ClientViewCompany) {
+	if authcore.HasPermission(tenant.Permissions, constants.ClientViewCompany) {
 		if tenant.CompanyID == nil {
-			return nil, errorHandler.ErrForbidden
+			err = errorHandler.NewAppError(http.StatusForbidden, "company_id not found")
+			return nil, err
 		}
 		// evitar bypass por query
 		if reqCompanyID != nil && *reqCompanyID != *tenant.CompanyID {
-			return nil, errorHandler.ErrForbidden
+			err = errorHandler.NewAppError(http.StatusForbidden, "company_id does not match")
+			return nil, err
 		}
 
 		return tenant.CompanyID, nil
 	}
-	return nil, errorHandler.ErrForbidden
+	err = errorHandler.NewAppError(http.StatusForbidden, "access denied")
+	return nil, err
 }
