@@ -60,7 +60,7 @@ func (s *clientService) Create(ctx context.Context, req *clientdto.CreateClientR
 	//  validar DTO
 	msg, invalid := validatorx.ValidateStruct(req)
 	if invalid {
-		err = errorHandler.NewAppError(400, msg)
+		err = errorHandler.NewAppError(http.StatusBadRequest, msg)
 		return nil, err
 	}
 

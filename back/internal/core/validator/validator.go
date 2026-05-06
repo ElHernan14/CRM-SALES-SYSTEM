@@ -1,6 +1,7 @@
 package validatorx
 
 import (
+	"crm-system-sales/internal/constants"
 	"fmt"
 	"strings"
 
@@ -12,10 +13,14 @@ var validate *validator.Validate
 func init() {
 	validate = validator.New()
 
-	// 🔥 custom validation
 	validate.RegisterValidation("strong_password", func(fl validator.FieldLevel) bool {
 		password := fl.Field().String()
 		return len(password) >= 6 && strings.ContainsAny(password, "0123456789")
+	})
+
+	validate.RegisterValidation("product_type", func(fl validator.FieldLevel) bool {
+		v := fl.Field().String()
+		return v == constants.ProductTypeProduct || v == constants.ProductTypeService
 	})
 }
 
@@ -48,6 +53,12 @@ func buildMessage(fe validator.FieldError) string {
 		return fmt.Sprintf("%s debe tener máximo %s caracteres", field, fe.Param())
 	case "strong_password":
 		return "la contraseña debe tener mínimo 6 caracteres y al menos un número"
+	case "product_type":
+		return fmt.Sprintf("%s debe ser '%s' o '%s'", field, constants.ProductTypeProduct, constants.ProductTypeService)
+	case "gt":
+		return fmt.Sprintf("%s debe ser mayor que %s", field, fe.Param())
+	case "gte":
+		return fmt.Sprintf("%s debe ser mayor o igual a %s", field, fe.Param())
 	default:
 		return fmt.Sprintf("%s es inválido", field)
 	}
