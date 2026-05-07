@@ -8,7 +8,9 @@ import (
 )
 
 func RegisterProductRoutes(r *mux.Router, controller *ProductController) {
-	products := r.PathPrefix("/product").Subrouter()
-	products.HandleFunc("/products", middleware.RequirePermission(constants.ProductCreate)(middleware.ErrorMiddleware(controller.CreateProduct))).Methods("POST")
-	products.HandleFunc("/products", middleware.RequirePermission(constants.ProductView)(middleware.ErrorMiddleware(controller.GetProducts))).Methods("GET")
+	r.HandleFunc("/product", middleware.RequirePermission(constants.ProductCreate)(middleware.ErrorMiddleware(controller.CreateProduct))).Methods("POST")
+	r.HandleFunc("/product", middleware.RequirePermission(constants.ProductView)(middleware.ErrorMiddleware(controller.GetProducts))).Methods("GET")
+	r.HandleFunc("/product/{id}", middleware.RequirePermission(constants.ProductRead)(middleware.ErrorMiddleware(controller.GetProductByID))).Methods("GET")
+	r.HandleFunc("/product/{id}", middleware.RequirePermission(constants.ProductUpdate)(middleware.ErrorMiddleware(controller.UpdateProduct))).Methods("PATCH")
+	r.HandleFunc("/product/{id}", middleware.RequirePermission(constants.ProductDelete)(middleware.ErrorMiddleware(controller.DeleteProduct))).Methods("DELETE")
 }

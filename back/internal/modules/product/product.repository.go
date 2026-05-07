@@ -10,6 +10,9 @@ import (
 type ProductRepository interface {
 	Create(ctx context.Context, p *models.Product) error
 	GetAll(ctx context.Context, search string, productType string, minPrice float64, maxPrice float64, companyID *int, limit int, offset int) ([]models.Product, int, error)
+	GetByID(ctx context.Context, id int) (*models.Product, error)
+	Update(ctx context.Context, p *models.Product) error
+	SoftDelete(ctx context.Context, id int) error
 }
 
 type productRepository struct {
@@ -134,4 +137,79 @@ func (r *productRepository) GetAll(
 	}
 
 	return products, total, nil
+}
+
+func (r *productRepository) GetByID(ctx context.Context, id int) (*models.Product, error) {
+
+	query := `
+		SELECT id, name, description, type, price, stock, status, company_id
+		FROM product
+		WHERE id = $1
+		  AND deleted_at IS NULL
+		  AND status = 1
+	`
+
+	var p models.Product
+
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&p.ID,
+		&p.Name,
+		&p.Description,
+		&p.Type,
+		&p.Price,
+		&p.Stock,
+		&p.Status,
+		&p.CompanyID,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &p, nil
+}
+
+func (r *productRepository) Update(ctx context.Context, p *models.Product) error {
+
+	query := `
+		UPDATE product SET
+			name = $1,
+			description = $2,
+			type = $3,
+			price = $4,
+			stock = $5,
+			status = $6
+		WHERE id = $7
+	`
+
+	_, err := r.db.ExecContext(
+		ctx,
+		query,
+		p.Name,
+		p.Description,
+		p.Type,
+		p.Price,
+		p.Stock,
+		p.Status,
+		p.ID,
+	)
+
+	return err
+}
+
+func (r *productRepository) SoftDelete(ctx context.Context, id int) error {
+
+	query := `
+		UPDATE product
+		SET 
+			deleted_at = NOW(),
+			status = 0
+		WHERE id = $1
+	`
+
+	_, err := r.db.ExecContext(ctx, query, id)
+	return err
 }

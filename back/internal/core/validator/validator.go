@@ -59,6 +59,8 @@ func buildMessage(fe validator.FieldError) string {
 		return fmt.Sprintf("%s debe ser mayor que %s", field, fe.Param())
 	case "gte":
 		return fmt.Sprintf("%s debe ser mayor o igual a %s", field, fe.Param())
+	case "oneof":
+		return fmt.Sprintf("%s es inválido.", field)
 	default:
 		return fmt.Sprintf("%s es inválido", field)
 	}

@@ -16,9 +16,8 @@ func RequirePermission(permission string) func(http.HandlerFunc) http.HandlerFun
 
 		return func(w http.ResponseWriter, r *http.Request) {
 
-			val := r.Context().Value(tenantHelper.TenantContextKey)
-			tenant, ok := val.(*tenantHelper.TenantContext)
-			if !ok || tenant == nil {
+			tenant := tenantHelper.GetTenant(r.Context())
+			if tenant == nil {
 				log.Printf("Tenant no encontrado en el contexto")
 				w.WriteHeader(http.StatusForbidden)
 				json.NewEncoder(w).Encode(response.Error(http.StatusForbidden, "Acceso denegado, usuario no autorizado por falta de permiso"))

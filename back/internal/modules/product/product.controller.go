@@ -10,6 +10,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 type ProductController struct {
@@ -114,4 +116,81 @@ func (c *ProductController) GetProducts(w http.ResponseWriter, r *http.Request) 
 	}
 
 	return json.NewEncoder(w).Encode(response.Success(res))
+}
+
+func (c *ProductController) GetProductByID(w http.ResponseWriter, r *http.Request) error {
+
+	var err error
+	defer func() {
+		utils.Trace(r.Context(), "CONTROLLER GetProductByID")(err)
+	}()
+
+	vars := mux.Vars(r)
+
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil || id <= 0 {
+		return errorHandler.NewAppError(http.StatusBadRequest, "id inválido")
+	}
+
+	res, err := c.service.GetByID(r.Context(), id)
+	if err != nil {
+		return err
+	}
+
+	return json.NewEncoder(w).Encode(response.Success(res))
+}
+
+func (c *ProductController) UpdateProduct(w http.ResponseWriter, r *http.Request) error {
+
+	var err error
+	defer func() {
+		utils.Trace(r.Context(), "CONTROLLER UpdateProduct")(err)
+	}()
+
+	vars := mux.Vars(r)
+
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil || id <= 0 {
+		return errorHandler.NewAppError(http.StatusBadRequest, "id inválido")
+	}
+
+	var req productdto.UpdateProductRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return errorHandler.NewAppError(http.StatusBadRequest, "body json inválido")
+	}
+
+	msg, invalid := validatorx.ValidateStruct(req)
+	if invalid {
+		return errorHandler.NewAppError(http.StatusBadRequest, msg)
+	}
+
+	res, err := c.service.Update(r.Context(), id, &req)
+	if err != nil {
+		return err
+	}
+
+	return json.NewEncoder(w).Encode(response.Success(res))
+}
+
+func (c *ProductController) DeleteProduct(w http.ResponseWriter, r *http.Request) error {
+
+	var err error
+	defer func() {
+		utils.Trace(r.Context(), "CONTROLLER DeleteProduct")(err)
+	}()
+
+	vars := mux.Vars(r)
+
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil || id <= 0 {
+		return errorHandler.NewAppError(http.StatusBadRequest, "id inválido")
+	}
+
+	err = c.service.Delete(r.Context(), id)
+	if err != nil {
+		return err
+	}
+
+	return json.NewEncoder(w).Encode(response.Success(nil))
 }

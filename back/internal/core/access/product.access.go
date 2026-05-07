@@ -40,7 +40,7 @@ func ResolveGetProductsCompanyID(
 		if reqCompanyID != nil && *reqCompanyID != *tenant.CompanyID {
 			return nil, errorHandler.NewAppError(
 				http.StatusForbidden,
-				"No podés consultar productos de otra empresa",
+				"No se permite consultar productos de otra empresa",
 			)
 		}
 		return tenant.CompanyID, nil

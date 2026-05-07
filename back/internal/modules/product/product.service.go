@@ -17,6 +17,9 @@ import (
 type ProductService interface {
 	Create(ctx context.Context, req *productdto.CreateProductRequest) (*productdto.ProductResponse, error)
 	GetProducts(ctx context.Context, req *productdto.GetProductsRequest) (*productdto.GetProductsResponse, error)
+	GetByID(ctx context.Context, id int) (*productdto.ProductDetailResponse, error)
+	Update(ctx context.Context, id int, req *productdto.UpdateProductRequest) (*productdto.ProductDetailResponse, error)
+	Delete(ctx context.Context, id int) error
 }
 
 type productService struct {
@@ -134,4 +137,145 @@ func (s *productService) GetProducts(
 			Total: total,
 		},
 	}, nil
+}
+
+func (s *productService) GetByID(
+	ctx context.Context,
+	id int,
+) (*productdto.ProductDetailResponse, error) {
+
+	var err error
+	defer func() {
+		utils.Trace(ctx, "SERVICE GetProductByID")(err)
+	}()
+
+	tenant := tenant.GetTenant(ctx)
+	if tenant == nil {
+		return nil, errorHandler.NewAppError(http.StatusUnauthorized, "Usuario no autorizado")
+	}
+
+	product, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if product == nil {
+		return nil, errorHandler.NewAppError(http.StatusNotFound, "Producto no encontrado")
+	}
+
+	_, err = access.ResolveGetProductsCompanyID(tenant, &product.CompanyID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &productdto.ProductDetailResponse{
+		ID:          product.ID,
+		Name:        product.Name,
+		Description: product.Description,
+		Type:        product.Type,
+		Price:       product.Price,
+		Stock:       product.Stock,
+		Status:      product.Status,
+		CompanyID:   product.CompanyID,
+	}, nil
+}
+
+func (s *productService) Update(
+	ctx context.Context,
+	id int,
+	req *productdto.UpdateProductRequest,
+) (*productdto.ProductDetailResponse, error) {
+
+	var err error
+	defer func() {
+		utils.Trace(ctx, "SERVICE UpdateProduct")(err)
+	}()
+
+	tenant := tenant.GetTenant(ctx)
+	if tenant == nil {
+		return nil, errorHandler.NewAppError(http.StatusUnauthorized, "Usuario no autorizado")
+	}
+
+	// 🔹 buscar producto
+	product, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if product == nil {
+		return nil, errorHandler.NewAppError(http.StatusNotFound, "Producto no encontrado")
+	}
+
+	_, err = access.ResolveGetProductsCompanyID(tenant, &product.CompanyID)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Name != nil {
+		product.Name = *req.Name
+	}
+	if req.Description != nil {
+		product.Description = *req.Description
+	}
+	if req.Type != nil {
+		product.Type = *req.Type
+	}
+	if req.Price != nil {
+		product.Price = *req.Price
+	}
+	if req.Stock != nil {
+		product.Stock = *req.Stock
+	}
+	if req.Status != nil {
+		product.Status = *req.Status
+	}
+
+	if err := s.repo.Update(ctx, product); err != nil {
+		return nil, err
+	}
+
+	return &productdto.ProductDetailResponse{
+		ID:          product.ID,
+		Name:        product.Name,
+		Description: product.Description,
+		Type:        product.Type,
+		Price:       product.Price,
+		Stock:       product.Stock,
+		Status:      product.Status,
+		CompanyID:   product.CompanyID,
+	}, nil
+}
+
+func (s *productService) Delete(ctx context.Context, id int) error {
+
+	var err error
+	defer func() {
+		utils.Trace(ctx, "SERVICE DeleteProduct")(err)
+	}()
+
+	tenant := tenant.GetTenant(ctx)
+	if tenant == nil {
+		return errorHandler.NewAppError(http.StatusUnauthorized, "Usuario no autorizado")
+	}
+
+	product, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if product == nil {
+		return errorHandler.NewAppError(http.StatusNotFound, "Producto no encontrado")
+	}
+
+	if product.Status == 0 {
+		return errorHandler.NewAppError(http.StatusBadRequest, "Producto ya fue eliminado")
+	}
+
+	_, err = access.ResolveGetProductsCompanyID(tenant, &product.CompanyID)
+	if err != nil {
+		return err
+	}
+
+	if err := s.repo.SoftDelete(ctx, id); err != nil {
+		return err
+	}
+
+	return nil
 }

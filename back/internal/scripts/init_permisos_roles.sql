@@ -111,3 +111,13 @@ JOIN permission p ON p.name IN (
     'client:view:company'
 )
 WHERE r.name = 'company_user';
+
+
+-- Manager también puede eliminar productos
+INSERT INTO role_permission (role_id, permission_id)
+SELECT r.id, p.id
+FROM rol r
+JOIN permission p ON p.name IN (
+    'product:delete',
+)
+WHERE r.name = 'company_user';
