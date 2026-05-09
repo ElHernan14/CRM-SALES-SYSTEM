@@ -13,6 +13,7 @@ type Claims struct {
 	UserID      int       `json:"user_id"`
 	Email       string    `json:"email"`
 	CompanyID   *int      `json:"company_id,omitempty"`
+	ClientID    *int      `json:"client_id,omitempty"`
 	Roles       *[]string `json:"roles,omitempty"`
 	Permissions *[]string `json:"permissions"`
 	jwt.RegisteredClaims
@@ -27,6 +28,7 @@ func GenerateJWT(user *models.UserLogin, permissions []string, roles []string) (
 		UserID:      user.ID,
 		Email:       user.Email,
 		CompanyID:   user.CompanyID,
+		ClientID:    user.ClientID,
 		Roles:       &roles,
 		Permissions: &permissions,
 		RegisteredClaims: jwt.RegisteredClaims{

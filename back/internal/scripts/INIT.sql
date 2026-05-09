@@ -152,3 +152,34 @@ ADD CONSTRAINT user_role_unique UNIQUE (user_id, role_id);
 ALTER TABLE users
 ADD COLUMN status SMALLINT DEFAULT 1,
 ADD COLUMN deleted_at TIMESTAMP NULL;
+
+ALTER TABLE invoice
+ADD COLUMN subtotal NUMERIC(10,2) DEFAULT 0,
+ADD COLUMN taxes NUMERIC(10,2) DEFAULT 0,
+ADD COLUMN paid_amount NUMERIC(10,2) DEFAULT 0,
+ADD COLUMN updated_at TIMESTAMP NULL;
+
+ALTER TABLE invoice_item
+ADD COLUMN product_name VARCHAR(255) NOT NULL DEFAULT '',
+ADD COLUMN subtotal NUMERIC(10,2) DEFAULT 0;
+
+CREATE TABLE invoice_payment (
+    id SERIAL PRIMARY KEY,
+
+    invoice_id INT NOT NULL,
+    amount NUMERIC(10,2) NOT NULL,
+
+    payment_method VARCHAR(50),
+
+    paid_by_user_id INT NOT NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_payment_invoice
+        FOREIGN KEY(invoice_id)
+        REFERENCES invoice(id),
+
+    CONSTRAINT fk_payment_user
+        FOREIGN KEY(paid_by_user_id)
+        REFERENCES users(id)
+);

@@ -305,7 +305,7 @@ RequirePermission
   ↓
 Controller
   ↓
-Service (🔥 lógica real)
+Service ( lógica real)
   ↓
 Repository
   ↓

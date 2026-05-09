@@ -33,6 +33,7 @@ func (r *userRepository) GetUserLogin(email string) (*auth.UserLogin, error) {
 			u.email,
 			u.password_hash,
 			c.company_id,
+			c.client_id,
 			COALESCE(ARRAY_AGG(DISTINCT r.name) FILTER (WHERE r.name IS NOT NULL), '{}') AS roles,
 			COALESCE(ARRAY_AGG(DISTINCT p.name) FILTER (WHERE p.name IS NOT NULL), '{}') AS permissions
 		FROM users u
@@ -42,19 +43,21 @@ func (r *userRepository) GetUserLogin(email string) (*auth.UserLogin, error) {
 		LEFT JOIN role_permission rp ON rp.role_id = r.id
 		LEFT JOIN permission p ON p.id = rp.permission_id
 		WHERE u.email = $1 AND u.status = 1
-		GROUP BY u.id, u.email, u.password_hash, c.company_id;
+		GROUP BY u.id, u.email, u.password_hash, c.company_id, c.client_id;
 	`
 
 	row := r.DB.QueryRow(query, email)
 
 	var user auth.UserLogin
 	var companyID sql.NullInt64
+	var clientID sql.NullInt64
 
 	err := row.Scan(
 		&user.ID,
 		&user.Email,
 		&user.PasswordHash,
 		&companyID,
+		&clientID,
 		pq.Array(&user.Roles),
 		pq.Array(&user.Permissions),
 	)
@@ -67,6 +70,11 @@ func (r *userRepository) GetUserLogin(email string) (*auth.UserLogin, error) {
 	if companyID.Valid {
 		id := int(companyID.Int64)
 		user.CompanyID = &id
+	}
+
+	if clientID.Valid {
+		id := int(clientID.Int64)
+		user.ClientID = &id
 	}
 
 	return &user, nil

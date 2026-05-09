@@ -9,6 +9,7 @@ type TenantContext struct {
 	UserID      int
 	Email       string
 	CompanyID   *int
+	ClientID    *int
 	Roles       []string
 	Permissions []string
 }

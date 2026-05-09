@@ -9,6 +9,7 @@ type UserLogin struct {
 	CreatedAt    time.Time `json:"created_at"`
 
 	CompanyID *int `json:"company_id,omitempty"` // Para clientes, puede ser nulo
+	ClientID  *int `json:"client_id,omitempty"`  // Para clientes, puede ser nulo
 
 	Roles []string `json:"roles"` //Para traer roles completos
 

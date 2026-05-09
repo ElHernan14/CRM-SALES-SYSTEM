@@ -38,6 +38,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		tenant := &tenantHelper.TenantContext{
 			UserID:      claims.UserID,
 			CompanyID:   claims.CompanyID,
+			ClientID:    claims.ClientID,
 			Email:       claims.Email,
 			Roles:       *claims.Roles,
 			Permissions: *claims.Permissions,
