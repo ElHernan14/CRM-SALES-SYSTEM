@@ -1,10 +1,10 @@
 package invoiceaccess
 
 import (
-	constants "crm-system-sales/internal/constants"
 	errorHandler "crm-system-sales/internal/core/error"
 	tenantctx "crm-system-sales/internal/core/tenant"
-	invoiceModel "crm-system-sales/internal/models/invoice"
+	constants "crm-system-sales/internal/modules/invoice/constants"
+	invoiceModel "crm-system-sales/internal/modules/invoice/models"
 	"net/http"
 )
 

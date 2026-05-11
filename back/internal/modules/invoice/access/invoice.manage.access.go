@@ -3,7 +3,7 @@ package invoiceaccess
 import (
 	errorHandler "crm-system-sales/internal/core/error"
 	tenantctx "crm-system-sales/internal/core/tenant"
-	invoiceModel "crm-system-sales/internal/models/invoice"
+	invoiceModel "crm-system-sales/internal/modules/invoice/models"
 	"net/http"
 )
 

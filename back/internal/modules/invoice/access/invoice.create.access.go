@@ -3,43 +3,50 @@ package invoiceaccess
 import (
 	errorHandler "crm-system-sales/internal/core/error"
 	tenantctx "crm-system-sales/internal/core/tenant"
+
 	clientModel "crm-system-sales/internal/models/client"
-	invoiceModel "crm-system-sales/internal/modules/invoice/models"
+
 	"net/http"
 )
 
-func CanViewInvoice(
+func CanCreateInvoice(
 	tenant *tenantctx.TenantContext,
-	invoice *invoiceModel.Invoice,
 	buyer *clientModel.Client,
+	sellerCompanyID int,
 ) error {
 
-	//  admin
 	if IsAdmin(tenant) {
 		return nil
 	}
 
-	//  seller company
-	if tenant.CompanyID != nil &&
-		*tenant.CompanyID == invoice.SellerCompanyID {
+	// individual user
+	if tenant.CompanyID == nil {
+
+		if buyer.UserID == nil ||
+			*buyer.UserID != tenant.UserID {
+
+			return errorHandler.NewAppError(
+				http.StatusForbidden,
+				"No autorizado para crear invoice",
+			)
+		}
+
 		return nil
 	}
 
-	//  buyer company
+	// empresa creando compra
 	if buyer.CompanyID != nil &&
-		tenant.CompanyID != nil &&
 		*buyer.CompanyID == *tenant.CompanyID {
 		return nil
 	}
 
-	//  buyer individual
-	if buyer.UserID != nil &&
-		*buyer.UserID == tenant.UserID {
+	// empresa creando venta
+	if *tenant.CompanyID == sellerCompanyID {
 		return nil
 	}
 
 	return errorHandler.NewAppError(
 		http.StatusForbidden,
-		"No autorizado para ver esta invoice",
+		"No autorizado para crear invoice",
 	)
 }
