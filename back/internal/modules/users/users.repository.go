@@ -33,7 +33,7 @@ func (r *userRepository) GetUserLogin(email string) (*auth.UserLogin, error) {
 			u.email,
 			u.password_hash,
 			c.company_id,
-			c.client_id,
+			c.id,
 			COALESCE(ARRAY_AGG(DISTINCT r.name) FILTER (WHERE r.name IS NOT NULL), '{}') AS roles,
 			COALESCE(ARRAY_AGG(DISTINCT p.name) FILTER (WHERE p.name IS NOT NULL), '{}') AS permissions
 		FROM users u
@@ -43,7 +43,7 @@ func (r *userRepository) GetUserLogin(email string) (*auth.UserLogin, error) {
 		LEFT JOIN role_permission rp ON rp.role_id = r.id
 		LEFT JOIN permission p ON p.id = rp.permission_id
 		WHERE u.email = $1 AND u.status = 1
-		GROUP BY u.id, u.email, u.password_hash, c.company_id, c.client_id;
+		GROUP BY u.id, u.email, u.password_hash, c.company_id, c.id;
 	`
 
 	row := r.DB.QueryRow(query, email)

@@ -183,3 +183,7 @@ CREATE TABLE invoice_payment (
         FOREIGN KEY(paid_by_user_id)
         REFERENCES users(id)
 );
+
+-- STOCK RESERVATION ENGINE PRO
+ALTER TABLE product
+ADD COLUMN reserved_stock INT NOT NULL DEFAULT 0;

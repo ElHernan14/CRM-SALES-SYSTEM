@@ -13,6 +13,8 @@ type ProductRepository interface {
 	GetByID(ctx context.Context, id int) (*models.Product, error)
 	Update(ctx context.Context, p *models.Product) error
 	SoftDelete(ctx context.Context, id int) error
+	GetByIDForUpdate(ctx context.Context, tx *sql.Tx, id int) (*models.Product, error)
+	IncrementReservedStock(ctx context.Context, tx *sql.Tx, productID int, quantity int) error
 }
 
 type productRepository struct {
@@ -211,5 +213,69 @@ func (r *productRepository) SoftDelete(ctx context.Context, id int) error {
 	`
 
 	_, err := r.db.ExecContext(ctx, query, id)
+	return err
+}
+
+func (r *productRepository) GetByIDForUpdate(
+	ctx context.Context,
+	tx *sql.Tx,
+	id int,
+) (*models.Product, error) {
+
+	query := `
+		SELECT
+			id,
+			name,
+			price,
+			stock,
+			reserved_stock,
+			company_id
+		FROM product
+		WHERE id = $1
+		FOR UPDATE
+	`
+
+	product := &models.Product{}
+
+	err := tx.QueryRowContext(
+		ctx,
+		query,
+		id,
+	).Scan(
+		&product.ID,
+		&product.Name,
+		&product.Price,
+		&product.Stock,
+		&product.ReservedStock,
+		&product.CompanyID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return product, nil
+}
+
+func (r *productRepository) IncrementReservedStock(
+	ctx context.Context,
+	tx *sql.Tx,
+	productID int,
+	quantity int,
+) error {
+
+	query := `
+		UPDATE product
+		SET reserved_stock = reserved_stock + $1
+		WHERE id = $2
+	`
+
+	_, err := tx.ExecContext(
+		ctx,
+		query,
+		quantity,
+		productID,
+	)
+
 	return err
 }

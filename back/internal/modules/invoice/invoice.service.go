@@ -31,7 +31,7 @@ func NewInvoiceService(
 	repo InvoiceRepository,
 	clientRepo client.ClientRepository,
 	companyRepo company.CompanyRepository,
-) *invoiceService {
+) InvoiceService {
 	return &invoiceService{
 		db:          db,
 		Repo:        repo,
@@ -56,26 +56,30 @@ func (s *invoiceService) CreateDraft(
 	//  buyer existe
 	buyer, err := s.ClientRepo.GetByID(ctx, req.BuyerClientID)
 	if err != nil {
-		return nil, err
+		return nil, errorHandler.NewAppError(
+			http.StatusNotFound,
+			"Cliente comprador no encontrado",
+		)
 	}
 
 	//  empresa seller existe
 	company, err := s.CompanyRepo.GetByID(ctx, req.SellerCompanyID)
 	if err != nil {
-		return nil, err
+		return nil, errorHandler.NewAppError(
+			http.StatusNotFound,
+			"Empresa vendedora no encontrada",
+		)
 	}
 
 	_ = company
 
 	//  no comprarte a vos mismo
-	if tenant.CompanyID != nil &&
-		*tenant.CompanyID == req.SellerCompanyID &&
-		buyer.CompanyID != nil &&
-		*buyer.CompanyID == req.SellerCompanyID {
+	if buyer.CompanyID != nil &&
+		req.SellerCompanyID == *buyer.CompanyID {
 
 		return nil, errorHandler.NewAppError(
 			http.StatusBadRequest,
-			"No puedes generar invoices a tu propia empresa",
+			"una empresa no puede facturarse a sí misma",
 		)
 	}
 
