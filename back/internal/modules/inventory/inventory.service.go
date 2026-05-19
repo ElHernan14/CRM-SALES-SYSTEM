@@ -13,6 +13,9 @@ import (
 type InventoryService interface {
 	ReserveStock(ctx context.Context, tx *sql.Tx, productID int, quantity int) error
 	ConsolidateStock(ctx context.Context, tx *sql.Tx, productID int, quantity int) error
+	IncrementReservedStock(ctx context.Context, tx *sql.Tx, productID int, quantity int) error
+	AdjustReservedStock(ctx context.Context, tx *sql.Tx, productID int, diff int) error
+	ReleaseStock(ctx context.Context, tx *sql.Tx, productID int, quantity int) error
 }
 
 type inventoryService struct {
@@ -56,7 +59,7 @@ func (s *inventoryService) ReserveStock(
 		)
 	}
 
-	return s.productRepo.IncrementReservedStock(
+	return s.IncrementReservedStock(
 		ctx,
 		tx,
 		productID,
@@ -76,6 +79,80 @@ func (s *inventoryService) ConsolidateStock(
 		SET
 			stock = stock - $1,
 			reserved_stock = reserved_stock - $1
+		WHERE id = $2
+	`
+
+	_, err := tx.ExecContext(
+		ctx,
+		query,
+		quantity,
+		productID,
+	)
+
+	return err
+}
+
+func (r *inventoryService) IncrementReservedStock(
+	ctx context.Context,
+	tx *sql.Tx,
+	productID int,
+	quantity int,
+) error {
+
+	query := `
+		UPDATE product
+		SET reserved_stock = reserved_stock + $1
+		WHERE id = $2
+	`
+
+	_, err := tx.ExecContext(
+		ctx,
+		query,
+		quantity,
+		productID,
+	)
+
+	return err
+}
+
+func (s *inventoryService) AdjustReservedStock(
+	ctx context.Context,
+	tx *sql.Tx,
+	productID int,
+	diff int,
+) error {
+
+	if diff == 0 {
+		return nil
+	}
+
+	if diff > 0 {
+		return s.ReserveStock(
+			ctx,
+			tx,
+			productID,
+			diff,
+		)
+	}
+
+	return s.ReleaseStock(
+		ctx,
+		tx,
+		productID,
+		-diff,
+	)
+}
+
+func (s *inventoryService) ReleaseStock(
+	ctx context.Context,
+	tx *sql.Tx,
+	productID int,
+	quantity int,
+) error {
+
+	query := `
+		UPDATE product
+		SET reserved_stock = reserved_stock - $1
 		WHERE id = $2
 	`
 
