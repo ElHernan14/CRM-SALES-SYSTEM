@@ -26,6 +26,7 @@ import (
 type InvoiceItemService interface {
 	Create(ctx context.Context, invoiceID int, req *invoiceItemDTO.CreateInvoiceItemRequest) (*invoiceItemDTO.InvoiceItemResponse, error)
 	Update(ctx context.Context, invoiceID int, itemID int, req *invoiceItemDTO.UpdateInvoiceItemRequest) (*invoiceItemDTO.InvoiceItemResponse, error)
+	Delete(ctx context.Context, invoiceID int, itemID int) error
 }
 
 type invoiceItemService struct {
@@ -112,6 +113,76 @@ func (s *invoiceItemService) Create(
 	var response *invoiceItemDTO.InvoiceItemResponse
 
 	err = core.RunInTransaction(ctx, s.db, func(tx *sql.Tx) error {
+		// Comprobar si ya existe un item para este producto en la invoice
+		existingItem, err := s.repo.GetByInvoiceAndProduct(
+			ctx,
+			invoice.ID,
+			product.ID,
+		)
+
+		if err != nil {
+			return errorHandler.NewAppError(
+				http.StatusInternalServerError,
+				"No se pudo verificar si el item ya existe",
+			)
+		}
+
+		// Compruebo si el item ya existe para esta invoice y producto, si existe sumo la cantidad, sino creo una nueva
+		if existingItem != nil {
+			// Si el item ya existe, actualizar la cantidad sumando la nueva cantidad a la existente
+			newQty := existingItem.Quantity + req.Quantity
+
+			diff := newQty - existingItem.Quantity
+
+			err = s.inventoryService.AdjustReservedStock(
+				ctx,
+				tx,
+				product.ID,
+				diff,
+			)
+			existingItem.Quantity = newQty
+			existingItem.Subtotal = product.Price * float64(newQty)
+
+			// Actualizo el item existente con la nueva cantidad y subtotal junto con la invoice
+			err = s.repo.Update(
+				ctx,
+				tx,
+				existingItem,
+			)
+
+			if err != nil {
+				log.Println("error updating invoice item:", err)
+				return errorHandler.NewAppError(
+					http.StatusInternalServerError,
+					"No se pudo actualizar el item ya existente de invoice",
+				)
+			}
+
+			err = s.invoiceRepo.RecalculateInvoiceTotals(
+				ctx,
+				tx,
+				invoice.ID,
+			)
+			if err != nil {
+				log.Println("error recalculating invoice total:", err)
+				return errorHandler.NewAppError(
+					http.StatusInternalServerError,
+					"No se pudo recalcular el nuevo total de la invoice",
+				)
+			}
+
+			response = &invoiceItemDTO.InvoiceItemResponse{
+				ID:          existingItem.ID,
+				InvoiceID:   existingItem.InvoiceID,
+				ProductID:   existingItem.ProductID,
+				ProductName: existingItem.ProductName,
+				Quantity:    existingItem.Quantity,
+				Price:       existingItem.Price,
+				Subtotal:    existingItem.Subtotal,
+			}
+
+			return nil
+		}
 
 		err = s.inventoryService.ReserveStock(
 			ctx,
@@ -137,7 +208,7 @@ func (s *invoiceItemService) Create(
 			Subtotal: subtotal,
 		}
 
-		err := s.repo.Create(ctx, tx, item)
+		err = s.repo.Create(ctx, tx, item)
 		if err != nil {
 			log.Println("error creating invoice item:", err)
 			return errorHandler.NewAppError(
@@ -323,4 +394,111 @@ func (s *invoiceItemService) Update(
 		Price:    item.Price,
 		Subtotal: item.Subtotal,
 	}, nil
+}
+
+func (s *invoiceItemService) Delete(
+	ctx context.Context,
+	invoiceID int,
+	itemID int,
+) error {
+
+	var err error
+	defer func() {
+		utils.Trace(ctx, "SERVICE DeleteInvoiceItem")(err)
+	}()
+
+	tenant := tenantctx.GetTenant(ctx)
+
+	item, err := s.repo.GetByID(ctx, itemID)
+	if err != nil {
+		return errorHandler.NewAppError(
+			http.StatusNotFound,
+			"invoice item no encontrado",
+		)
+	}
+
+	if item.InvoiceID != invoiceID {
+		return errorHandler.NewAppError(
+			http.StatusBadRequest,
+			"invoice item inválido",
+		)
+	}
+
+	invoice, err := s.invoiceRepo.GetByID(ctx, invoiceID)
+	if err != nil {
+		return errorHandler.NewAppError(
+			http.StatusNotFound,
+			"Invoice no encontrada",
+		)
+	}
+
+	buyer, err := s.clientRepo.GetByID(ctx, invoice.BuyerClientID)
+	if err != nil {
+		return errorHandler.NewAppError(
+			http.StatusNotFound,
+			"Cliente no encontrado",
+		)
+	}
+
+	// ownership
+	err = invoiceaccess.CanMutateDraftInvoice(
+		tenant,
+		invoice,
+		buyer,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	// draft only
+	if invoice.StatusInvoice != constants.InvoiceDraft {
+		return errorHandler.NewAppError(
+			http.StatusForbidden,
+			"solo se pueden eliminar items de invoices draft",
+		)
+	}
+
+	err = core.RunInTransaction(ctx, s.db, func(tx *sql.Tx) error {
+
+		// liberar stock
+		err = s.inventoryService.ReleaseStock(
+			ctx,
+			tx,
+			item.ProductID,
+			item.Quantity,
+		)
+
+		if err != nil {
+			log.Println("error releasing reserved stock:", err)
+			return errorHandler.NewAppError(
+				http.StatusInternalServerError,
+				"No se pudo liberar el stock reservado",
+			)
+		}
+
+		//  eliminar item
+		err = s.repo.Delete(
+			ctx,
+			tx,
+			item.ID,
+		)
+
+		if err != nil {
+			log.Println("error deleting invoice item:", err)
+			return errorHandler.NewAppError(
+				http.StatusInternalServerError,
+				"No se pudo eliminar el item de invoice",
+			)
+		}
+
+		// recalcular invoice
+		return s.invoiceRepo.RecalculateInvoiceTotals(
+			ctx,
+			tx,
+			invoice.ID,
+		)
+	})
+
+	return err
 }

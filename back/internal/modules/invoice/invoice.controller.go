@@ -3,10 +3,14 @@ package invoice
 import (
 	errorHandler "crm-system-sales/internal/core/error"
 	"crm-system-sales/internal/core/response"
+	"crm-system-sales/internal/core/utils"
 	validatorx "crm-system-sales/internal/core/validator"
 	invoicedto "crm-system-sales/internal/modules/invoice/dto"
 	"encoding/json"
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 type InvoiceController struct {
@@ -46,5 +50,35 @@ func (c *InvoiceController) CreateDraft(
 
 	return json.NewEncoder(w).Encode(
 		response.Success(res),
+	)
+}
+
+func (c *InvoiceController) Submit(
+	w http.ResponseWriter,
+	r *http.Request,
+) error {
+
+	var err error
+	defer func() {
+		utils.Trace(r.Context(), "CONTROLLER SubmitInvoice")(err)
+	}()
+
+	params := mux.Vars(r)
+
+	invoiceID, _ := strconv.Atoi(params["id"])
+
+	err = c.Service.Submit(
+		r.Context(),
+		invoiceID,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return json.NewEncoder(w).Encode(
+		response.Success(
+			"invoice enviada correctamente",
+		),
 	)
 }

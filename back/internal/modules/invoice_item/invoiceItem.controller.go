@@ -115,3 +115,35 @@ func (c *InvoiceItemController) Update(
 		response.Success(res),
 	)
 }
+
+func (c *InvoiceItemController) Delete(
+	w http.ResponseWriter,
+	r *http.Request,
+) error {
+
+	var err error
+	defer func() {
+		utils.Trace(r.Context(), "CONTROLLER DeleteInvoiceItem")(err)
+	}()
+
+	params := mux.Vars(r)
+
+	invoiceID, _ := strconv.Atoi(params["id"])
+	itemID, _ := strconv.Atoi(params["itemId"])
+
+	err = c.service.Delete(
+		r.Context(),
+		invoiceID,
+		itemID,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return json.NewEncoder(w).Encode(
+		response.Success(
+			"item eliminado correctamente",
+		),
+	)
+}

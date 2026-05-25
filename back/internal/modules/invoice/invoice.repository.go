@@ -11,6 +11,8 @@ type InvoiceRepository interface {
 	Create(ctx context.Context, tx *sql.Tx, invoice *invoiceModel.Invoice) error
 	GetByID(ctx context.Context, id int) (*invoiceModel.Invoice, error)
 	RecalculateInvoiceTotals(ctx context.Context, tx *sql.Tx, invoiceID int) error
+	GetActiveDraft(ctx context.Context, buyerClientID int, sellerCompanyID int) (*invoiceModel.Invoice, error)
+	UpdateStatus(ctx context.Context, tx *sql.Tx, invoiceID int, status string) error
 }
 
 type invoiceRepository struct {
@@ -152,6 +154,84 @@ func (r *invoiceRepository) RecalculateInvoiceTotals(
 		subtotal,
 		taxes,
 		total,
+		invoiceID,
+	)
+
+	return err
+}
+
+func (r *invoiceRepository) GetActiveDraft(
+	ctx context.Context,
+	buyerClientID int,
+	sellerCompanyID int,
+) (*invoiceModel.Invoice, error) {
+
+	query := `
+		SELECT
+			id,
+			buyer_client_id,
+			seller_company_id,
+			status_invoice,
+			created_at,
+			created_by_user_id,
+			total_amount
+		FROM invoice
+		WHERE
+			buyer_client_id = $1
+			AND seller_company_id = $2
+			AND status_invoice = 'draft'
+			AND status = 1
+		ORDER BY created_at DESC
+		LIMIT 1
+	`
+
+	invoice := &invoiceModel.Invoice{}
+
+	err := r.DB.QueryRowContext(
+		ctx,
+		query,
+		buyerClientID,
+		sellerCompanyID,
+	).Scan(
+		&invoice.ID,
+		&invoice.BuyerClientID,
+		&invoice.SellerCompanyID,
+		&invoice.StatusInvoice,
+		&invoice.CreatedAt,
+		&invoice.CreatedByUserID,
+		&invoice.TotalAmount,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return invoice, nil
+}
+
+func (r *invoiceRepository) UpdateStatus(
+	ctx context.Context,
+	tx *sql.Tx,
+	invoiceID int,
+	status string,
+) error {
+
+	query := `
+		UPDATE invoice
+		SET
+			status_invoice = $1,
+			updated_at = NOW()
+		WHERE id = $2
+	`
+
+	_, err := tx.ExecContext(
+		ctx,
+		query,
+		status,
 		invoiceID,
 	)
 
