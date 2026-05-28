@@ -1,7 +1,6 @@
 package authcore
 
 import (
-	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -22,8 +21,6 @@ type Claims struct {
 var jwtSecret = []byte("super_secret_key") // después va a .env
 
 func GenerateJWT(user *models.UserLogin, permissions []string, roles []string) (string, error) {
-	log.Println("User roles in GenerateJWT:", roles)
-	log.Println("User permissions in GenerateJWT:", permissions)
 	claims := Claims{
 		UserID:      user.ID,
 		Email:       user.Email,

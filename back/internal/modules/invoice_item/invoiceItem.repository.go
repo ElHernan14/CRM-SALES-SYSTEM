@@ -181,6 +181,7 @@ func (r *invoiceItemRepository) GetByInvoiceAndProduct(
 		&item.ID,
 		&item.InvoiceID,
 		&item.ProductID,
+		&item.ProductName,
 		&item.Quantity,
 		&item.Price,
 		&item.Subtotal,

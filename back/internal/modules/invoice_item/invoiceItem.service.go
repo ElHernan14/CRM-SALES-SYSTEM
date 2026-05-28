@@ -121,6 +121,7 @@ func (s *invoiceItemService) Create(
 		)
 
 		if err != nil {
+			log.Println("error checking existing invoice item:", err)
 			return errorHandler.NewAppError(
 				http.StatusInternalServerError,
 				"No se pudo verificar si el item ya existe",

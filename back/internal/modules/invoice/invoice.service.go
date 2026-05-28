@@ -200,7 +200,7 @@ func (s *invoiceService) Submit(
 		)
 	}
 
-	// //  validate items
+	//  validate items
 	// count, err := s.InvoiceItemRepo.CountByInvoice(
 	// 	ctx,
 	// 	invoice.ID,

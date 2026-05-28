@@ -1,368 +1,194 @@
-# CRM-SALES-SYSTEM
-BACKEND OF CRM SALES SYSTEM
-# 🧠 CRM SaaS Multi-Tenant (Go + PostgreSQL)
+# CRM-System-Sales
 
-## 📌 Descripción
+Scalable multi-tenant ERP & commerce backend built with Go following clean architecture and modular domain-driven design principles.
 
-Sistema SaaS multi-tenant de gestión de ventas y marketplace B2B/B2C.
-Permite que empresas publiquen productos y usuarios compren tanto como individuos como organizaciones.
+The project focuses on secure business workflows, invoice management, inventory control, authentication, and financial operations for B2B/B2C environments.
 
 ---
 
-# 🏗️ Arquitectura
+# Features
 
-##  Stack
-
-* **Backend:** Go (net/http + gorilla/mux)
-* **DB:** PostgreSQL
-* **Auth:** JWT + bcrypt
-* **Arquitectura:** Clean-ish modular
-
----
-
-##  Capas
-
-```text
-controller (handler)
-    ↓
-service (lógica de negocio + seguridad real)
-    ↓
-repository (acceso a datos)
-```
+* Multi-tenant architecture
+* JWT authentication & authorization
+* Role & permission system
+* Company & client management
+* Product management
+* Invoice draft lifecycle
+* Invoice item workflows
+* Inventory reservation system
+* Payment-ready invoice engine
+* Secure access scopes
+* Transaction-safe operations
+* Soft delete & audit fields
+* Centralized error handling
+* Request tracing & metrics
+* RESTful API design
 
 ---
 
-##  Estructura de carpetas (recomendada)
+# Architecture
 
-```text
-internal/
-├── modules/
-│   ├── auth/
-│   ├── users/
-│   ├── clients/
-│   ├── companies/
-│   ├── products/
-│   ├── invoices/
-│   └── invoice_items/
-│
-├── middleware/
-│   ├── auth.middleware.go
-│   ├── permission.middleware.go
-│   └── context.go
-│
-├── core/                # (opcional pero recomendado)
-│   └── tenant.go
-│
-├── utils/
-│   ├── jwt.go
-│   └── permissions.go
-│
-├── database/
-│   └── connection.go
-│
-└── routes/
-    └── routes.go
-```
+The project follows a modular clean architecture approach.
+
+Each domain is separated into independent modules:
+
+* controller
+* service
+* repository
+* dto
+* model
+* access
+* middleware
+
+The application is designed to scale into larger ERP and commerce workflows while maintaining low coupling between domains.
 
 ---
 
-# 🔐 Autenticación
+# Modules
 
-##  JWT Claims
+## Auth
 
-```go
-type Claims struct {
-    UserID      int
-    Email       string
-    CompanyID   *int
-    Roles       []string
-    Permissions []string
-    jwt.RegisteredClaims
-}
-```
+Authentication, JWT tokens, roles and permissions.
 
----
+## Client
 
-##  Flujo de Login
+Client management and multi-tenant ownership validation.
 
-```text
-Login → validar password (bcrypt)
-     → traer roles + permisos desde DB
-     → generar JWT
-```
+## Company
 
----
+Company administration and tenant isolation.
 
-##  Generación de Token
+## Product
 
-* Incluye:
+Product catalog, stock management and company ownership.
 
-  * user_id
-  * email
-  * company_id
-  * roles
-  * permissions
+## Invoice
 
----
+Invoice lifecycle, draft workflows, financial states and payments.
 
-# 🧠 Contexto de Usuario (Multi-Tenant)
+## Invoice Item
 
-##  TenantContext
+Collaborative invoice item management with inventory reservation.
 
-```go
-type TenantContext struct {
-    UserID      int
-    Email       string
-    CompanyID   *int
-    Roles       []string
-    Permissions []string
-}
-```
+## Inventory
+
+Reserved stock handling and inventory consistency.
+
+## Core
+
+Shared infrastructure:
+
+* middleware
+* validators
+* observability
+* tracing
+* response handlers
+* access scopes
 
 ---
 
-##  Middleware de Auth
+# Technologies
 
-Responsabilidades:
+* Go
+* PostgreSQL
+* Gorilla Mux
+* JWT
+* Docker
+* REST APIs
 
-* Validar JWT
-* Parsear claims
-* Construir `TenantContext`
-* Inyectarlo en `context.Context`
+Architecture & Concepts:
 
----
-
-##  Acceso al contexto
-
-```go
-tenant := GetTenant(ctx)
-```
-
----
-
-# 🔑 Permisos
-
-##  Formato
-
-```text
-entity:action
-```
-
-Ejemplos:
-
-```text
-invoice:view
-invoice:read
-invoice:create
-invoice:pay
-```
+* Clean Architecture
+* Modular Monolith
+* Multi-Tenancy
+* RBAC Authorization
+* Transaction Management
+* Observability
 
 ---
 
-##  Tipos de permisos
+# API Example
 
-| Tipo                    | Uso               |
-| ----------------------- | ----------------- |
-| `:view`                 | Frontend (UI)     |
-| `:read`                 | Backend           |
-| `:create/update/delete` | CRUD              |
-| acciones especiales     | (`pay`, `cancel`) |
+## Create Draft Invoice
 
----
+POST /invoices
 
-##  Regla clave
-
-```text
-Permisos → permiten ejecutar acción
-Service → decide acceso real a los datos
-```
-
----
-
-# 👥 Roles
-
-```text
-super_admin
-company_user
-individual_user
-```
-
----
-
-##  Descripción
-
-| Rol             | Descripción             |
-| --------------- | ----------------------- |
-| super_admin     | acceso global           |
-| company_user    | opera dentro de empresa |
-| individual_user | usuario B2C             |
-
----
-
-# 🏢 Multi-Tenant
-
-##  Tipos
-
-### 🧩 B2B (empresa)
-
-* `company_id != null`
-* acceso limitado a su empresa
-
-### 🧩 B2C (individual)
-
-* `company_id = null`
-* acceso solo a sus propios datos
-
----
-
-##  Regla clave
-
-```text
-❌ NO filtrar en middleware
-✔ SIEMPRE filtrar en service
-```
-
----
-
-# 🔒 Seguridad
-
-## ❌ Nunca confiar en el request
+Request:
 
 ```json
 {
-  "company_id": 999 ❌
+  "buyer_client_id": 8,
+  "seller_company_id": 2
+}
+```
+
+Response:
+
+```json
+{
+  "status": "success",
+  "code": 200,
+  "data": {
+    "id": 15,
+    "status_invoice": "draft"
+  }
 }
 ```
 
 ---
 
-## ✔ Siempre usar contexto
+# Observability
 
-```go
-tenant.CompanyID
-tenant.UserID
-```
+The system includes:
 
----
+* centralized logging
+* request tracing
+* execution timing
+* middleware metrics
+* structured error handling
 
-# 🧩 Ejemplo de Endpoint
-
-```http
-GET /clients/{id}/invoices
-```
-
----
-
-##  Middleware
-
-```go
-RequirePermission("invoice:read")
-```
-
----
-
-##  Service (control real)
-
-```go
-if super_admin → acceso total
-
-if company_user → validar company_id
-
-if individual_user → validar user_id
-```
-
----
-
-# 🗄️ Base de Datos (simplificada)
-
-## Tablas principales
+Example trace:
 
 ```text
-users
-clients (user_id, company_id nullable)
-companies
-roles
-permissions
-role_permissions
-user_rol
-products
-invoices
-invoice_items
+[REQ] method=POST path=/invoices status=200 duration=12ms
+→ SERVICE CreateInvoiceDraft
+→ REPOSITORY CreateInvoice
 ```
 
 ---
 
-# 🔄 Flujo completo
+# Security
 
-```text
-Request
-  ↓
-AuthMiddleware
-  ↓
-TenantContext
-  ↓
-RequirePermission
-  ↓
-Controller
-  ↓
-Service ( lógica real)
-  ↓
-Repository
-  ↓
-Database
+* JWT authentication
+* Role-based permissions
+* Multi-tenant access scopes
+* Ownership validation
+* Transaction-safe financial operations
+* Draft state validation
+* Soft delete strategy
+
+---
+
+# Run Locally
+
+```bash
+git clone <repository>
+
+docker-compose up
+
+go run cmd/api/main.go
 ```
 
 ---
 
-# 🧠 Decisiones de diseño
+# Future Improvements
 
-## ✔ Permisos simples
-
-* Evitar sobreingeniería (`:own`, `:all`, etc.)
-* Resolver alcance en services
-
-## ✔ Multi-tenant en service
-
-* Más flexible
-* Más seguro
-
-## ✔ JWT con contexto suficiente
-
-* evita queries innecesarias
-
----
-
-# 🚀 Estado del sistema
-
-✔ Auth completa (JWT + bcrypt)
-✔ Permisos dinámicos desde DB
-✔ Middleware desacoplado
-✔ Multi-tenant (B2B + B2C)
-✔ Arquitectura modular
-✔ Base lista para escalar
-
----
-
-# 🔮 Próximos pasos
-
-* Refresh tokens
-* Auditoría (logs de acciones)
-* Soft delete
-* Cache
-* Rate limiting
-* Frontend (React/Vue)
-
----
-
-# 🧠 Conclusión
-
-Este proyecto ya implementa:
-
-* autenticación real
-* autorización basada en permisos
-* multi-tenancy sólido
-* separación de responsabilidades
-
-👉 Base lista para un SaaS real.
-
----
+* payment gateways
+* invoice reconciliation
+* analytics dashboards
+* event-driven workflows
+* notifications
+* WebSocket real-time updates
+* distributed tracing
+* CI/CD pipelines
+* Kubernetes deployment
