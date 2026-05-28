@@ -1,36 +1,38 @@
 # CRM-System-Sales
 
-Scalable multi-tenant ERP & commerce backend built with Go following clean architecture and modular domain-driven design principles.
+Scalable multi-tenant SaaS ERP & commerce backend built with Go following clean architecture and modular domain-driven design principles.
 
-The project focuses on secure business workflows, invoice management, inventory control, authentication, and financial operations for B2B/B2C environments.
+The platform is designed for secure business operations across B2B and B2C environments, including invoice workflows, inventory management, authentication, financial operations, and tenant-isolated company management.
+
+The system focuses on scalability, security, maintainability, and enterprise-grade backend architecture.
 
 ---
 
 # Features
 
-* Multi-tenant architecture
+* Multi-tenant SaaS architecture
 * JWT authentication & authorization
-* Role & permission system
+* Role & permission system (RBAC)
 * Company & client management
-* Product management
-* Invoice draft lifecycle
-* Invoice item workflows
+* Product catalog & inventory management
+* Invoice draft lifecycle workflows
+* Collaborative invoice item handling
 * Inventory reservation system
 * Payment-ready invoice engine
-* Secure access scopes
+* Secure ownership & access scopes
 * Transaction-safe operations
 * Soft delete & audit fields
 * Centralized error handling
-* Request tracing & metrics
-* RESTful API design
+* Request tracing & observability
+* RESTful API architecture
 
 ---
 
 # Architecture
 
-The project follows a modular clean architecture approach.
+The project follows a modular clean architecture approach designed for scalability and low coupling between business domains.
 
-Each domain is separated into independent modules:
+Each module is internally organized into independent layers:
 
 * controller
 * service
@@ -40,7 +42,7 @@ Each domain is separated into independent modules:
 * access
 * middleware
 
-The application is designed to scale into larger ERP and commerce workflows while maintaining low coupling between domains.
+The backend currently follows a modular monolith architecture with workflow orchestration patterns for complex financial operations.
 
 ---
 
@@ -48,35 +50,35 @@ The application is designed to scale into larger ERP and commerce workflows whil
 
 ## Auth
 
-Authentication, JWT tokens, roles and permissions.
+Authentication, JWT tokens, roles and permission management.
 
 ## Client
 
-Client management and multi-tenant ownership validation.
+Client management with ownership validation and tenant isolation.
 
 ## Company
 
-Company administration and tenant isolation.
+Company administration and multi-tenant business structure.
 
 ## Product
 
-Product catalog, stock management and company ownership.
+Product catalog, stock management and company ownership validation.
 
 ## Invoice
 
-Invoice lifecycle, draft workflows, financial states and payments.
+Invoice lifecycle management, draft workflows, financial states and payment processing.
 
 ## Invoice Item
 
-Collaborative invoice item management with inventory reservation.
+Collaborative invoice item handling with stock reservation logic.
 
 ## Inventory
 
-Reserved stock handling and inventory consistency.
+Inventory consistency and reserved stock operations.
 
 ## Core
 
-Shared infrastructure:
+Shared infrastructure and cross-cutting concerns:
 
 * middleware
 * validators
@@ -89,17 +91,19 @@ Shared infrastructure:
 
 # Technologies
 
+### Backend
+
 * Go
 * PostgreSQL
 * Gorilla Mux
 * JWT
-* Docker
 * REST APIs
 
-Architecture & Concepts:
+### Architecture & Concepts
 
 * Clean Architecture
 * Modular Monolith
+* Workflow Orchestration
 * Multi-Tenancy
 * RBAC Authorization
 * Transaction Management
@@ -137,9 +141,8 @@ Response:
 
 ---
 
-# Observability
-
-The system includes:
+### Observability
+## The system includes:
 
 * centralized logging
 * request tracing
@@ -147,18 +150,15 @@ The system includes:
 * middleware metrics
 * structured error handling
 
-Example trace:
+# Example trace:
 
-```text
-[REQ] method=POST path=/invoices status=200 duration=12ms
+```[REQ] method=POST path=/invoices status=200 duration=12ms
 → SERVICE CreateInvoiceDraft
-→ REPOSITORY CreateInvoice
+→ REPOSITORY CreateInvoice 
 ```
-
 ---
 
-# Security
-
+### Security
 * JWT authentication
 * Role-based permissions
 * Multi-tenant access scopes
@@ -167,28 +167,17 @@ Example trace:
 * Draft state validation
 * Soft delete strategy
 
----
+### Project Vision
 
-# Run Locally
+## CRM-System-Sales is designed as a scalable backend foundation for future ERP, commerce, and SaaS ecosystems.
 
-```bash
-git clone <repository>
+# The architecture aims to support:
 
-docker-compose up
+* enterprise workflows
+* financial operations
+* inventory systems
+* analytics
+* workflow automation
+* real-time business management
 
-go run cmd/api/main.go
-```
-
----
-
-# Future Improvements
-
-* payment gateways
-* invoice reconciliation
-* analytics dashboards
-* event-driven workflows
-* notifications
-* WebSocket real-time updates
-* distributed tracing
-* CI/CD pipelines
-* Kubernetes deployment
+# while maintaining a clean, modular, and extensible codebase.
