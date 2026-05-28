@@ -3,11 +3,15 @@ package routes
 import (
 	"database/sql"
 
+	submitInvoiceWorkflow "crm-system-sales/internal/domains/invoice_workflow/service"
 	"crm-system-sales/internal/modules/auth"
 	"crm-system-sales/internal/modules/client"
 	"crm-system-sales/internal/modules/company"
 	"crm-system-sales/internal/modules/inventory"
-	"crm-system-sales/internal/modules/invoice"
+	invoiceController "crm-system-sales/internal/modules/invoice/controller"
+	invoiceRepository "crm-system-sales/internal/modules/invoice/repository"
+	invoiceRoutes "crm-system-sales/internal/modules/invoice/routes"
+	invoiceService "crm-system-sales/internal/modules/invoice/service"
 	invoiceitem "crm-system-sales/internal/modules/invoice_item"
 	"crm-system-sales/internal/modules/product"
 	"crm-system-sales/internal/modules/users"
@@ -24,7 +28,7 @@ type AppContainer struct {
 	ClientController      *client.ClientController
 	CompanyController     *company.CompanyController
 	ProductController     *product.ProductController
-	InvoiceController     *invoice.InvoiceController
+	InvoiceController     *invoiceController.InvoiceController
 	InvoiceItemController *invoiceitem.InvoiceItemController
 }
 
@@ -45,7 +49,7 @@ func SetupRoutes(r *mux.Router, db *sql.DB) {
 	authRepo := auth.NewAuthRepository(db)
 	companyRepo := company.NewCompanyRepository(db)
 	productRepo := product.NewProductRepository(db)
-	invoiceRepo := invoice.NewInvoiceRepository(db)
+	invoiceRepo := invoiceRepository.NewInvoiceRepository(db)
 	invoiceItemRepo := invoiceitem.NewInvoiceItemRepository(db)
 
 	// Services
@@ -54,9 +58,11 @@ func SetupRoutes(r *mux.Router, db *sql.DB) {
 	clientService := client.NewClientService(db, clientRepo, userRepository, authRepo)
 	companyService := company.NewCompanyService(db, companyRepo, authRepo, userRepository)
 	productService := product.NewProductService(db, productRepo)
-	invoiceService := invoice.NewInvoiceService(db, invoiceRepo, clientRepo, companyRepo)
+	invoiceService := invoiceService.NewInvoiceService(db, invoiceRepo, clientRepo, companyRepo)
 	inventoryService := inventory.NewInventoryService(productRepo)
 	invoiceItemService := invoiceitem.NewInvoiceItemService(db, invoiceItemRepo, invoiceRepo, clientRepo, productRepo, inventoryService)
+	// Workflow
+	submitWorkflow := submitInvoiceWorkflow.NewSubmitInvoiceWorkflow(invoiceRepo, invoiceItemRepo, inventoryService, db)
 
 	// Controllers
 	authController := auth.NewAuthController(authService)
@@ -64,7 +70,7 @@ func SetupRoutes(r *mux.Router, db *sql.DB) {
 	clientController := client.NewClientController(clientService)
 	companyController := company.NewCompanyController(companyService)
 	productController := product.NewProductController(productService)
-	invoiceController := invoice.NewInvoiceController(invoiceService)
+	invoiceController := invoiceController.NewInvoiceController(invoiceService, submitWorkflow)
 	invoiceItemController := invoiceitem.NewInvoiceItemController(invoiceItemService)
 
 	// Container para inyección de dependencias
@@ -84,6 +90,6 @@ func SetupRoutes(r *mux.Router, db *sql.DB) {
 	client.RegisterClientRoutes(protected, container.ClientController)
 	company.RegisterCompanyRoutes(protected, container.CompanyController)
 	product.RegisterProductRoutes(protected, container.ProductController)
-	invoice.RegisterInvoiceRoutes(protected, container.InvoiceController)
+	invoiceRoutes.RegisterInvoiceRoutes(protected, container.InvoiceController)
 	invoiceitem.RegisterInvoiceItemRoutes(protected, container.InvoiceItemController)
 }

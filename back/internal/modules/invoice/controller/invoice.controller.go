@@ -1,11 +1,13 @@
-package invoice
+package invoiceController
 
 import (
 	errorHandler "crm-system-sales/internal/core/error"
 	"crm-system-sales/internal/core/response"
 	"crm-system-sales/internal/core/utils"
 	validatorx "crm-system-sales/internal/core/validator"
+	submitInvoiceWorkflow "crm-system-sales/internal/domains/invoice_workflow/service"
 	invoicedto "crm-system-sales/internal/modules/invoice/dto"
+	invoiceService "crm-system-sales/internal/modules/invoice/service"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -14,11 +16,18 @@ import (
 )
 
 type InvoiceController struct {
-	Service InvoiceService
+	Service        invoiceService.InvoiceService
+	SubmitWorkflow submitInvoiceWorkflow.SubmitInvoiceWorkflow
 }
 
-func NewInvoiceController(service InvoiceService) *InvoiceController {
-	return &InvoiceController{Service: service}
+func NewInvoiceController(
+	service invoiceService.InvoiceService,
+	submitWorkflow submitInvoiceWorkflow.SubmitInvoiceWorkflow,
+) *InvoiceController {
+	return &InvoiceController{
+		Service:        service,
+		SubmitWorkflow: submitWorkflow,
+	}
 }
 
 func (c *InvoiceController) CreateDraft(
@@ -67,7 +76,7 @@ func (c *InvoiceController) Submit(
 
 	invoiceID, _ := strconv.Atoi(params["id"])
 
-	err = c.Service.Submit(
+	err = c.SubmitWorkflow.Submit(
 		r.Context(),
 		invoiceID,
 	)

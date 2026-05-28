@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	"crm-system-sales/internal/core/utils"
 	invoiceItemModel "crm-system-sales/internal/modules/invoice_item/models"
 )
 
@@ -17,6 +18,12 @@ type InvoiceItemRepository interface {
 		ctx context.Context,
 		invoiceID int,
 	) (int, error)
+	GetByInvoiceID(
+		ctx context.Context,
+		invoiceID int,
+		page int,
+		limit int,
+	) ([]invoiceItemModel.InvoiceItem, int, error)
 }
 
 type invoiceItemRepository struct {
@@ -220,4 +227,60 @@ func (r *invoiceItemRepository) CountByInvoice(
 	).Scan(&count)
 
 	return count, err
+}
+
+func (r *invoiceItemRepository) GetByInvoiceID(
+	ctx context.Context,
+	invoiceID int,
+	page int,
+	limit int,
+) ([]invoiceItemModel.InvoiceItem, int, error) {
+	var err error
+	defer func() {
+		utils.Trace(ctx, "REPO GetByInvoiceID")(err)
+	}()
+
+	baseQuery := `
+			 FROM invoice_item
+			WHERE invoice_id = $1
+			AND status = 1 `
+
+	countQuery := `SELECT COUNT(*) ` + baseQuery
+	var total int
+	err = r.db.QueryRowContext(ctx, countQuery, invoiceID).Scan(&total)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * limit
+	dataQuery := `SELECT id, product_id, product_name, quantity, price, subtotal 
+				` + baseQuery + `
+				ORDER BY id ASC
+				LIMIT $2 OFFSET $3`
+
+	rows, err := r.db.QueryContext(ctx, dataQuery, invoiceID, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	items := []invoiceItemModel.InvoiceItem{}
+
+	for rows.Next() {
+		var item invoiceItemModel.InvoiceItem
+		err := rows.Scan(
+			&item.ID,
+			&item.ProductID,
+			&item.ProductName,
+			&item.Quantity,
+			&item.Price,
+			&item.Subtotal,
+		)
+		if err != nil {
+			return nil, 0, err
+		}
+		items = append(items, item)
+	}
+
+	return items, total, nil
 }

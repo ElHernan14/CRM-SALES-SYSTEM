@@ -2,6 +2,7 @@ package invoiceitem
 
 import (
 	errorHandler "crm-system-sales/internal/core/error"
+	helper "crm-system-sales/internal/core/helper"
 	"crm-system-sales/internal/core/response"
 	"crm-system-sales/internal/core/utils"
 	validatorx "crm-system-sales/internal/core/validator"
@@ -63,9 +64,11 @@ func (c *InvoiceItemController) Create(
 		return err
 	}
 
-	return json.NewEncoder(w).Encode(
+	json.NewEncoder(w).Encode(
 		response.Success(res),
 	)
+
+	return nil
 }
 
 func (c *InvoiceItemController) Update(
@@ -111,9 +114,11 @@ func (c *InvoiceItemController) Update(
 		return err
 	}
 
-	return json.NewEncoder(w).Encode(
+	json.NewEncoder(w).Encode(
 		response.Success(res),
 	)
+
+	return nil
 }
 
 func (c *InvoiceItemController) Delete(
@@ -141,9 +146,52 @@ func (c *InvoiceItemController) Delete(
 		return err
 	}
 
-	return json.NewEncoder(w).Encode(
+	json.NewEncoder(w).Encode(
 		response.Success(
 			"item eliminado correctamente",
 		),
 	)
+
+	return nil
+}
+
+func (c *InvoiceItemController) GetInvoiceItems(
+	w http.ResponseWriter,
+	r *http.Request,
+) error {
+	var err error
+	defer func() {
+		utils.Trace(r.Context(), "CONTROLLER GetInvoiceItems")(err)
+	}()
+
+	params := mux.Vars(r)
+
+	invoiceID, err := strconv.Atoi(params["id"])
+
+	if err != nil {
+		return errorHandler.NewAppError(
+			http.StatusBadRequest,
+			"invoice_id inválido",
+		)
+	}
+
+	req, err := helper.ParseGetInvoicesRequest(r)
+	if err != nil {
+		return err
+	}
+
+	res, err := c.service.GetInvoiceItems(
+		r.Context(),
+		invoiceID,
+		req,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	json.NewEncoder(w).Encode(
+		response.Success(res),
+	)
+	return nil
 }

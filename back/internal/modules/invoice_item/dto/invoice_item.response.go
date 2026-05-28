@@ -3,7 +3,7 @@ package invoiceitemdto
 type InvoiceItemResponse struct {
 	ID int `json:"id"`
 
-	InvoiceID int `json:"invoice_id"`
+	InvoiceID *int `json:"invoice_id,omitempty"`
 
 	ProductID   int    `json:"product_id"`
 	ProductName string `json:"product_name"`

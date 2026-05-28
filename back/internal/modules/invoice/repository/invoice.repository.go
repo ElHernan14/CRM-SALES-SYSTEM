@@ -1,4 +1,4 @@
-package invoice
+package invoiceRepository
 
 import (
 	"context"

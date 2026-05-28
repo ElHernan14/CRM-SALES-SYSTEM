@@ -7,17 +7,19 @@ import (
 	"net/http"
 
 	errorHandler "crm-system-sales/internal/core/error"
+	tenantHelper "crm-system-sales/internal/core/tenant"
 	tenantctx "crm-system-sales/internal/core/tenant"
 	core "crm-system-sales/internal/core/transaction"
 	"crm-system-sales/internal/core/utils"
 
 	"crm-system-sales/internal/modules/client"
 	"crm-system-sales/internal/modules/inventory"
-	"crm-system-sales/internal/modules/invoice"
 	invoiceaccess "crm-system-sales/internal/modules/invoice/access"
 	"crm-system-sales/internal/modules/invoice/constants"
+	invoice "crm-system-sales/internal/modules/invoice/repository"
 	"crm-system-sales/internal/modules/product"
 
+	metadto "crm-system-sales/internal/core/dto"
 	invoiceItemDTO "crm-system-sales/internal/modules/invoice_item/dto"
 	invoiceitemdto "crm-system-sales/internal/modules/invoice_item/dto"
 	invoiceItemModel "crm-system-sales/internal/modules/invoice_item/models"
@@ -27,6 +29,7 @@ type InvoiceItemService interface {
 	Create(ctx context.Context, invoiceID int, req *invoiceItemDTO.CreateInvoiceItemRequest) (*invoiceItemDTO.InvoiceItemResponse, error)
 	Update(ctx context.Context, invoiceID int, itemID int, req *invoiceItemDTO.UpdateInvoiceItemRequest) (*invoiceItemDTO.InvoiceItemResponse, error)
 	Delete(ctx context.Context, invoiceID int, itemID int) error
+	GetInvoiceItems(ctx context.Context, invoiceID int, req *invoiceItemDTO.GetInvoiceItemsRequest) (*invoiceItemDTO.GetInvoiceItemsResponse, error)
 }
 
 type invoiceItemService struct {
@@ -174,7 +177,7 @@ func (s *invoiceItemService) Create(
 
 			response = &invoiceItemDTO.InvoiceItemResponse{
 				ID:          existingItem.ID,
-				InvoiceID:   existingItem.InvoiceID,
+				InvoiceID:   &existingItem.InvoiceID,
 				ProductID:   existingItem.ProductID,
 				ProductName: existingItem.ProductName,
 				Quantity:    existingItem.Quantity,
@@ -235,7 +238,7 @@ func (s *invoiceItemService) Create(
 
 		response = &invoiceItemDTO.InvoiceItemResponse{
 			ID:        item.ID,
-			InvoiceID: item.InvoiceID,
+			InvoiceID: &item.InvoiceID,
 
 			ProductID:   item.ProductID,
 			ProductName: item.ProductName,
@@ -385,7 +388,7 @@ func (s *invoiceItemService) Update(
 
 	return &invoiceitemdto.InvoiceItemResponse{
 		ID:        item.ID,
-		InvoiceID: item.InvoiceID,
+		InvoiceID: &item.InvoiceID,
 
 		ProductID:   item.ProductID,
 		ProductName: item.ProductName,
@@ -502,4 +505,76 @@ func (s *invoiceItemService) Delete(
 	})
 
 	return err
+}
+
+func (s *invoiceItemService) GetInvoiceItems(
+	ctx context.Context,
+	invoiceID int,
+	req *invoiceItemDTO.GetInvoiceItemsRequest,
+) (*invoiceItemDTO.GetInvoiceItemsResponse, error) {
+	var err error
+	defer func() {
+		utils.Trace(ctx, "SERVICE GetInvoiceItems")(err)
+	}()
+
+	tenant := tenantHelper.GetTenant(ctx)
+
+	invoice, err := s.invoiceRepo.GetByID(ctx, invoiceID)
+	if err != nil {
+		log.Println("error fetching invoice:", err)
+		return nil, errorHandler.NewAppError(
+			http.StatusNotFound,
+			"Invoice no encontrada",
+		)
+	}
+
+	buyer, err := s.clientRepo.GetByID(ctx, invoice.BuyerClientID)
+	if err != nil {
+		log.Println("error fetching buyer client:", err)
+		return nil, errorHandler.NewAppError(
+			http.StatusNotFound,
+			"Cliente comprador no encontrado",
+		)
+	}
+
+	err = invoiceaccess.CanViewInvoice(tenant, invoice, buyer)
+	if err != nil {
+		return nil, err
+	}
+
+	items, total, err := s.repo.GetByInvoiceID(ctx, invoiceID, req.Page, req.Limit)
+	if err != nil {
+		log.Println("error fetching invoice items:", err)
+		return nil, errorHandler.NewAppError(
+			http.StatusInternalServerError,
+			"Error obteniendo items de la invoice",
+		)
+	}
+
+	resp := &invoiceItemDTO.GetInvoiceItemsResponse{
+		Items: []invoiceItemDTO.InvoiceItemResponse{},
+		Meta: metadto.Meta{
+			Page:  req.Page,
+			Limit: req.Limit,
+			Total: total,
+		},
+	}
+
+	// calcular total pages
+	if total > 0 {
+		resp.Meta.TotalPages = (total + req.Limit - 1) / req.Limit
+	}
+
+	for _, item := range items {
+		resp.Items = append(resp.Items, invoiceItemDTO.InvoiceItemResponse{
+			ID:          item.ID,
+			ProductID:   item.ProductID,
+			ProductName: item.ProductName,
+			Quantity:    item.Quantity,
+			Price:       item.Price,
+			Subtotal:    item.Subtotal,
+		})
+	}
+
+	return resp, nil
 }
