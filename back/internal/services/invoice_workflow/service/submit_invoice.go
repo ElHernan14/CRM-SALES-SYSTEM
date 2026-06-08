@@ -6,6 +6,7 @@ import (
 	tenantHelper "crm-system-sales/internal/core/tenant"
 	"crm-system-sales/internal/core/transaction"
 	"crm-system-sales/internal/core/utils"
+	clientRepo "crm-system-sales/internal/modules/client"
 	inventoryService "crm-system-sales/internal/modules/inventory"
 	invoiceAccess "crm-system-sales/internal/modules/invoice/access"
 	"crm-system-sales/internal/modules/invoice/constants"
@@ -26,6 +27,7 @@ type SubmitInvoiceWorkflow interface {
 type submitInvoiceWorkflow struct {
 	invoiceRepo      invoiceRepository.InvoiceRepository
 	invoiceItemRepo  invoiceItemRepository.InvoiceItemRepository
+	clientRepo       clientRepo.ClientRepository
 	inventoryService inventoryService.InventoryService
 	db               *sql.DB
 }
@@ -33,12 +35,14 @@ type submitInvoiceWorkflow struct {
 func NewSubmitInvoiceWorkflow(
 	invoiceRepo invoiceRepository.InvoiceRepository,
 	invoiceItemRepo invoiceItemRepository.InvoiceItemRepository,
+	clientRepo clientRepo.ClientRepository,
 	inventoryService inventoryService.InventoryService,
 	db *sql.DB,
 ) SubmitInvoiceWorkflow {
 	return &submitInvoiceWorkflow{
 		invoiceRepo:      invoiceRepo,
 		invoiceItemRepo:  invoiceItemRepo,
+		clientRepo:       clientRepo,
 		inventoryService: inventoryService,
 		db:               db,
 	}
@@ -65,10 +69,20 @@ func (s *submitInvoiceWorkflow) Submit(
 		)
 	}
 
+	//  buyer
+	buyer, err := s.clientRepo.GetByID(ctx, invoice.BuyerClientID)
+	if err != nil {
+		return errorHandler.NewAppError(
+			http.StatusNotFound,
+			"Cliente no encontrado",
+		)
+	}
+
 	//  ownership
-	err = invoiceAccess.CanEditDraftInvoice(
+	err = invoiceAccess.CanMutateDraftInvoice(
 		tenant,
 		invoice,
+		buyer,
 	)
 
 	if err != nil {
@@ -103,6 +117,7 @@ func (s *submitInvoiceWorkflow) Submit(
 		)
 	}
 
+	log.Printf("Invoice %d tiene subtotal %.2f", invoice.ID, invoice.Subtotal)
 	//  validate subtotal
 	if invoice.Subtotal <= 0 {
 		return errorHandler.NewAppError(

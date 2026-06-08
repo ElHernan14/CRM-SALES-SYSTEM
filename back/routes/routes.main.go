@@ -3,7 +3,6 @@ package routes
 import (
 	"database/sql"
 
-	submitInvoiceWorkflow "crm-system-sales/internal/domains/invoice_workflow/service"
 	"crm-system-sales/internal/modules/auth"
 	"crm-system-sales/internal/modules/client"
 	"crm-system-sales/internal/modules/company"
@@ -15,6 +14,7 @@ import (
 	invoiceitem "crm-system-sales/internal/modules/invoice_item"
 	"crm-system-sales/internal/modules/product"
 	"crm-system-sales/internal/modules/users"
+	submitInvoiceWorkflow "crm-system-sales/internal/services/invoice_workflow/service"
 
 	"crm-system-sales/internal/middleware"
 
@@ -62,7 +62,7 @@ func SetupRoutes(r *mux.Router, db *sql.DB) {
 	inventoryService := inventory.NewInventoryService(productRepo)
 	invoiceItemService := invoiceitem.NewInvoiceItemService(db, invoiceItemRepo, invoiceRepo, clientRepo, productRepo, inventoryService)
 	// Workflow
-	submitWorkflow := submitInvoiceWorkflow.NewSubmitInvoiceWorkflow(invoiceRepo, invoiceItemRepo, inventoryService, db)
+	submitWorkflow := submitInvoiceWorkflow.NewSubmitInvoiceWorkflow(invoiceRepo, invoiceItemRepo, clientRepo, inventoryService, db)
 
 	// Controllers
 	authController := auth.NewAuthController(authService)

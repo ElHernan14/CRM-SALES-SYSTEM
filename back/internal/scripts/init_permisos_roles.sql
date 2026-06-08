@@ -121,3 +121,10 @@ JOIN permission p ON p.name IN (
     'product:delete',
 )
 WHERE r.name = 'company_user';
+
+INSERT INTO role_permission (role_id, permission_id)
+SELECT r.id, p.id
+FROM rol r
+JOIN permission p
+ON p.name = 'invoice:pay'
+WHERE r.name = 'individual_user';

@@ -5,9 +5,9 @@ import (
 	"crm-system-sales/internal/core/response"
 	"crm-system-sales/internal/core/utils"
 	validatorx "crm-system-sales/internal/core/validator"
-	submitInvoiceWorkflow "crm-system-sales/internal/domains/invoice_workflow/service"
 	invoicedto "crm-system-sales/internal/modules/invoice/dto"
 	invoiceService "crm-system-sales/internal/modules/invoice/service"
+	submitInvoiceWorkflow "crm-system-sales/internal/services/invoice_workflow/service"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -66,7 +66,6 @@ func (c *InvoiceController) Submit(
 	w http.ResponseWriter,
 	r *http.Request,
 ) error {
-
 	var err error
 	defer func() {
 		utils.Trace(r.Context(), "CONTROLLER SubmitInvoice")(err)
@@ -74,7 +73,20 @@ func (c *InvoiceController) Submit(
 
 	params := mux.Vars(r)
 
-	invoiceID, _ := strconv.Atoi(params["id"])
+	if _, ok := params["id"]; !ok {
+		return errorHandler.NewAppError(
+			http.StatusBadRequest,
+			"ID de factura es requerido",
+		)
+	}
+
+	invoiceID, err := strconv.Atoi(params["id"])
+	if err != nil {
+		return errorHandler.NewAppError(
+			http.StatusBadRequest,
+			"ID de factura inválido",
+		)
+	}
 
 	err = c.SubmitWorkflow.Submit(
 		r.Context(),
