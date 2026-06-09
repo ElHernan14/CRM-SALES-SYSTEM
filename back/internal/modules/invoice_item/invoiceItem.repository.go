@@ -24,6 +24,11 @@ type InvoiceItemRepository interface {
 		page int,
 		limit int,
 	) ([]invoiceItemModel.InvoiceItem, int, error)
+	ListByInvoiceID(
+		ctx context.Context,
+		tx *sql.Tx,
+		invoiceID int,
+	) ([]invoiceItemModel.InvoiceItem, error)
 }
 
 type invoiceItemRepository struct {
@@ -283,4 +288,52 @@ func (r *invoiceItemRepository) GetByInvoiceID(
 	}
 
 	return items, total, nil
+}
+
+func (r *invoiceItemRepository) ListByInvoiceID(
+	ctx context.Context,
+	tx *sql.Tx,
+	invoiceID int,
+) ([]invoiceItemModel.InvoiceItem, error) {
+	var err error
+	defer func() {
+		utils.Trace(ctx, "REPO ListByInvoiceID")(err)
+	}()
+	query := `SELECT
+				id,
+				invoice_id,
+				product_id,
+				quantity,
+				price,
+				product_name,
+				subtotal
+			FROM invoice_item
+			WHERE invoice_id = $1
+			AND status = 1;`
+	rows, err := tx.QueryContext(ctx, query, invoiceID)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	items := []invoiceItemModel.InvoiceItem{}
+	for rows.Next() {
+		var item invoiceItemModel.InvoiceItem
+		err := rows.Scan(
+			&item.ID,
+			&item.InvoiceID,
+			&item.ProductID,
+			&item.Quantity,
+			&item.Price,
+			&item.ProductName,
+			&item.Subtotal,
+		)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+
+	return items, nil
 }

@@ -4,13 +4,20 @@ import (
 	"context"
 	errorHandler "crm-system-sales/internal/core/error"
 	tenantHelper "crm-system-sales/internal/core/tenant"
+	transaction "crm-system-sales/internal/core/transaction"
+	"crm-system-sales/internal/core/utils"
 	"crm-system-sales/internal/modules/client"
 	"crm-system-sales/internal/modules/company"
+	inventoryservice "crm-system-sales/internal/modules/inventory"
 	invoiceAccess "crm-system-sales/internal/modules/invoice/access"
+	"crm-system-sales/internal/modules/invoice/constants"
 	invoiceConstants "crm-system-sales/internal/modules/invoice/constants"
 	invoicedto "crm-system-sales/internal/modules/invoice/dto"
 	invoiceModel "crm-system-sales/internal/modules/invoice/models"
 	invoiceRepository "crm-system-sales/internal/modules/invoice/repository"
+	invoicepaymentmodel "crm-system-sales/internal/modules/invoice_payment/models"
+	invoicepaymentrepo "crm-system-sales/internal/modules/invoice_payment/repository"
+	invoicePaymentWorkflow "crm-system-sales/internal/services/invoice_workflow/service"
 
 	"database/sql"
 	"log"
@@ -19,13 +26,17 @@ import (
 
 type InvoiceService interface {
 	CreateDraft(ctx context.Context, req *invoicedto.CreateInvoiceRequest) (*invoicedto.InvoiceResponse, error)
+	Pay(ctx context.Context, invoiceID int, req *invoicedto.PayInvoiceRequest) (*invoicedto.PayInvoiceResponse, error)
 }
 
 type invoiceService struct {
-	db          *sql.DB
-	Repo        invoiceRepository.InvoiceRepository
-	ClientRepo  client.ClientRepository
-	CompanyRepo company.CompanyRepository
+	db                     *sql.DB
+	Repo                   invoiceRepository.InvoiceRepository
+	ClientRepo             client.ClientRepository
+	CompanyRepo            company.CompanyRepository
+	InventoryService       inventoryservice.InventoryService
+	InvoicePaymentRepo     invoicepaymentrepo.InvoicePaymentRepository
+	InvoicePaymentWorkflow invoicePaymentWorkflow.PayInvoiceWorkflow
 }
 
 func NewInvoiceService(
@@ -33,12 +44,18 @@ func NewInvoiceService(
 	repo invoiceRepository.InvoiceRepository,
 	clientRepo client.ClientRepository,
 	companyRepo company.CompanyRepository,
+	inventoryService inventoryservice.InventoryService,
+	invoicePaymentRepo invoicepaymentrepo.InvoicePaymentRepository,
+	invoiceWorkflow invoicePaymentWorkflow.PayInvoiceWorkflow,
 ) InvoiceService {
 	return &invoiceService{
-		db:          db,
-		Repo:        repo,
-		ClientRepo:  clientRepo,
-		CompanyRepo: companyRepo,
+		db:                     db,
+		Repo:                   repo,
+		ClientRepo:             clientRepo,
+		CompanyRepo:            companyRepo,
+		InventoryService:       inventoryService,
+		InvoicePaymentRepo:     invoicePaymentRepo,
+		InvoicePaymentWorkflow: invoiceWorkflow,
 	}
 }
 
@@ -151,4 +168,125 @@ func (s *invoiceService) CreateDraft(
 		TotalAmount:     invoice.TotalAmount,
 		CreatedAt:       invoice.CreatedAt,
 	}, nil
+}
+
+func (s *invoiceService) Pay(
+	ctx context.Context,
+	invoiceID int,
+	req *invoicedto.PayInvoiceRequest,
+) (*invoicedto.PayInvoiceResponse, error) {
+
+	var err error
+
+	defer func() {
+		utils.Trace(ctx, "SERVICE PayInvoice")(err)
+	}()
+
+	tenant := tenantHelper.GetTenant(ctx)
+
+	invoice, err := s.Repo.GetByID(
+		ctx,
+		invoiceID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	buyer, err := s.ClientRepo.GetByID(
+		ctx,
+		invoice.BuyerClientID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	err = invoiceAccess.CanPayInvoice(
+		tenant,
+		invoice,
+		buyer,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	remaining := invoice.TotalAmount - invoice.PaidAmount
+
+	if req.Amount > remaining {
+		return nil, errorHandler.NewAppError(
+			http.StatusBadRequest,
+			"El monto supera el saldo pendiente",
+		)
+	}
+
+	payment := &invoicepaymentmodel.InvoicePayment{
+		InvoiceID:     invoice.ID,
+		Amount:        req.Amount,
+		PaymentMethod: req.PaymentMethod,
+		PaidByUserID:  tenant.UserID,
+	}
+
+	status := invoice.StatusInvoice
+	newPaidAmount := invoice.PaidAmount + req.Amount
+	remainingAmount := invoice.TotalAmount - newPaidAmount
+
+	err = transaction.RunInTransaction(ctx, s.db, func(tx *sql.Tx) error {
+		err = s.InvoicePaymentRepo.Create(
+			ctx,
+			tx,
+			payment,
+		)
+		if err != nil {
+			return err
+		}
+
+		err = s.Repo.SetPaidAmount(
+			ctx,
+			tx,
+			invoice.ID,
+			newPaidAmount,
+		)
+		if err != nil {
+			return err
+		}
+
+		if newPaidAmount >= invoice.TotalAmount {
+
+			err = s.Repo.UpdateStatus(
+				ctx,
+				tx,
+				invoice.ID,
+				constants.InvoicePaid,
+			)
+			if err != nil {
+				return err
+			}
+
+			err = s.InvoicePaymentWorkflow.FinalizePayment(
+				ctx,
+				tx,
+				invoice.ID,
+			)
+			if err != nil {
+				return err
+			}
+
+			status = constants.InvoicePaid
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	response := &invoicedto.PayInvoiceResponse{
+		ID:              payment.ID,
+		StatusInvoice:   status,
+		TotalAmount:     invoice.TotalAmount,
+		PaidAmount:      newPaidAmount,
+		RemainingAmount: remainingAmount,
+	}
+
+	return response, nil
 }

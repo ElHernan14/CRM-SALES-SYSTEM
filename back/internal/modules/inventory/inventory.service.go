@@ -16,6 +16,7 @@ type InventoryService interface {
 	IncrementReservedStock(ctx context.Context, tx *sql.Tx, productID int, quantity int) error
 	AdjustReservedStock(ctx context.Context, tx *sql.Tx, productID int, diff int) error
 	ReleaseStock(ctx context.Context, tx *sql.Tx, productID int, quantity int) error
+	FinalizeReservedStock(ctx context.Context, tx *sql.Tx, productID int, quantity int) error
 }
 
 type inventoryService struct {
@@ -163,5 +164,26 @@ func (s *inventoryService) ReleaseStock(
 		productID,
 	)
 
+	return err
+}
+
+func (s *inventoryService) FinalizeReservedStock(
+	ctx context.Context,
+	tx *sql.Tx,
+	productID int,
+	quantity int,
+) error {
+	query := `
+		UPDATE product
+		SET reserved_stock = reserved_stock - $1,
+		    stock = stock - $1
+		WHERE id = $2
+	`
+	_, err := tx.ExecContext(
+		ctx,
+		query,
+		quantity,
+		productID,
+	)
 	return err
 }

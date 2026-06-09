@@ -122,9 +122,37 @@ JOIN permission p ON p.name IN (
 )
 WHERE r.name = 'company_user';
 
+-- USER → sin acceso a clientes, solo ver productos e interactuar con sus facturas
 INSERT INTO role_permission (role_id, permission_id)
 SELECT r.id, p.id
 FROM rol r
 JOIN permission p
 ON p.name = 'invoice:pay'
 WHERE r.name = 'individual_user';
+
+INSERT INTO permission (name, description)
+VALUES
+('invoice:submit', 'Submit draft invoice'),
+
+INSERT INTO role_permission (role_id, permission_id)
+SELECT r.id, p.id
+FROM rol r
+JOIN permission p ON p.name IN (
+
+    -- INVOICES
+    'invoice:submit',
+
+    -- INVOICE ITEMS
+    'invoice_item:delete','invoice_item:create','invoice_item:read','invoice_item:update'
+
+)
+WHERE r.name = 'individual_user';
+
+-- submit invoice también para company_user
+INSERT INTO role_permission (role_id, permission_id)
+SELECT r.id, p.id
+FROM rol r
+JOIN permission p ON p.name IN (
+    'invoice:submit'
+)
+WHERE r.name = 'company_user';

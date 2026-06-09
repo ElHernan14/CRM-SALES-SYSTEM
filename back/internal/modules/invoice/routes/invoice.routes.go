@@ -9,5 +9,6 @@ import (
 
 func RegisterInvoiceRoutes(r *mux.Router, controller *controller.InvoiceController) {
 	r.HandleFunc("/invoice", middleware.RequirePermission("invoice:create")(middleware.ErrorMiddleware(controller.CreateDraft))).Methods("POST")
-	r.HandleFunc("/invoice/{id}/submit", middleware.RequirePermission("invoice:update")(middleware.ErrorMiddleware(controller.Submit))).Methods("POST")
+	r.HandleFunc("/invoice/{id}/submit", middleware.RequirePermission("invoice:submit")(middleware.ErrorMiddleware(controller.Submit))).Methods("POST")
+	r.HandleFunc("/invoice/{id}/pay", middleware.RequirePermission("invoice:pay")(middleware.ErrorMiddleware(controller.Pay))).Methods("POST")
 }

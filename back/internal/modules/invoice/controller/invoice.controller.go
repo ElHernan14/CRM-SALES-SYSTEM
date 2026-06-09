@@ -103,3 +103,54 @@ func (c *InvoiceController) Submit(
 		),
 	)
 }
+
+func (c *InvoiceController) Pay(
+	w http.ResponseWriter,
+	r *http.Request,
+) error {
+
+	var err error
+	defer func() {
+		utils.Trace(r.Context(), "CONTROLLER PayInvoice")(err)
+	}()
+
+	params := mux.Vars(r)
+
+	invoiceID, err := strconv.Atoi(params["id"])
+	if err != nil {
+		return errorHandler.NewAppError(
+			http.StatusBadRequest,
+			"id inválido",
+		)
+	}
+
+	var req invoicedto.PayInvoiceRequest
+
+	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return errorHandler.NewAppError(
+			http.StatusBadRequest,
+			"body inválido",
+		)
+	}
+
+	msg, invalid := validatorx.ValidateStruct(req)
+	if invalid {
+		return errorHandler.NewAppError(
+			http.StatusBadRequest,
+			msg,
+		)
+	}
+
+	res, err := c.Service.Pay(
+		r.Context(),
+		invoiceID,
+		&req,
+	)
+	if err != nil {
+		return err
+	}
+
+	return json.NewEncoder(w).Encode(
+		response.Success(res),
+	)
+}

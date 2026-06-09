@@ -13,6 +13,7 @@ type InvoiceRepository interface {
 	RecalculateInvoiceTotals(ctx context.Context, tx *sql.Tx, invoiceID int) error
 	GetActiveDraft(ctx context.Context, buyerClientID int, sellerCompanyID int) (*invoiceModel.Invoice, error)
 	UpdateStatus(ctx context.Context, tx *sql.Tx, invoiceID int, status string) error
+	SetPaidAmount(ctx context.Context, tx *sql.Tx, invoiceID int, paidAmount float64) error
 }
 
 type invoiceRepository struct {
@@ -233,6 +234,31 @@ func (r *invoiceRepository) UpdateStatus(
 		ctx,
 		query,
 		status,
+		invoiceID,
+	)
+
+	return err
+}
+
+func (r *invoiceRepository) SetPaidAmount(
+	ctx context.Context,
+	tx *sql.Tx,
+	invoiceID int,
+	paidAmount float64,
+) error {
+
+	query := `
+		UPDATE invoice
+		SET
+			paid_amount = $1,
+			updated_at = NOW()
+		WHERE id = $2
+	`
+
+	_, err := tx.ExecContext(
+		ctx,
+		query,
+		paidAmount,
 		invoiceID,
 	)
 

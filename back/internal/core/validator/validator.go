@@ -22,6 +22,11 @@ func init() {
 		v := fl.Field().String()
 		return v == constants.ProductTypeProduct || v == constants.ProductTypeService
 	})
+
+	validate.RegisterValidation("payment_method", func(fl validator.FieldLevel) bool {
+		v := fl.Field().String()
+		return v == constants.PaymentTransfer || v == constants.PaymentCash || v == constants.PaymentCard
+	})
 }
 
 // devuelve UN SOLO mensaje

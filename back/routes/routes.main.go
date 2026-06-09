@@ -12,8 +12,10 @@ import (
 	invoiceRoutes "crm-system-sales/internal/modules/invoice/routes"
 	invoiceService "crm-system-sales/internal/modules/invoice/service"
 	invoiceitem "crm-system-sales/internal/modules/invoice_item"
+	invoicepaymentrepo "crm-system-sales/internal/modules/invoice_payment/repository"
 	"crm-system-sales/internal/modules/product"
 	"crm-system-sales/internal/modules/users"
+	paymentworkflow "crm-system-sales/internal/services/invoice_workflow/service"
 	submitInvoiceWorkflow "crm-system-sales/internal/services/invoice_workflow/service"
 
 	"crm-system-sales/internal/middleware"
@@ -51,6 +53,7 @@ func SetupRoutes(r *mux.Router, db *sql.DB) {
 	productRepo := product.NewProductRepository(db)
 	invoiceRepo := invoiceRepository.NewInvoiceRepository(db)
 	invoiceItemRepo := invoiceitem.NewInvoiceItemRepository(db)
+	invoicePaymentRepo := invoicepaymentrepo.NewInvoicePaymentRepository(db)
 
 	// Services
 	authService := auth.NewAuthService(userRepository)
@@ -58,11 +61,12 @@ func SetupRoutes(r *mux.Router, db *sql.DB) {
 	clientService := client.NewClientService(db, clientRepo, userRepository, authRepo)
 	companyService := company.NewCompanyService(db, companyRepo, authRepo, userRepository)
 	productService := product.NewProductService(db, productRepo)
-	invoiceService := invoiceService.NewInvoiceService(db, invoiceRepo, clientRepo, companyRepo)
 	inventoryService := inventory.NewInventoryService(productRepo)
 	invoiceItemService := invoiceitem.NewInvoiceItemService(db, invoiceItemRepo, invoiceRepo, clientRepo, productRepo, inventoryService)
 	// Workflow
 	submitWorkflow := submitInvoiceWorkflow.NewSubmitInvoiceWorkflow(invoiceRepo, invoiceItemRepo, clientRepo, inventoryService, db)
+	paymentWorkflow := paymentworkflow.NewPayInvoiceWorkflow(invoiceItemRepo, inventoryService)
+	invoiceService := invoiceService.NewInvoiceService(db, invoiceRepo, clientRepo, companyRepo, inventoryService, invoicePaymentRepo, paymentWorkflow)
 
 	// Controllers
 	authController := auth.NewAuthController(authService)
