@@ -27,6 +27,7 @@ import (
 type InvoiceService interface {
 	CreateDraft(ctx context.Context, req *invoicedto.CreateInvoiceRequest) (*invoicedto.InvoiceResponse, error)
 	Pay(ctx context.Context, invoiceID int, req *invoicedto.PayInvoiceRequest) (*invoicedto.PayInvoiceResponse, error)
+	GetByID(ctx context.Context, id int) (*invoicedto.GetInvoiceResponse, error)
 }
 
 type invoiceService struct {
@@ -289,4 +290,59 @@ func (s *invoiceService) Pay(
 	}
 
 	return response, nil
+}
+
+func (s *invoiceService) GetByID(
+	ctx context.Context,
+	id int,
+) (*invoicedto.GetInvoiceResponse, error) {
+	var err error
+
+	defer func() {
+		utils.Trace(ctx, "SERVICE PayInvoice")(err)
+	}()
+
+	tenant := tenantHelper.GetTenant(ctx)
+
+	invoice, err := s.Repo.GetByID(
+		ctx,
+		id,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	buyer, err := s.ClientRepo.GetByID(
+		ctx,
+		invoice.BuyerClientID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	err = invoiceAccess.CanViewInvoice(
+		tenant,
+		invoice,
+		buyer,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &invoicedto.GetInvoiceResponse{
+		ID:              invoice.ID,
+		BuyerClientID:   invoice.BuyerClientID,
+		SellerCompanyID: invoice.SellerCompanyID,
+		CreatedByUserID: invoice.CreatedByUserID,
+		StatusInvoice:   invoice.StatusInvoice,
+		TotalAmount:     invoice.TotalAmount,
+		PaidAmount:      invoice.PaidAmount,
+		Status:          invoice.Status,
+		Subtotal:        invoice.Subtotal,
+		Taxes:           invoice.Taxes,
+		CreatedAt:       invoice.CreatedAt,
+		UpdatedAt:       invoice.UpdatedAt,
+		DeletedAt:       invoice.DeletedAt,
+	}, nil
 }

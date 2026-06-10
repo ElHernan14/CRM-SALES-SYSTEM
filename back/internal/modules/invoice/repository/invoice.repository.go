@@ -80,7 +80,7 @@ func (r *invoiceRepository) GetByID(ctx context.Context, id int) (*invoiceModel.
 
 	query := `
         SELECT id, buyer_client_id, seller_company_id, created_by_user_id,
-               total_amount, subtotal, status_invoice, status
+               total_amount, subtotal, paid_amount, status_invoice, status, taxes, created_at, updated_at, deleted_at
         FROM invoice
         WHERE id = $1
     `
@@ -94,8 +94,13 @@ func (r *invoiceRepository) GetByID(ctx context.Context, id int) (*invoiceModel.
 		&inv.CreatedByUserID,
 		&inv.TotalAmount,
 		&inv.Subtotal,
+		&inv.PaidAmount,
 		&inv.StatusInvoice,
 		&inv.Status,
+		&inv.Taxes,
+		&inv.CreatedAt,
+		&inv.UpdatedAt,
+		&inv.DeletedAt,
 	)
 
 	if err != nil {

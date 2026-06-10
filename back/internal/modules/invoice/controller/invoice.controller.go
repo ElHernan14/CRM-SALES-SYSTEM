@@ -154,3 +154,30 @@ func (c *InvoiceController) Pay(
 		response.Success(res),
 	)
 }
+
+func (c *InvoiceController) GetByID(
+	w http.ResponseWriter,
+	r *http.Request,
+) error {
+
+	id, err := strconv.Atoi(
+		mux.Vars(r)["id"],
+	)
+	if err != nil {
+		return errorHandler.NewAppError(
+			http.StatusBadRequest,
+			"id inválido",
+		)
+	}
+
+	res, err := c.Service.GetByID(
+		r.Context(),
+		id,
+	)
+	if err != nil {
+		return err
+	}
+
+	return json.NewEncoder(w).
+		Encode(response.Success(res))
+}
