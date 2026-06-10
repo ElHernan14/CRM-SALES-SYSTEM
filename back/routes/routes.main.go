@@ -12,6 +12,7 @@ import (
 	invoiceRoutes "crm-system-sales/internal/modules/invoice/routes"
 	invoiceService "crm-system-sales/internal/modules/invoice/service"
 	invoiceitem "crm-system-sales/internal/modules/invoice_item"
+	invoicepayment "crm-system-sales/internal/modules/invoice_payment"
 	invoicepaymentrepo "crm-system-sales/internal/modules/invoice_payment/repository"
 	"crm-system-sales/internal/modules/product"
 	"crm-system-sales/internal/modules/users"
@@ -25,13 +26,14 @@ import (
 
 // AppContainer struct to hold controllers
 type AppContainer struct {
-	UserController        *users.UserController
-	AuthController        *auth.AuthController
-	ClientController      *client.ClientController
-	CompanyController     *company.CompanyController
-	ProductController     *product.ProductController
-	InvoiceController     *invoiceController.InvoiceController
-	InvoiceItemController *invoiceitem.InvoiceItemController
+	UserController           *users.UserController
+	AuthController           *auth.AuthController
+	ClientController         *client.ClientController
+	CompanyController        *company.CompanyController
+	ProductController        *product.ProductController
+	InvoiceController        *invoiceController.InvoiceController
+	InvoiceItemController    *invoiceitem.InvoiceItemController
+	InvoicePaymentController *invoicepayment.InvoicePaymentController
 }
 
 func SetupRoutes(r *mux.Router, db *sql.DB) {
@@ -66,7 +68,8 @@ func SetupRoutes(r *mux.Router, db *sql.DB) {
 	// Workflow
 	submitWorkflow := submitInvoiceWorkflow.NewSubmitInvoiceWorkflow(invoiceRepo, invoiceItemRepo, clientRepo, inventoryService, db)
 	paymentWorkflow := paymentworkflow.NewPayInvoiceWorkflow(invoiceItemRepo, inventoryService)
-	invoiceService := invoiceService.NewInvoiceService(db, invoiceRepo, clientRepo, companyRepo, inventoryService, invoicePaymentRepo, paymentWorkflow)
+	invoiceService := invoiceService.NewInvoiceService(db, invoiceRepo, clientRepo, companyRepo, invoiceItemRepo, inventoryService, invoicePaymentRepo, paymentWorkflow)
+	invoicePaymentService := invoicepayment.NewInvoicePaymentService(db, invoiceRepo, clientRepo, invoicePaymentRepo)
 
 	// Controllers
 	authController := auth.NewAuthController(authService)
@@ -76,16 +79,18 @@ func SetupRoutes(r *mux.Router, db *sql.DB) {
 	productController := product.NewProductController(productService)
 	invoiceController := invoiceController.NewInvoiceController(invoiceService, submitWorkflow)
 	invoiceItemController := invoiceitem.NewInvoiceItemController(invoiceItemService)
+	invoicePaymentController := invoicepayment.NewInvoicePaymentController(invoicePaymentService)
 
 	// Container para inyección de dependencias
 	container := &AppContainer{
-		UserController:        userController,
-		AuthController:        authController,
-		ClientController:      clientController,
-		CompanyController:     companyController,
-		ProductController:     productController,
-		InvoiceController:     invoiceController,
-		InvoiceItemController: invoiceItemController,
+		UserController:           userController,
+		AuthController:           authController,
+		ClientController:         clientController,
+		CompanyController:        companyController,
+		ProductController:        productController,
+		InvoiceController:        invoiceController,
+		InvoiceItemController:    invoiceItemController,
+		InvoicePaymentController: invoicePaymentController,
 	}
 
 	// Registrar rutas endpoints
@@ -96,4 +101,5 @@ func SetupRoutes(r *mux.Router, db *sql.DB) {
 	product.RegisterProductRoutes(protected, container.ProductController)
 	invoiceRoutes.RegisterInvoiceRoutes(protected, container.InvoiceController)
 	invoiceitem.RegisterInvoiceItemRoutes(protected, container.InvoiceItemController)
+	invoicepayment.RegisterInvoicePaymentRoutes(protected, container.InvoicePaymentController)
 }

@@ -13,12 +13,34 @@ func CanCancelInvoice(
 	invoice *invoiceModel.Invoice,
 ) error {
 
+	if IsAdmin(tenant) {
+		return nil
+	}
+
 	if invoice.StatusInvoice == constants.InvoicePaid {
+
 		return errorHandler.NewAppError(
 			http.StatusBadRequest,
 			"No se puede cancelar una invoice pagada",
 		)
 	}
 
-	return CanManageInvoice(tenant, invoice)
+	if invoice.StatusInvoice == constants.InvoiceCanceled {
+
+		return errorHandler.NewAppError(
+			http.StatusBadRequest,
+			"La invoice ya está cancelada",
+		)
+	}
+
+	if tenant.CompanyID != nil &&
+		*tenant.CompanyID == invoice.SellerCompanyID {
+
+		return nil
+	}
+
+	return errorHandler.NewAppError(
+		http.StatusForbidden,
+		"No autorizado",
+	)
 }

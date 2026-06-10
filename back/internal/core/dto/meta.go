@@ -4,5 +4,5 @@ type Meta struct {
 	Page       int `json:"page"`
 	Limit      int `json:"limit"`
 	Total      int `json:"total"`
-	TotalPages int `json:"total_pages"`
+	TotalPages int `json:"total_pages,omitempty"`
 }

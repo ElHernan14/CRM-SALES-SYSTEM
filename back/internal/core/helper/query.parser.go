@@ -5,6 +5,7 @@ import (
 	validatorx "crm-system-sales/internal/core/validator"
 	clientdto "crm-system-sales/internal/modules/client/dto"
 	invoiceitemdto "crm-system-sales/internal/modules/invoice_item/dto"
+	invoicepaymentdto "crm-system-sales/internal/modules/invoice_payment/dto"
 
 	"net/http"
 	"strconv"
@@ -63,6 +64,44 @@ func ParseGetInvoicesRequest(r *http.Request) (*invoiceitemdto.GetInvoiceItemsRe
 	q := r.URL.Query()
 
 	req := &invoiceitemdto.GetInvoiceItemsRequest{}
+
+	if v := q.Get("page"); v != "" {
+		page, err := strconv.Atoi(v)
+		if err != nil {
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "page inválido")
+		}
+		req.Page = page
+	}
+
+	if v := q.Get("limit"); v != "" {
+		limit, err := strconv.Atoi(v)
+		if err != nil {
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "limit inválido")
+		}
+		req.Limit = limit
+	}
+
+	// defaults
+	if req.Page == 0 {
+		req.Page = 1
+	}
+	if req.Limit == 0 {
+		req.Limit = 10
+	}
+
+	// validate
+	msg, invalid := validatorx.ValidateStruct(req)
+	if invalid {
+		return nil, errorHandler.NewAppError(http.StatusBadRequest, msg)
+	}
+
+	return req, nil
+}
+
+func ParseGetInvoicePaymentsRequest(r *http.Request) (*invoicepaymentdto.GetInvoicePaymentsRequest, error) {
+	q := r.URL.Query()
+
+	req := &invoicepaymentdto.GetInvoicePaymentsRequest{}
 
 	if v := q.Get("page"); v != "" {
 		page, err := strconv.Atoi(v)

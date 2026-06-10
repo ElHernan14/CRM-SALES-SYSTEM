@@ -156,3 +156,29 @@ JOIN permission p ON p.name IN (
     'invoice:submit'
 )
 WHERE r.name = 'company_user';
+
+INSERT INTO permission (name, description)
+VALUES
+('invoice_payment:read', 'Read invoice payments');
+
+INSERT INTO role_permission (role_id, permission_id)
+SELECT r.id, p.id
+FROM rol r
+JOIN permission p ON p.name IN (
+
+    -- INVOICE PAYMENTS
+    'invoice_payment:read'
+
+)
+WHERE r.name IN ('company_user', 'individual_user', 'super_admin');
+
+INSERT INTO role_permission (role_id, permission_id)
+SELECT r.id, p.id
+FROM rol r
+JOIN permission p ON p.name IN (
+
+    -- INVOICE PAYMENTS
+    'invoice:cancel'
+
+)
+WHERE r.name IN ('company_user');

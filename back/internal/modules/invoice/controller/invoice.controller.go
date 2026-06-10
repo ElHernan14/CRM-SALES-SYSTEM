@@ -181,3 +181,35 @@ func (c *InvoiceController) GetByID(
 	return json.NewEncoder(w).
 		Encode(response.Success(res))
 }
+
+func (c *InvoiceController) Cancel(
+	w http.ResponseWriter,
+	r *http.Request,
+) error {
+
+	id, err := strconv.Atoi(
+		mux.Vars(r)["id"],
+	)
+
+	if err != nil {
+		return errorHandler.NewAppError(
+			http.StatusBadRequest,
+			"id inválido",
+		)
+	}
+
+	err = c.Service.Cancel(
+		r.Context(),
+		id,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return json.NewEncoder(w).Encode(
+		response.Success(
+			"Invoice cancelada correctamente",
+		),
+	)
+}

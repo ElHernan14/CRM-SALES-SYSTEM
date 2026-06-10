@@ -12,4 +12,5 @@ func RegisterInvoiceRoutes(r *mux.Router, controller *controller.InvoiceControll
 	r.HandleFunc("/invoice/{id}/submit", middleware.RequirePermission("invoice:submit")(middleware.ErrorMiddleware(controller.Submit))).Methods("POST")
 	r.HandleFunc("/invoice/{id}/pay", middleware.RequirePermission("invoice:pay")(middleware.ErrorMiddleware(controller.Pay))).Methods("POST")
 	r.HandleFunc("/invoice/{id}", middleware.RequirePermission("invoice:read")(middleware.ErrorMiddleware(controller.GetByID))).Methods("GET")
+	r.HandleFunc("/invoices/{id}/cancel", middleware.RequirePermission("invoice:cancel")(middleware.ErrorMiddleware(controller.Cancel))).Methods("POST")
 }

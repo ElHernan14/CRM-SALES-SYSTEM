@@ -15,6 +15,7 @@ import (
 	invoicedto "crm-system-sales/internal/modules/invoice/dto"
 	invoiceModel "crm-system-sales/internal/modules/invoice/models"
 	invoiceRepository "crm-system-sales/internal/modules/invoice/repository"
+	invoiceitemrepo "crm-system-sales/internal/modules/invoice_item"
 	invoicepaymentmodel "crm-system-sales/internal/modules/invoice_payment/models"
 	invoicepaymentrepo "crm-system-sales/internal/modules/invoice_payment/repository"
 	invoicePaymentWorkflow "crm-system-sales/internal/services/invoice_workflow/service"
@@ -28,6 +29,10 @@ type InvoiceService interface {
 	CreateDraft(ctx context.Context, req *invoicedto.CreateInvoiceRequest) (*invoicedto.InvoiceResponse, error)
 	Pay(ctx context.Context, invoiceID int, req *invoicedto.PayInvoiceRequest) (*invoicedto.PayInvoiceResponse, error)
 	GetByID(ctx context.Context, id int) (*invoicedto.GetInvoiceResponse, error)
+	Cancel(
+		ctx context.Context,
+		invoiceID int,
+	) error
 }
 
 type invoiceService struct {
@@ -35,6 +40,7 @@ type invoiceService struct {
 	Repo                   invoiceRepository.InvoiceRepository
 	ClientRepo             client.ClientRepository
 	CompanyRepo            company.CompanyRepository
+	InvoiceItemRepo        invoiceitemrepo.InvoiceItemRepository
 	InventoryService       inventoryservice.InventoryService
 	InvoicePaymentRepo     invoicepaymentrepo.InvoicePaymentRepository
 	InvoicePaymentWorkflow invoicePaymentWorkflow.PayInvoiceWorkflow
@@ -45,6 +51,7 @@ func NewInvoiceService(
 	repo invoiceRepository.InvoiceRepository,
 	clientRepo client.ClientRepository,
 	companyRepo company.CompanyRepository,
+	invoiceItemRepo invoiceitemrepo.InvoiceItemRepository,
 	inventoryService inventoryservice.InventoryService,
 	invoicePaymentRepo invoicepaymentrepo.InvoicePaymentRepository,
 	invoiceWorkflow invoicePaymentWorkflow.PayInvoiceWorkflow,
@@ -54,6 +61,7 @@ func NewInvoiceService(
 		Repo:                   repo,
 		ClientRepo:             clientRepo,
 		CompanyRepo:            companyRepo,
+		InvoiceItemRepo:        invoiceItemRepo,
 		InventoryService:       inventoryService,
 		InvoicePaymentRepo:     invoicePaymentRepo,
 		InvoicePaymentWorkflow: invoiceWorkflow,
@@ -345,4 +353,73 @@ func (s *invoiceService) GetByID(
 		UpdatedAt:       invoice.UpdatedAt,
 		DeletedAt:       invoice.DeletedAt,
 	}, nil
+}
+
+func (s *invoiceService) Cancel(
+	ctx context.Context,
+	invoiceID int,
+) error {
+
+	tenant := tenantHelper.GetTenant(ctx)
+
+	invoice, err := s.Repo.GetByID(
+		ctx,
+		invoiceID,
+	)
+	if err != nil {
+		return err
+	}
+
+	err = invoiceAccess.CanCancelInvoice(
+		tenant,
+		invoice,
+	)
+	if err != nil {
+		return err
+	}
+
+	return transaction.RunInTransaction(
+		ctx,
+		s.db,
+		func(tx *sql.Tx) error {
+
+			if invoice.StatusInvoice == constants.InvoiceDraft ||
+				invoice.StatusInvoice == constants.InvoicePending {
+
+				items, err := s.InvoiceItemRepo.ListByInvoiceID(
+					ctx,
+					tx,
+					invoiceID,
+				)
+				if err != nil {
+					return err
+				}
+
+				for _, item := range items {
+
+					err = s.InventoryService.ReleaseStock(
+						ctx,
+						tx,
+						item.ProductID,
+						item.Quantity,
+					)
+					if err != nil {
+						return err
+					}
+				}
+			}
+
+			err := s.Repo.UpdateStatus(
+				ctx,
+				tx,
+				invoice.ID,
+				constants.InvoiceCanceled,
+			)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+	)
 }
