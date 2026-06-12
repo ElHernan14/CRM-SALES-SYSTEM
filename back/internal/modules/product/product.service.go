@@ -3,6 +3,7 @@ package product
 import (
 	"context"
 	"crm-system-sales/internal/core/access"
+	"crm-system-sales/internal/core/dto"
 	meta "crm-system-sales/internal/core/dto"
 	errorHandler "crm-system-sales/internal/core/error"
 	tenant "crm-system-sales/internal/core/tenant"
@@ -20,6 +21,10 @@ type ProductService interface {
 	GetByID(ctx context.Context, id int) (*productdto.ProductDetailResponse, error)
 	Update(ctx context.Context, id int, req *productdto.UpdateProductRequest) (*productdto.ProductDetailResponse, error)
 	Delete(ctx context.Context, id int) error
+	GetCompanyProducts(
+		ctx context.Context,
+		req *productdto.GetCompanyProductsRequest,
+	) (*productdto.GetCompanyProductsResponse, error)
 }
 
 type productService struct {
@@ -278,4 +283,54 @@ func (s *productService) Delete(ctx context.Context, id int) error {
 	}
 
 	return nil
+}
+
+func (s *productService) GetCompanyProducts(
+	ctx context.Context,
+	req *productdto.GetCompanyProductsRequest,
+) (*productdto.GetCompanyProductsResponse, error) {
+	tenant := tenant.GetTenant(ctx)
+
+	if tenant.CompanyID == nil {
+		return nil, errorHandler.NewAppError(
+			http.StatusForbidden,
+			"Solo empresas",
+		)
+	}
+
+	products, total, err := s.repo.ListByCompanyID(
+		ctx,
+		*tenant.CompanyID,
+		req,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Mapear a DTO de respuesta
+	items := make([]productdto.CompanyProductResponse, 0, len(products))
+	for _, p := range products {
+		items = append(items, productdto.CompanyProductResponse{
+			ID:            p.ID,
+			Name:          p.Name,
+			Description:   p.Description,
+			Type:          p.Type,
+			Price:         p.Price,
+			Stock:         p.Stock,
+			ReservedStock: p.ReservedStock,
+			Status:        p.Status,
+		})
+	}
+
+	// Meta info
+	meta := dto.Meta{
+		Page:  req.Page,
+		Limit: req.Limit,
+		Total: total,
+	}
+
+	return &productdto.GetCompanyProductsResponse{
+		Items: items,
+		Meta:  meta,
+	}, nil
 }

@@ -3,8 +3,10 @@ package product
 import (
 	"context"
 	models "crm-system-sales/internal/models/product"
+	productdto "crm-system-sales/internal/modules/product/dto"
 	"database/sql"
 	"fmt"
+	"strings"
 )
 
 type ProductRepository interface {
@@ -14,6 +16,11 @@ type ProductRepository interface {
 	Update(ctx context.Context, p *models.Product) error
 	SoftDelete(ctx context.Context, id int) error
 	GetByIDForUpdate(ctx context.Context, tx *sql.Tx, id int) (*models.Product, error)
+	ListByCompanyID(
+		ctx context.Context,
+		companyID int,
+		req *productdto.GetCompanyProductsRequest,
+	) ([]*models.Product, int, error)
 }
 
 type productRepository struct {
@@ -254,4 +261,118 @@ func (r *productRepository) GetByIDForUpdate(
 	}
 
 	return product, nil
+}
+
+func (r *productRepository) ListByCompanyID(
+	ctx context.Context,
+	companyID int,
+	req *productdto.GetCompanyProductsRequest,
+) ([]*models.Product, int, error) {
+	var err error
+
+	allowedSortColumns := map[string]string{
+		"name":        "name",
+		"description": "description",
+		"type":        "type",
+		"price":       "price",
+		"stock":       "stock",
+	}
+
+	allowedOrders := map[string]string{
+		"asc":  "ASC",
+		"desc": "DESC",
+	}
+
+	selectQuery := `
+        SELECT
+            id,
+            name,
+            description,
+			type,
+            price,
+            stock,
+            reserved_stock,
+            status
+    `
+
+	baseQuery := `
+        FROM product
+        WHERE company_id = $1
+    `
+
+	args := []interface{}{companyID}
+	argPos := 2
+
+	// Filtro por nombre
+	if req.Name != "" {
+		baseQuery += fmt.Sprintf(" AND name ILIKE $%d", argPos)
+		args = append(args, "%"+req.Name+"%")
+		argPos++
+	}
+
+	// Filtro por tipo
+	if req.Type != "" {
+		baseQuery += fmt.Sprintf(" AND type = $%d", argPos)
+		args = append(args, req.Type)
+		argPos++
+	}
+
+	// Filtro por status
+	if req.Status != 0 {
+		baseQuery += fmt.Sprintf(" AND status = $%d", argPos)
+		args = append(args, req.Status)
+		argPos++
+	}
+
+	// Count
+	countQuery := "SELECT COUNT(*) " + baseQuery
+	var total int
+	if err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	// Ordenamiento
+	sortColumn := "created_at"
+	order := "DESC"
+
+	if v, ok := allowedSortColumns[req.SortColumn]; ok {
+		sortColumn = v
+	}
+	if v, ok := allowedOrders[strings.ToLower(req.Order)]; ok {
+		order = v
+	}
+
+	offset := (req.Page - 1) * req.Limit
+
+	baseQuery += fmt.Sprintf(" ORDER BY %s %s", sortColumn, order)
+	baseQuery += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argPos, argPos+1)
+
+	args = append(args, req.Limit, offset)
+
+	rows, err := r.db.QueryContext(ctx, selectQuery+baseQuery, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	products := make([]*models.Product, 0)
+	for rows.Next() {
+		var p models.Product
+		err := rows.Scan(
+			&p.ID,
+			&p.Name,
+			&p.Description,
+			&p.Type,
+			&p.Price,
+			&p.Stock,
+			&p.ReservedStock,
+			&p.Status,
+		)
+		if err != nil {
+			return nil, 0, err
+		}
+		products = append(products, &p)
+	}
+
+	return products, total, nil
 }

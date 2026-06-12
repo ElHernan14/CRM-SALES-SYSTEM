@@ -2,6 +2,7 @@ package product
 
 import (
 	errorHandler "crm-system-sales/internal/core/error"
+	helper "crm-system-sales/internal/core/helper"
 	"crm-system-sales/internal/core/response"
 	"crm-system-sales/internal/core/utils"
 	validatorx "crm-system-sales/internal/core/validator"
@@ -193,4 +194,28 @@ func (c *ProductController) DeleteProduct(w http.ResponseWriter, r *http.Request
 	}
 
 	return json.NewEncoder(w).Encode(response.Success(nil))
+}
+
+func (c *ProductController) GetCompanyProducts(
+	w http.ResponseWriter,
+	r *http.Request,
+) error {
+
+	req, err := helper.ParseGetCompanyProductsRequest(r)
+	if err != nil {
+		return err
+	}
+
+	res, err := c.service.GetCompanyProducts(
+		r.Context(),
+		req,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return json.NewEncoder(w).Encode(
+		response.Success(res),
+	)
 }

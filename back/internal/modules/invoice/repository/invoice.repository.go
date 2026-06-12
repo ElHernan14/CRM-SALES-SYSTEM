@@ -3,8 +3,11 @@ package invoiceRepository
 import (
 	"context"
 	"crm-system-sales/internal/core/utils"
+	invoicedto "crm-system-sales/internal/modules/invoice/dto"
 	invoiceModel "crm-system-sales/internal/modules/invoice/models"
 	"database/sql"
+	"fmt"
+	"strings"
 )
 
 type InvoiceRepository interface {
@@ -14,6 +17,11 @@ type InvoiceRepository interface {
 	GetActiveDraft(ctx context.Context, buyerClientID int, sellerCompanyID int) (*invoiceModel.Invoice, error)
 	UpdateStatus(ctx context.Context, tx *sql.Tx, invoiceID int, status string) error
 	SetPaidAmount(ctx context.Context, tx *sql.Tx, invoiceID int, paidAmount float64) error
+	ListBySellerCompanyID(
+		ctx context.Context,
+		companyID int,
+		req *invoicedto.GetCompanyInvoicesRequest,
+	) ([]*invoiceModel.Invoice, int, error)
 }
 
 type invoiceRepository struct {
@@ -268,4 +276,108 @@ func (r *invoiceRepository) SetPaidAmount(
 	)
 
 	return err
+}
+
+func (r *invoiceRepository) ListBySellerCompanyID(
+	ctx context.Context,
+	companyID int,
+	req *invoicedto.GetCompanyInvoicesRequest,
+) ([]*invoiceModel.Invoice, int, error) {
+	var err error
+
+	allowedSortColumns := map[string]string{
+		"created_at":     "created_at",
+		"total_amount":   "total_amount",
+		"paid_amount":    "paid_amount",
+		"status_invoice": "status_invoice",
+	}
+
+	allowedOrders := map[string]string{
+		"asc":  "ASC",
+		"desc": "DESC",
+	}
+
+	selectQuery := `
+        SELECT
+            id,
+            buyer_client_id,
+            seller_company_id,
+            status_invoice,
+            total_amount,
+            paid_amount,
+            created_at
+    `
+
+	baseQuery := `
+        FROM invoice
+        WHERE seller_company_id = $1
+    `
+
+	args := []interface{}{companyID}
+	argPos := 2
+
+	// Filtro por status_invoice
+	if req.StatusInvoice != "" {
+		baseQuery += fmt.Sprintf(" AND status_invoice = $%d", argPos)
+		args = append(args, req.StatusInvoice)
+		argPos++
+	}
+
+	// Filtro por status
+	if req.Status != 0 {
+		baseQuery += fmt.Sprintf(" AND status = $%d", argPos)
+		args = append(args, req.Status)
+		argPos++
+	}
+
+	// Count
+	countQuery := "SELECT COUNT(*) " + baseQuery
+	var total int
+	if err := r.DB.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	// Ordenamiento
+	sortColumn := "created_at"
+	order := "DESC"
+
+	if v, ok := allowedSortColumns[req.SortColumn]; ok {
+		sortColumn = v
+	}
+	if v, ok := allowedOrders[strings.ToLower(req.Order)]; ok {
+		order = v
+	}
+
+	offset := (req.Page - 1) * req.Limit
+
+	baseQuery += fmt.Sprintf(" ORDER BY %s %s", sortColumn, order)
+	baseQuery += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argPos, argPos+1)
+
+	args = append(args, req.Limit, offset)
+
+	rows, err := r.DB.QueryContext(ctx, selectQuery+baseQuery, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	invoices := make([]*invoiceModel.Invoice, 0)
+	for rows.Next() {
+		var inv invoiceModel.Invoice
+		err := rows.Scan(
+			&inv.ID,
+			&inv.BuyerClientID,
+			&inv.SellerCompanyID,
+			&inv.StatusInvoice,
+			&inv.TotalAmount,
+			&inv.PaidAmount,
+			&inv.CreatedAt,
+		)
+		if err != nil {
+			return nil, 0, err
+		}
+		invoices = append(invoices, &inv)
+	}
+
+	return invoices, total, nil
 }

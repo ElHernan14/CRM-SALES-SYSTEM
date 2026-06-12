@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	constantinvoice "crm-system-sales/internal/modules/invoice/constants"
+
 	"github.com/go-playground/validator/v10"
 )
 
@@ -26,6 +28,11 @@ func init() {
 	validate.RegisterValidation("payment_method", func(fl validator.FieldLevel) bool {
 		v := fl.Field().String()
 		return v == constants.PaymentTransfer || v == constants.PaymentCash || v == constants.PaymentCard
+	})
+
+	validate.RegisterValidation("status_invoice", func(fl validator.FieldLevel) bool {
+		v := fl.Field().String()
+		return v == constantinvoice.InvoiceCanceled || v == constantinvoice.InvoiceDraft || v == constantinvoice.InvoicePaid || v == constantinvoice.InvoicePending
 	})
 }
 
