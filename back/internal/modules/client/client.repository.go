@@ -4,7 +4,9 @@ import (
 	"context"
 	"crm-system-sales/internal/core/utils"
 	client "crm-system-sales/internal/models/client"
+	dto "crm-system-sales/internal/modules/client/dto"
 	"fmt"
+	"strings"
 
 	"database/sql"
 )
@@ -16,6 +18,11 @@ type ClientRepository interface {
 	GetByID(ctx context.Context, id int) (*client.Client, error)
 	Update(ctx context.Context, c *client.Client) error
 	SoftDeleteTx(tx *sql.Tx, clientID int) error
+	ListCompanyCustomers(
+		ctx context.Context,
+		companyID int,
+		req *dto.GetCompanyCustomersRequest,
+	) ([]*client.Client, int, error)
 }
 
 type clientRepository struct {
@@ -213,4 +220,116 @@ func (r *clientRepository) SoftDeleteTx(tx *sql.Tx, clientID int) error {
 
 	_, err := tx.Exec(query, clientID)
 	return err
+}
+
+func (r *clientRepository) ListCompanyCustomers(
+	ctx context.Context,
+	companyID int,
+	req *dto.GetCompanyCustomersRequest,
+) ([]*client.Client, int, error) {
+	var err error
+
+	allowedSortColumns := map[string]string{
+		"name":            "name_complete",
+		"total_invoices":  "total_invoices",
+		"total_purchased": "total_purchased",
+	}
+
+	allowedOrders := map[string]string{
+		"asc":  "ASC",
+		"desc": "DESC",
+	}
+
+	selectQuery := `
+        SELECT
+            c.id,
+            (c.first_name || ' ' || c.last_name) AS name_complete,
+            c.email,
+            c.company_id,
+            COUNT(i.id) AS total_invoices,
+            COALESCE(SUM(i.total_amount), 0) AS total_purchased
+    `
+
+	baseQuery := `
+        FROM client c
+        INNER JOIN invoice i ON i.buyer_client_id = c.id
+        WHERE i.seller_company_id = $1
+    `
+
+	args := []interface{}{companyID}
+	argPos := 2
+
+	// Filtro por nombre (concatenado first_name + last_name)
+	if req.Name != "" {
+		baseQuery += fmt.Sprintf(
+			` AND (
+                c.first_name ILIKE $%d
+                OR c.last_name ILIKE $%d
+            )`,
+			argPos, argPos,
+		)
+		args = append(args, "%"+req.Name+"%")
+		argPos++
+	}
+
+	// Agrupación
+	groupBy := `
+        GROUP BY
+            c.id,
+            c.first_name,
+            c.last_name,
+            c.email,
+            c.company_id
+    `
+
+	// Count
+	countQuery := "SELECT COUNT(*) FROM (" + selectQuery + baseQuery + groupBy + ") AS sub"
+	var total int
+	if err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	// Ordenamiento
+	sortColumn := "name_complete"
+	order := "ASC"
+
+	if v, ok := allowedSortColumns[req.SortColumn]; ok {
+		sortColumn = v
+	}
+	if v, ok := allowedOrders[strings.ToLower(req.Order)]; ok {
+		order = v
+	}
+
+	offset := (req.Page - 1) * req.Limit
+
+	baseQuery += groupBy
+	baseQuery += fmt.Sprintf(" ORDER BY %s %s", sortColumn, order)
+	baseQuery += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argPos, argPos+1)
+
+	args = append(args, req.Limit, offset)
+
+	rows, err := r.db.QueryContext(ctx, selectQuery+baseQuery, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	customers := make([]*client.Client, 0)
+	for rows.Next() {
+		var c client.Client
+		err := rows.Scan(
+			&c.ID,
+			&c.NameComplete,
+			&c.Email,
+			&c.CompanyID,
+			&c.TotalInvoices,
+			&c.TotalPurchased,
+		)
+		if err != nil {
+			return nil, 0, err
+		}
+		customers = append(customers, &c)
+	}
+
+	return customers, total, nil
 }

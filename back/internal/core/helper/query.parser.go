@@ -239,3 +239,44 @@ func ParseGetCompanyProductsRequest(r *http.Request) (*productdto.GetCompanyProd
 
 	return req, nil
 }
+
+func ParseGetCompanyCustomersRequest(r *http.Request) (*clientdto.GetCompanyCustomersRequest, error) {
+	q := r.URL.Query()
+
+	req := &clientdto.GetCompanyCustomersRequest{}
+	req.Name = q.Get("name")
+	req.SortColumn = q.Get("sort_column")
+	req.Order = q.Get("order")
+
+	if v := q.Get("page"); v != "" {
+		page, err := strconv.Atoi(v)
+		if err != nil {
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "page inválido")
+		}
+		req.Page = page
+	}
+
+	if v := q.Get("limit"); v != "" {
+		limit, err := strconv.Atoi(v)
+		if err != nil {
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "limit inválido")
+		}
+		req.Limit = limit
+	}
+
+	// defaults
+	if req.Page == 0 {
+		req.Page = 1
+	}
+	if req.Limit == 0 {
+		req.Limit = 10
+	}
+
+	// validate
+	msg, invalid := validatorx.ValidateStruct(req)
+	if invalid {
+		return nil, errorHandler.NewAppError(http.StatusBadRequest, msg)
+	}
+
+	return req, nil
+}

@@ -6,6 +6,6 @@ type GetCompanyCustomersRequest struct {
 
 	Name string `json:"name" validate:"omitempty,max=50"`
 
-	SortColumn string `json:"sort_column" validate:"omitempty,max=50,oneof=name description type price stock"`
+	SortColumn string `json:"sort_column" validate:"omitempty,max=50,oneof=name total_invoices total_purchased"`
 	Order      string `json:"order" validate:"omitempty,oneof=asc desc"`
 }

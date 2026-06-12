@@ -9,6 +9,7 @@ import (
 
 	constants "crm-system-sales/internal/constants"
 	"crm-system-sales/internal/core/access"
+	"crm-system-sales/internal/core/dto"
 	errorHandler "crm-system-sales/internal/core/error"
 	tenant "crm-system-sales/internal/core/tenant"
 	transaction "crm-system-sales/internal/core/transaction"
@@ -32,6 +33,10 @@ type ClientService interface {
 	GetClientByID(ctx context.Context, id int) (*clientdto.ClientResponse, error)
 	UpdateClient(ctx context.Context, id int, req *clientdto.UpdateClientRequest) (*clientdto.ClientResponse, error)
 	DeleteClient(ctx context.Context, id int) error
+	GetCompanyCustomers(
+		ctx context.Context,
+		req *clientdto.GetCompanyCustomersRequest,
+	) (*clientdto.GetCompanyCustomersResponse, error)
 }
 
 type clientService struct {
@@ -418,4 +423,52 @@ func (s *clientService) DeleteClient(ctx context.Context, id int) error {
 	log.Println("Client + User soft deleted:", id)
 
 	return nil
+}
+
+func (s *clientService) GetCompanyCustomers(
+	ctx context.Context,
+	req *clientdto.GetCompanyCustomersRequest,
+) (*clientdto.GetCompanyCustomersResponse, error) {
+	tenant := tenant.GetTenant(ctx)
+
+	if tenant.CompanyID == nil {
+		return nil, errorHandler.NewAppError(
+			http.StatusForbidden,
+			"Solo empresas",
+		)
+	}
+
+	customers, total, err := s.repo.ListCompanyCustomers(
+		ctx,
+		*tenant.CompanyID,
+		req,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Mapear a DTO de respuesta
+	items := make([]clientdto.CompanyCustomerResponse, 0, len(customers))
+	for _, c := range customers {
+		items = append(items, clientdto.CompanyCustomerResponse{
+			ID:             c.ID,
+			Name:           *c.NameComplete,
+			Email:          c.Email,
+			CompanyID:      c.CompanyID,
+			TotalInvoices:  c.TotalInvoices,
+			TotalPurchased: c.TotalPurchased,
+		})
+	}
+
+	// Meta info
+	meta := dto.Meta{
+		Page:  req.Page,
+		Limit: req.Limit,
+		Total: total,
+	}
+
+	return &clientdto.GetCompanyCustomersResponse{
+		Items: items,
+		Meta:  meta,
+	}, nil
 }

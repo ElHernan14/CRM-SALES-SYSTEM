@@ -155,3 +155,27 @@ func (c *ClientController) DeleteClient(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(response.Success(nil))
 	return nil
 }
+
+func (c *ClientController) GetCompanyCustomers(
+	w http.ResponseWriter,
+	r *http.Request,
+) error {
+
+	req, err := helper.ParseGetCompanyCustomersRequest(r)
+	if err != nil {
+		return err
+	}
+
+	res, err := c.service.GetCompanyCustomers(
+		r.Context(),
+		req,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return json.NewEncoder(w).Encode(
+		response.Success(res),
+	)
+}

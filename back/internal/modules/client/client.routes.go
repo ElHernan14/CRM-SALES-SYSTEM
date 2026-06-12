@@ -14,4 +14,7 @@ func RegisterClientRoutes(r *mux.Router, controller *ClientController) {
 	clients.HandleFunc("/clients/{id}", middleware.RequirePermission(constants.ClientView)(middleware.ErrorMiddleware(controller.GetClientByID))).Methods("GET")
 	clients.HandleFunc("/clients/{id}", middleware.RequirePermission(constants.ClientUpdate)(middleware.ErrorMiddleware(controller.UpdateClient))).Methods("PATCH")
 	clients.HandleFunc("/clients/{id}", middleware.RequirePermission(constants.ClientDelete)(middleware.ErrorMiddleware(controller.DeleteClient))).Methods("DELETE")
+
+	// ERP routes
+	r.HandleFunc("/company/customers", middleware.RequirePermission(constants.ClientRead)(middleware.ErrorMiddleware(controller.GetCompanyCustomers))).Methods("GET")
 }
