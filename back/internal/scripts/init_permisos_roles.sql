@@ -157,6 +157,7 @@ JOIN permission p ON p.name IN (
 )
 WHERE r.name = 'company_user';
 
+--Insertar permisos adicionales de payment
 INSERT INTO permission (name, description)
 VALUES
 ('invoice_payment:read', 'Read invoice payments');
@@ -182,3 +183,19 @@ JOIN permission p ON p.name IN (
 
 )
 WHERE r.name IN ('company_user');
+
+--Insertar permiso checkout de store
+INSERT INTO permission (name, description)
+VALUES
+('store:checkout', 'Checkout invoice draft');
+
+INSERT INTO role_permission (role_id, permission_id)
+SELECT r.id, p.id
+FROM rol r
+JOIN permission p ON p.name IN (
+
+    -- CHECKOUT INVOICE STORE
+    'store:checkout'
+
+)
+WHERE r.name IN ('individual_user', 'super_admin');

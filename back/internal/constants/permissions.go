@@ -49,3 +49,8 @@ const (
 	InvoiceItemUpdate = "invoice_item:update"
 	InvoiceItemDelete = "invoice_item:delete"
 )
+
+// ===== INVOICE ITEMS =====
+const (
+	StoreCheckout = "store:checkout"
+)

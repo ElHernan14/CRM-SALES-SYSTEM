@@ -8,6 +8,7 @@ import (
 	invoiceitemdto "crm-system-sales/internal/modules/invoice_item/dto"
 	invoicepaymentdto "crm-system-sales/internal/modules/invoice_payment/dto"
 	productdto "crm-system-sales/internal/modules/product/dto"
+	storedto "crm-system-sales/internal/modules/store/dto"
 
 	"net/http"
 	"strconv"
@@ -245,6 +246,48 @@ func ParseGetCompanyCustomersRequest(r *http.Request) (*clientdto.GetCompanyCust
 
 	req := &clientdto.GetCompanyCustomersRequest{}
 	req.Name = q.Get("name")
+	req.SortColumn = q.Get("sort_column")
+	req.Order = q.Get("order")
+
+	if v := q.Get("page"); v != "" {
+		page, err := strconv.Atoi(v)
+		if err != nil {
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "page inválido")
+		}
+		req.Page = page
+	}
+
+	if v := q.Get("limit"); v != "" {
+		limit, err := strconv.Atoi(v)
+		if err != nil {
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "limit inválido")
+		}
+		req.Limit = limit
+	}
+
+	// defaults
+	if req.Page == 0 {
+		req.Page = 1
+	}
+	if req.Limit == 0 {
+		req.Limit = 10
+	}
+
+	// validate
+	msg, invalid := validatorx.ValidateStruct(req)
+	if invalid {
+		return nil, errorHandler.NewAppError(http.StatusBadRequest, msg)
+	}
+
+	return req, nil
+}
+
+func ParseGetStoreProductsRequest(r *http.Request) (*storedto.GetStoreProductsRequest, error) {
+	q := r.URL.Query()
+
+	req := &storedto.GetStoreProductsRequest{}
+	req.Name = q.Get("name")
+	req.Type = q.Get("type")
 	req.SortColumn = q.Get("sort_column")
 	req.Order = q.Get("order")
 

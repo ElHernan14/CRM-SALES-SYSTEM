@@ -10,4 +10,5 @@ import (
 
 func RegisterInvoiceItemRoutes(r *mux.Router, controller *controller.StoreController) {
 	r.HandleFunc("/store/products", middleware.RequirePermission(constants.ProductRead)(middleware.ErrorMiddleware(controller.GetProducts))).Methods("GET")
+	r.HandleFunc("/store/checkout", middleware.RequirePermission(constants.StoreCheckout)(middleware.ErrorMiddleware(controller.Checkout))).Methods("POST")
 }

@@ -2,6 +2,7 @@ package invoiceRepository
 
 import (
 	"context"
+	tenantHelper "crm-system-sales/internal/core/tenant"
 	"crm-system-sales/internal/core/utils"
 	invoicedto "crm-system-sales/internal/modules/invoice/dto"
 	invoiceModel "crm-system-sales/internal/modules/invoice/models"
@@ -22,6 +23,10 @@ type InvoiceRepository interface {
 		companyID int,
 		req *invoicedto.GetCompanyInvoicesRequest,
 	) ([]*invoiceModel.Invoice, int, error)
+	GetActiveDraftByTenant(
+		ctx context.Context,
+		tenant *tenantHelper.TenantContext,
+	) (*invoiceModel.Invoice, error)
 }
 
 type invoiceRepository struct {
@@ -380,4 +385,50 @@ func (r *invoiceRepository) ListBySellerCompanyID(
 	}
 
 	return invoices, total, nil
+}
+
+func (r *invoiceRepository) GetActiveDraftByTenant(
+	ctx context.Context,
+	tenant *tenantHelper.TenantContext,
+) (*invoiceModel.Invoice, error) {
+
+	query := `
+        SELECT
+            id,
+            buyer_client_id,
+            seller_company_id,
+            status_invoice,
+            created_at,
+            created_by_user_id,
+            total_amount
+        FROM invoice
+        WHERE
+            buyer_client_id = $1
+            AND status_invoice = 'draft'
+            AND status = 1
+        ORDER BY created_at DESC
+        LIMIT 1
+    `
+
+	invoice := &invoiceModel.Invoice{}
+
+	err := r.DB.QueryRowContext(
+		ctx,
+		query,
+		*tenant.ClientID,
+	).Scan(
+		&invoice.ID,
+		&invoice.BuyerClientID,
+		&invoice.SellerCompanyID,
+		&invoice.StatusInvoice,
+		&invoice.CreatedAt,
+		&invoice.CreatedByUserID,
+		&invoice.TotalAmount,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return invoice, nil
 }

@@ -144,6 +144,7 @@ func (s *invoiceItemService) Create(
 				product.ID,
 				diff,
 			)
+			existingItem.Price = product.Price
 			existingItem.Quantity = newQty
 			existingItem.Subtotal = product.Price * float64(newQty)
 
@@ -325,6 +326,15 @@ func (s *invoiceItemService) Update(
 		)
 	}
 
+	//  product
+	product, err := s.productRepo.GetByID(ctx, item.ProductID)
+	if err != nil {
+		return nil, errorHandler.NewAppError(
+			http.StatusNotFound,
+			"Producto no encontrado",
+		)
+	}
+
 	err = core.RunInTransaction(ctx, s.db, func(tx *sql.Tx) error {
 
 		//  stock diff
@@ -345,11 +355,14 @@ func (s *invoiceItemService) Update(
 			)
 		}
 
+		// update price item
+		item.Price = product.Price
+
 		//  update quantity
 		item.Quantity = req.Quantity
 
 		//  subtotal
-		item.Subtotal = item.Price * float64(item.Quantity)
+		item.Subtotal = product.Price * float64(item.Quantity)
 
 		//  persist
 		err = s.repo.Update(
