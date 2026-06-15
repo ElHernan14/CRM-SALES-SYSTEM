@@ -25,8 +25,15 @@ func (rw *responseWriter) WriteHeader(code int) {
 func ObservabilityMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		requestID := uuid.New().String()
+		requestID := r.Header.Get("X-Request-ID")
+		if requestID == "" {
+			requestID = uuid.New().String()
+		}
 
+		w.Header().Set(
+			"X-Request-ID",
+			requestID,
+		)
 		// meter request_id en contexto
 		ctx := context.WithValue(r.Context(), corecontext.RequestIDKey, requestID)
 

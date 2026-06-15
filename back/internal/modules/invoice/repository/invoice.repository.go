@@ -3,7 +3,6 @@ package invoiceRepository
 import (
 	"context"
 	tenantHelper "crm-system-sales/internal/core/tenant"
-	"crm-system-sales/internal/core/utils"
 	invoicedto "crm-system-sales/internal/modules/invoice/dto"
 	invoiceModel "crm-system-sales/internal/modules/invoice/models"
 	"database/sql"
@@ -87,9 +86,6 @@ func (r *invoiceRepository) Create(
 
 func (r *invoiceRepository) GetByID(ctx context.Context, id int) (*invoiceModel.Invoice, error) {
 	var err error
-	defer func() {
-		utils.Trace(ctx, "REPO GetInvoiceByID")(err)
-	}()
 
 	query := `
         SELECT id, buyer_client_id, seller_company_id, created_by_user_id,

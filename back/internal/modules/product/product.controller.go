@@ -1,10 +1,10 @@
 package product
 
 import (
+	_ "crm-system-sales/docs"
 	errorHandler "crm-system-sales/internal/core/error"
 	helper "crm-system-sales/internal/core/helper"
 	"crm-system-sales/internal/core/response"
-	"crm-system-sales/internal/core/utils"
 	validatorx "crm-system-sales/internal/core/validator"
 	productdto "crm-system-sales/internal/modules/product/dto"
 	"encoding/json"
@@ -26,9 +26,6 @@ func NewProductController(service ProductService) *ProductController {
 func (c *ProductController) CreateProduct(w http.ResponseWriter, r *http.Request) error {
 
 	var err error
-	defer func() {
-		utils.Trace(r.Context(), "CONTROLLER CreateProduct")(err)
-	}()
 
 	var req productdto.CreateProductRequest
 
@@ -50,12 +47,29 @@ func (c *ProductController) CreateProduct(w http.ResponseWriter, r *http.Request
 	return json.NewEncoder(w).Encode(response.Success(res))
 }
 
+// GetProducts godoc
+//
+// @Summary List products
+// @Description Returns a paginated list of products with filters
+// @Tags Products
+// @Produce json
+// @Security BearerAuth
+//
+// @Param search query string false "Search by name"
+// @Param type query string false "Product type"
+// @Param min_price query number false "Minimum price"
+// @Param max_price query number false "Maximum price"
+// @Param page query int false "Page number"
+// @Param limit query int false "Items per page"
+//
+// @Success 200 {object} docs.GetProductsSuccessResponse
+// @Failure 400 {object} response.APIResponse
+// @Failure 401 {object} response.APIResponse
+//
+// @Router /product [get]
 func (c *ProductController) GetProducts(w http.ResponseWriter, r *http.Request) error {
 
 	var err error
-	defer func() {
-		utils.Trace(r.Context(), "CONTROLLER GetProducts")(err)
-	}()
 
 	q := r.URL.Query()
 
@@ -119,12 +133,25 @@ func (c *ProductController) GetProducts(w http.ResponseWriter, r *http.Request) 
 	return json.NewEncoder(w).Encode(response.Success(res))
 }
 
+// GetProductByID godoc
+//
+// @Summary Get product
+// @Description Returns a product by id
+// @Tags Products
+// @Produce json
+// @Security BearerAuth
+//
+// @Param id path int true "Product ID"
+//
+// @Success 200 {object} docs.ProductDetailSuccessResponse
+// @Failure 400 {object} response.APIResponse
+// @Failure 404 {object} response.APIResponse
+// @Failure 401 {object} response.APIResponse
+//
+// @Router /product/{id} [get]
 func (c *ProductController) GetProductByID(w http.ResponseWriter, r *http.Request) error {
 
 	var err error
-	defer func() {
-		utils.Trace(r.Context(), "CONTROLLER GetProductByID")(err)
-	}()
 
 	vars := mux.Vars(r)
 
@@ -144,9 +171,6 @@ func (c *ProductController) GetProductByID(w http.ResponseWriter, r *http.Reques
 func (c *ProductController) UpdateProduct(w http.ResponseWriter, r *http.Request) error {
 
 	var err error
-	defer func() {
-		utils.Trace(r.Context(), "CONTROLLER UpdateProduct")(err)
-	}()
 
 	vars := mux.Vars(r)
 
@@ -177,9 +201,6 @@ func (c *ProductController) UpdateProduct(w http.ResponseWriter, r *http.Request
 func (c *ProductController) DeleteProduct(w http.ResponseWriter, r *http.Request) error {
 
 	var err error
-	defer func() {
-		utils.Trace(r.Context(), "CONTROLLER DeleteProduct")(err)
-	}()
 
 	vars := mux.Vars(r)
 

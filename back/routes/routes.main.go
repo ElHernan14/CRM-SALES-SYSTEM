@@ -74,7 +74,7 @@ func SetupRoutes(r *mux.Router, db *sql.DB) {
 	paymentWorkflow := paymentworkflow.NewPayInvoiceWorkflow(invoiceItemRepo, inventoryService)
 	invoiceService := invoiceService.NewInvoiceService(db, invoiceRepo, clientRepo, companyRepo, invoiceItemRepo, inventoryService, invoicePaymentRepo, paymentWorkflow)
 	invoicePaymentService := invoicepayment.NewInvoicePaymentService(db, invoiceRepo, clientRepo, invoicePaymentRepo)
-	storeService := storeservice.NewStoreService(db, productRepo)
+	storeService := storeservice.NewStoreService(db, productRepo, submitWorkflow)
 
 	// Controllers
 	authController := auth.NewAuthController(authService)

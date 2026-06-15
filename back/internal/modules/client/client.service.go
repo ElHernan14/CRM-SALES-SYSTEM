@@ -13,7 +13,6 @@ import (
 	errorHandler "crm-system-sales/internal/core/error"
 	tenant "crm-system-sales/internal/core/tenant"
 	transaction "crm-system-sales/internal/core/transaction"
-	"crm-system-sales/internal/core/utils"
 	validatorx "crm-system-sales/internal/core/validator"
 
 	metadto "crm-system-sales/internal/core/dto"
@@ -58,9 +57,6 @@ func NewClientService(db *sql.DB, repo ClientRepository, userRepo users.UserRepo
 func (s *clientService) Create(ctx context.Context, req *clientdto.CreateClientRequest) (*clientdto.ClientResponse, error) {
 	// Tracing
 	var err error
-	defer func() {
-		utils.Trace(ctx, "SERVICE CreateClient")(err)
-	}()
 
 	//  validar DTO
 	msg, invalid := validatorx.ValidateStruct(req)
@@ -171,9 +167,6 @@ func (s *clientService) Create(ctx context.Context, req *clientdto.CreateClientR
 func (s *clientService) GetClients(ctx context.Context, req *clientdto.GetClientsRequest) (*clientdto.GetClientsResponse, error) {
 
 	var err error
-	defer func() {
-		utils.Trace(ctx, "SERVICE GetClients")(err)
-	}()
 
 	tenant := tenant.GetTenant(ctx)
 
@@ -235,9 +228,6 @@ func (s *clientService) GetClients(ctx context.Context, req *clientdto.GetClient
 func (s *clientService) GetClientByID(ctx context.Context, id int) (*clientdto.ClientResponse, error) {
 
 	var err error
-	defer func() {
-		utils.Trace(ctx, "SERVICE GetClientByID")(err)
-	}()
 
 	tenant := tenant.GetTenant(ctx)
 
@@ -289,9 +279,6 @@ func (s *clientService) UpdateClient(
 ) (*clientdto.ClientResponse, error) {
 
 	var err error
-	defer func() {
-		utils.Trace(ctx, "SERVICE UpdateClient")(err)
-	}()
 
 	tenant := tenant.GetTenant(ctx)
 
@@ -369,9 +356,6 @@ func (s *clientService) UpdateClient(
 func (s *clientService) DeleteClient(ctx context.Context, id int) error {
 
 	var err error
-	defer func() {
-		utils.Trace(ctx, "SERVICE DeleteClient")(err)
-	}()
 
 	tenant := tenant.GetTenant(ctx)
 

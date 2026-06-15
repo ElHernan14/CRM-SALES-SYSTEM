@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"crm-system-sales/internal/core/utils"
 	client "crm-system-sales/internal/models/client"
 	dto "crm-system-sales/internal/modules/client/dto"
 	"fmt"
@@ -70,9 +69,6 @@ func (r *clientRepository) GetClients(
 ) ([]*client.Client, int, error) {
 
 	var err error
-	defer func() {
-		utils.Trace(ctx, "REPO GetClients")(err)
-	}()
 
 	baseQuery := `
 		FROM client
@@ -151,9 +147,6 @@ func (r *clientRepository) GetClients(
 func (r *clientRepository) GetByID(ctx context.Context, id int) (*client.Client, error) {
 
 	var err error
-	defer func() {
-		utils.Trace(ctx, "REPO GetClientByID")(err)
-	}()
 
 	query := `
 		SELECT id, first_name, last_name, email, user_id, company_id, phone, status, deleted_at

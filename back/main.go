@@ -1,3 +1,12 @@
+// @title CRM System Sales API
+// @version 1.0
+// @description Multi-tenant ERP & Commerce SaaS API
+// @BasePath /api
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @schemes http
 package main
 
 import (
@@ -11,7 +20,10 @@ import (
 
 	"crm-system-sales/routes"
 
+	_ "crm-system-sales/docs"
+
 	"github.com/gorilla/mux"
+	httpSwagger "github.com/swaggo/http-swagger"
 	/*"golang.org/x/crypto/bcrypt"*/)
 
 //
@@ -46,6 +58,11 @@ func main() {
 
 	// Health check route
 	r.HandleFunc("/health", healthHandler.Check).Methods("GET")
+
+	// Swagger route
+	r.PathPrefix("/swagger/").Handler(
+		httpSwagger.WrapHandler,
+	)
 
 	//Tracing middleware
 	r.Use(middleware.ObservabilityMiddleware)

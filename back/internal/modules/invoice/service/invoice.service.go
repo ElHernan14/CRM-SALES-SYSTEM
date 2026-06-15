@@ -6,7 +6,6 @@ import (
 	errorHandler "crm-system-sales/internal/core/error"
 	tenantHelper "crm-system-sales/internal/core/tenant"
 	transaction "crm-system-sales/internal/core/transaction"
-	"crm-system-sales/internal/core/utils"
 	"crm-system-sales/internal/modules/client"
 	"crm-system-sales/internal/modules/company"
 	inventoryservice "crm-system-sales/internal/modules/inventory"
@@ -192,10 +191,6 @@ func (s *invoiceService) Pay(
 
 	var err error
 
-	defer func() {
-		utils.Trace(ctx, "SERVICE PayInvoice")(err)
-	}()
-
 	tenant := tenantHelper.GetTenant(ctx)
 
 	invoice, err := s.Repo.GetByID(
@@ -310,10 +305,6 @@ func (s *invoiceService) GetByID(
 	id int,
 ) (*invoicedto.GetInvoiceResponse, error) {
 	var err error
-
-	defer func() {
-		utils.Trace(ctx, "SERVICE PayInvoice")(err)
-	}()
 
 	tenant := tenantHelper.GetTenant(ctx)
 

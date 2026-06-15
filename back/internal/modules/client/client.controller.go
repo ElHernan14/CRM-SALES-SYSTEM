@@ -4,7 +4,6 @@ import (
 	errorHandler "crm-system-sales/internal/core/error"
 	helper "crm-system-sales/internal/core/helper"
 	response "crm-system-sales/internal/core/response"
-	utils "crm-system-sales/internal/core/utils"
 	validatorx "crm-system-sales/internal/core/validator"
 	clientdto "crm-system-sales/internal/modules/client/dto"
 	"encoding/json"
@@ -24,9 +23,6 @@ func NewClientController(service ClientService) *ClientController {
 
 func (c *ClientController) Create(w http.ResponseWriter, r *http.Request) error {
 	var err error
-	defer func() {
-		utils.Trace(r.Context(), "CONTROLLER CreateClient")(err)
-	}()
 
 	var req clientdto.CreateClientRequest
 
@@ -46,9 +42,6 @@ func (c *ClientController) Create(w http.ResponseWriter, r *http.Request) error 
 func (c *ClientController) GetClients(w http.ResponseWriter, r *http.Request) error {
 
 	var err error
-	defer func() {
-		utils.Trace(r.Context(), "CONTROLLER GetClients")(err)
-	}()
 
 	req, err := helper.ParseGetClientsRequest(r)
 	if err != nil {
@@ -72,9 +65,6 @@ func (c *ClientController) GetClients(w http.ResponseWriter, r *http.Request) er
 func (c *ClientController) GetClientByID(w http.ResponseWriter, r *http.Request) error {
 
 	var err error
-	defer func() {
-		utils.Trace(r.Context(), "CONTROLLER GetClientByID")(err)
-	}()
 
 	vars := mux.Vars(r)
 
@@ -97,9 +87,6 @@ func (c *ClientController) GetClientByID(w http.ResponseWriter, r *http.Request)
 func (c *ClientController) UpdateClient(w http.ResponseWriter, r *http.Request) error {
 
 	var err error
-	defer func() {
-		utils.Trace(r.Context(), "CONTROLLER UpdateClient")(err)
-	}()
 
 	vars := mux.Vars(r)
 
@@ -135,9 +122,6 @@ func (c *ClientController) UpdateClient(w http.ResponseWriter, r *http.Request) 
 func (c *ClientController) DeleteClient(w http.ResponseWriter, r *http.Request) error {
 
 	var err error
-	defer func() {
-		utils.Trace(r.Context(), "CONTROLLER DeleteClient")(err)
-	}()
 
 	vars := mux.Vars(r)
 

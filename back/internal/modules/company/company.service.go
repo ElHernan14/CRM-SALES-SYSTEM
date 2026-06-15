@@ -8,7 +8,6 @@ import (
 	errorHandler "crm-system-sales/internal/core/error"
 	tenant "crm-system-sales/internal/core/tenant"
 	"crm-system-sales/internal/core/transaction"
-	"crm-system-sales/internal/core/utils"
 	company "crm-system-sales/internal/models/company"
 	userModel "crm-system-sales/internal/models/users"
 	"crm-system-sales/internal/modules/auth"
@@ -49,9 +48,6 @@ func (s *companyService) CreateCompany(
 ) (*companydto.CompanyResponse, error) {
 
 	var err error
-	defer func() {
-		utils.Trace(ctx, "SERVICE CreateCompany")(err)
-	}()
 
 	exists, err := s.userRepo.EmailExists(req.Email)
 	if err != nil {
@@ -111,9 +107,6 @@ func (s *companyService) CreateCompany(
 func (s *companyService) GetMyCompany(ctx context.Context) (*companydto.CompanyResponse, error) {
 
 	var err error
-	defer func() {
-		utils.Trace(ctx, "SERVICE GetMyCompany")(err)
-	}()
 
 	tenant := tenant.GetTenant(ctx)
 
@@ -141,9 +134,6 @@ func (s *companyService) GetCompanies(
 ) (*companydto.GetCompaniesResponse, error) {
 
 	var err error
-	defer func() {
-		utils.Trace(ctx, "SERVICE GetCompanies")(err)
-	}()
 
 	offset := (req.Page - 1) * req.Limit
 
@@ -174,9 +164,6 @@ func (s *companyService) GetCompanies(
 func (s *companyService) GetByID(ctx context.Context, id int) (*companydto.CompanyResponse, error) {
 
 	var err error
-	defer func() {
-		utils.Trace(ctx, "SERVICE GetCompanyByID")(err)
-	}()
 
 	tenant := tenant.GetTenant(ctx)
 

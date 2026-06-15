@@ -3,7 +3,6 @@ package company
 import (
 	errorHandler "crm-system-sales/internal/core/error"
 	"crm-system-sales/internal/core/response"
-	"crm-system-sales/internal/core/utils"
 	validatorx "crm-system-sales/internal/core/validator"
 	companydto "crm-system-sales/internal/modules/company/dto"
 	"encoding/json"
@@ -24,9 +23,6 @@ func NewCompanyController(service CompanyService) *CompanyController {
 func (c *CompanyController) Create(w http.ResponseWriter, r *http.Request) error {
 
 	var err error
-	defer func() {
-		utils.Trace(r.Context(), "CONTROLLER CreateCompany")(err)
-	}()
 
 	var req companydto.CreateCompanyRequest
 
@@ -51,9 +47,6 @@ func (c *CompanyController) Create(w http.ResponseWriter, r *http.Request) error
 func (c *CompanyController) GetMyCompany(w http.ResponseWriter, r *http.Request) error {
 
 	var err error
-	defer func() {
-		utils.Trace(r.Context(), "CONTROLLER GetMyCompany")(err)
-	}()
 
 	res, err := c.service.GetMyCompany(r.Context())
 	if err != nil {
@@ -66,9 +59,6 @@ func (c *CompanyController) GetMyCompany(w http.ResponseWriter, r *http.Request)
 func (c *CompanyController) GetCompanies(w http.ResponseWriter, r *http.Request) error {
 
 	var err error
-	defer func() {
-		utils.Trace(r.Context(), "CONTROLLER GetCompanies")(err)
-	}()
 
 	q := r.URL.Query()
 
@@ -115,9 +105,6 @@ func (c *CompanyController) GetCompanies(w http.ResponseWriter, r *http.Request)
 func (c *CompanyController) GetCompanyByID(w http.ResponseWriter, r *http.Request) error {
 
 	var err error
-	defer func() {
-		utils.Trace(r.Context(), "CONTROLLER GetCompanyByID")(err)
-	}()
 
 	vars := mux.Vars(r)
 

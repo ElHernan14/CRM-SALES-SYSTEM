@@ -4,7 +4,6 @@ import (
 	"context"
 	metadto "crm-system-sales/internal/core/dto"
 	tenantHelper "crm-system-sales/internal/core/tenant"
-	"crm-system-sales/internal/core/utils"
 	clientrepo "crm-system-sales/internal/modules/client"
 	invoiceAccess "crm-system-sales/internal/modules/invoice/access"
 	invoicerepo "crm-system-sales/internal/modules/invoice/repository"
@@ -49,10 +48,6 @@ func (s *invoicePaymentService) GetByInvoice(
 ) (*invoicepaymentdto.GetInvoicePaymentsResponse, error) {
 
 	var err error
-
-	defer func() {
-		utils.Trace(ctx, "SERVICE GetInvoicePayments")(err)
-	}()
 
 	tenant := tenantHelper.GetTenant(ctx)
 

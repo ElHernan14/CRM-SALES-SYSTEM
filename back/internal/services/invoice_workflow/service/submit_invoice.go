@@ -5,7 +5,6 @@ import (
 	errorHandler "crm-system-sales/internal/core/error"
 	tenantHelper "crm-system-sales/internal/core/tenant"
 	"crm-system-sales/internal/core/transaction"
-	"crm-system-sales/internal/core/utils"
 	clientRepo "crm-system-sales/internal/modules/client"
 	inventoryService "crm-system-sales/internal/modules/inventory"
 	invoiceAccess "crm-system-sales/internal/modules/invoice/access"
@@ -54,9 +53,6 @@ func (s *submitInvoiceWorkflow) Submit(
 ) error {
 
 	var err error
-	defer func() {
-		utils.Trace(ctx, "SERVICE SubmitInvoiceWorkflowService")(err)
-	}()
 
 	tenant := tenantHelper.GetTenant(ctx)
 

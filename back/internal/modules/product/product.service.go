@@ -7,7 +7,6 @@ import (
 	meta "crm-system-sales/internal/core/dto"
 	errorHandler "crm-system-sales/internal/core/error"
 	tenant "crm-system-sales/internal/core/tenant"
-	"crm-system-sales/internal/core/utils"
 	models "crm-system-sales/internal/models/product"
 	productdto "crm-system-sales/internal/modules/product/dto"
 	"database/sql"
@@ -42,9 +41,6 @@ func (s *productService) Create(
 ) (*productdto.ProductResponse, error) {
 
 	var err error
-	defer func() {
-		utils.Trace(ctx, "SERVICE CreateProduct")(err)
-	}()
 
 	tenant := tenant.GetTenant(ctx)
 
@@ -88,9 +84,6 @@ func (s *productService) GetProducts(
 ) (*productdto.GetProductsResponse, error) {
 
 	var err error
-	defer func() {
-		utils.Trace(ctx, "SERVICE GetProducts")(err)
-	}()
 
 	tenant := tenant.GetTenant(ctx)
 	if tenant == nil {
@@ -150,9 +143,6 @@ func (s *productService) GetByID(
 ) (*productdto.ProductDetailResponse, error) {
 
 	var err error
-	defer func() {
-		utils.Trace(ctx, "SERVICE GetProductByID")(err)
-	}()
 
 	tenant := tenant.GetTenant(ctx)
 	if tenant == nil {
@@ -191,9 +181,6 @@ func (s *productService) Update(
 ) (*productdto.ProductDetailResponse, error) {
 
 	var err error
-	defer func() {
-		utils.Trace(ctx, "SERVICE UpdateProduct")(err)
-	}()
 
 	tenant := tenant.GetTenant(ctx)
 	if tenant == nil {
@@ -252,9 +239,6 @@ func (s *productService) Update(
 func (s *productService) Delete(ctx context.Context, id int) error {
 
 	var err error
-	defer func() {
-		utils.Trace(ctx, "SERVICE DeleteProduct")(err)
-	}()
 
 	tenant := tenant.GetTenant(ctx)
 	if tenant == nil {

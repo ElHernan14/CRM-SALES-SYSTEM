@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 
-	"crm-system-sales/internal/core/utils"
 	invoiceItemModel "crm-system-sales/internal/modules/invoice_item/models"
 )
 
@@ -241,9 +240,6 @@ func (r *invoiceItemRepository) GetByInvoiceID(
 	limit int,
 ) ([]invoiceItemModel.InvoiceItem, int, error) {
 	var err error
-	defer func() {
-		utils.Trace(ctx, "REPO GetByInvoiceID")(err)
-	}()
 
 	baseQuery := `
 			 FROM invoice_item
@@ -296,9 +292,7 @@ func (r *invoiceItemRepository) ListByInvoiceID(
 	invoiceID int,
 ) ([]invoiceItemModel.InvoiceItem, error) {
 	var err error
-	defer func() {
-		utils.Trace(ctx, "REPO ListByInvoiceID")(err)
-	}()
+
 	query := `SELECT
 				id,
 				invoice_id,

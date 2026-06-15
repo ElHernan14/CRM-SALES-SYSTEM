@@ -5,10 +5,10 @@ import (
 	"log"
 	"net/http"
 
+	_ "crm-system-sales/docs"
 	authcore "crm-system-sales/internal/core/auth"
 	errorHandler "crm-system-sales/internal/core/error"
 	response "crm-system-sales/internal/core/response"
-	coreUtils "crm-system-sales/internal/core/utils"
 	validatorx "crm-system-sales/internal/core/validator"
 	authdto "crm-system-sales/internal/modules/auth/dto"
 )
@@ -21,13 +21,24 @@ func NewAuthController(authService AuthService) *AuthController {
 	return &AuthController{AuthService: authService}
 }
 
-// Login method
+// Login godoc
+//
+// @Summary Login user
+// @Description Authenticate user and return JWT token
+// @Tags Auth
+// @Accept json
+// @Produce json
+//
+// @Param request body authdto.LoginRequest true "Credentials"
+//
+// @Success 200 {object} response.APIResponse
+// @Failure 400 {object} response.APIResponse
+// @Failure 401 {object} response.APIResponse
+//
+// @Router /auth/login [post]
 func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) error {
 	var req authdto.LoginRequest
 	var err error
-	defer func() {
-		coreUtils.Trace(r.Context(), "CONTROLLER Login")(err)
-	}()
 
 	err = json.NewDecoder(r.Body).Decode(&req)
 	log.Println("Received login request: ", req)
@@ -58,8 +69,8 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	res := map[string]interface{}{
-		"token": token,
+	res := &authdto.LoginResponse{
+		Token: token,
 	}
 
 	log.Print("Login success")

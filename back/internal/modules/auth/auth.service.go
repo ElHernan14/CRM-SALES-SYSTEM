@@ -3,7 +3,6 @@ package auth
 import (
 	authcore "crm-system-sales/internal/core/auth"
 	errorHandler "crm-system-sales/internal/core/error"
-	coreUtils "crm-system-sales/internal/core/utils"
 	models "crm-system-sales/internal/models/auth"
 	"crm-system-sales/internal/modules/users"
 	"log"
@@ -24,9 +23,7 @@ func NewAuthService(userRepo users.UserRepository) AuthService {
 
 func (s *authService) Login(r *http.Request, email, password string) (*models.UserLogin, error) {
 	var err error
-	defer func() {
-		coreUtils.Trace(r.Context(), "SERVICE Login")(err)
-	}()
+
 	user, err := s.UserRepo.GetUserLogin(email)
 	if err != nil {
 		log.Println("Error fetching user for login: ", err)

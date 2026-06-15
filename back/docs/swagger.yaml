@@ -1,0 +1,907 @@
+basePath: /api
+definitions:
+  authdto.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  docs.CheckoutSuccessResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      data:
+        $ref: '#/definitions/dto.CheckoutResponse'
+      status:
+        example: success
+        type: string
+    type: object
+  docs.CreateInvoiceItemSuccessResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      data:
+        $ref: '#/definitions/invoiceitemdto.InvoiceItemResponse'
+      status:
+        example: success
+        type: string
+    type: object
+  docs.CreateInvoiceSuccessResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      data:
+        $ref: '#/definitions/invoicedto.InvoiceResponse'
+      status:
+        example: success
+        type: string
+    type: object
+  docs.DeleteInvoiceItemSuccessResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      data:
+        example: item eliminado correctamente
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  docs.GetInvoiceSuccessResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      data:
+        $ref: '#/definitions/invoicedto.GetInvoiceResponse'
+      status:
+        example: success
+        type: string
+    type: object
+  docs.GetProductsSuccessResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/productdto.GetProductsResponse'
+      status:
+        type: string
+    type: object
+  docs.GetStoreProductsSuccessResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      data:
+        $ref: '#/definitions/dto.GetStoreProductsResponse'
+      status:
+        example: success
+        type: string
+    type: object
+  docs.PayInvoiceSuccessResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      data:
+        $ref: '#/definitions/invoicedto.PayInvoiceResponse'
+      status:
+        example: success
+        type: string
+    type: object
+  docs.ProductDetailSuccessResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/productdto.ProductDetailResponse'
+      status:
+        type: string
+    type: object
+  docs.SubmitInvoiceSuccessResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      data:
+        example: invoice enviada correctamente
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  docs.UpdateInvoiceItemSuccessResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      data:
+        $ref: '#/definitions/invoiceitemdto.InvoiceItemResponse'
+      status:
+        example: success
+        type: string
+    type: object
+  dto.CheckoutResponse:
+    properties:
+      invoice_id:
+        example: 15
+        type: integer
+      status:
+        example: pending
+        type: string
+    type: object
+  dto.GetStoreProductsResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.StoreProductResponse'
+        type: array
+      meta:
+        $ref: '#/definitions/dto.Meta'
+    type: object
+  dto.Meta:
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  dto.StoreProductResponse:
+    properties:
+      available_stock:
+        example: 25
+        type: integer
+      description:
+        example: Business notebook
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: Notebook Lenovo ThinkPad
+        type: string
+      price:
+        example: 1200
+        type: number
+      type:
+        example: physical
+        type: string
+    type: object
+  invoicedto.CreateInvoiceRequest:
+    properties:
+      buyer_client_id:
+        example: 5
+        type: integer
+      seller_company_id:
+        example: 2
+        type: integer
+    required:
+    - buyer_client_id
+    - seller_company_id
+    type: object
+  invoicedto.GetInvoiceResponse:
+    properties:
+      buyer_client_id:
+        example: 8
+        type: integer
+      created_at:
+        example: "2026-06-15T10:00:00Z"
+        type: string
+      created_by_user_id:
+        example: 12
+        type: integer
+      deleted_at:
+        type: string
+      id:
+        example: 15
+        type: integer
+      paid_amount:
+        example: 500
+        type: number
+      seller_company_id:
+        example: 2
+        type: integer
+      status:
+        example: 1
+        type: integer
+      status_invoice:
+        example: pending
+        type: string
+      subtotal:
+        example: 1000
+        type: number
+      taxes:
+        example: 210
+        type: number
+      total_amount:
+        example: 1210
+        type: number
+      updated_at:
+        type: string
+    type: object
+  invoicedto.InvoiceResponse:
+    properties:
+      buyer_client_id:
+        example: 5
+        type: integer
+      created_at:
+        example: "2026-06-15T18:30:00Z"
+        type: string
+      created_by_user_id:
+        example: 10
+        type: integer
+      id:
+        example: 15
+        type: integer
+      seller_company_id:
+        example: 2
+        type: integer
+      status_invoice:
+        example: draft
+        type: string
+      total_amount:
+        example: 0
+        type: number
+    type: object
+  invoicedto.PayInvoiceRequest:
+    properties:
+      amount:
+        example: 1500
+        type: number
+      payment_method:
+        example: cash
+        maxLength: 50
+        type: string
+    required:
+    - amount
+    - payment_method
+    type: object
+  invoicedto.PayInvoiceResponse:
+    properties:
+      paid_amount:
+        example: 1500
+        type: number
+      payment_id:
+        example: 21
+        type: integer
+      remaining_amount:
+        example: 0
+        type: number
+      status_invoice:
+        example: paid
+        type: string
+      total_amount:
+        example: 1500
+        type: number
+    type: object
+  invoiceitemdto.CreateInvoiceItemRequest:
+    properties:
+      product_id:
+        example: 12
+        type: integer
+      quantity:
+        example: 3
+        maximum: 999
+        type: integer
+    required:
+    - product_id
+    - quantity
+    type: object
+  invoiceitemdto.InvoiceItemResponse:
+    properties:
+      id:
+        example: 101
+        type: integer
+      invoice_id:
+        example: 15
+        type: integer
+      price:
+        example: 1200
+        type: number
+      product_id:
+        example: 12
+        type: integer
+      product_name:
+        example: Notebook Lenovo ThinkPad
+        type: string
+      quantity:
+        example: 3
+        type: integer
+      subtotal:
+        example: 3600
+        type: number
+    type: object
+  invoiceitemdto.UpdateInvoiceItemRequest:
+    properties:
+      quantity:
+        example: 5
+        maximum: 9999
+        type: integer
+    required:
+    - quantity
+    type: object
+  productdto.GetProductsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/productdto.ProductListItem'
+        type: array
+      meta:
+        $ref: '#/definitions/dto.Meta'
+    type: object
+  productdto.ProductDetailResponse:
+    properties:
+      company_id:
+        example: 1
+        type: integer
+      description:
+        example: Business laptop with Intel Core i7 processor
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: Notebook Lenovo ThinkPad
+        type: string
+      price:
+        example: 1200.5
+        type: number
+      status:
+        example: 1
+        type: integer
+      stock:
+        example: 50
+        type: integer
+      type:
+        example: physical
+        type: string
+    type: object
+  productdto.ProductListItem:
+    properties:
+      company_id:
+        example: 1
+        type: integer
+      description:
+        example: Business laptop with Intel Core i7 processor
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: Notebook Lenovo ThinkPad
+        type: string
+      price:
+        example: 1200.5
+        type: number
+      status:
+        example: 1
+        type: integer
+      stock:
+        example: 50
+        type: integer
+      type:
+        example: physical
+        type: string
+    type: object
+  response.APIResponse:
+    properties:
+      code:
+        type: integer
+      data: {}
+      errorMessage:
+        type: string
+      status:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Multi-tenant ERP & Commerce SaaS API
+  title: CRM System Sales API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return JWT token
+      parameters:
+      - description: Credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/authdto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Login user
+      tags:
+      - Auth
+  /invoice:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new draft invoice for a buyer and seller relationship
+      parameters:
+      - description: Invoice data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/invoicedto.CreateInvoiceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/docs.CreateInvoiceSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create invoice draft
+      tags:
+      - Invoice
+  /invoice/{id}:
+    get:
+      description: Returns invoice details and financial information
+      parameters:
+      - description: Invoice ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/docs.GetInvoiceSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get invoice by ID
+      tags:
+      - Invoice
+  /invoice/{id}/items:
+    post:
+      consumes:
+      - application/json
+      description: Adds a product to a draft invoice or increases quantity if already
+        exists
+      parameters:
+      - description: Invoice ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Invoice Item
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/invoiceitemdto.CreateInvoiceItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/docs.CreateInvoiceItemSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Add item to invoice
+      tags:
+      - Invoice Items
+  /invoice/{id}/items/{itemId}:
+    delete:
+      description: Removes an item from a draft invoice
+      parameters:
+      - description: Invoice ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Invoice Item ID
+        in: path
+        name: itemId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/docs.DeleteInvoiceItemSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete invoice item
+      tags:
+      - Invoice Items
+    patch:
+      consumes:
+      - application/json
+      description: Updates item quantity and recalculates subtotal
+      parameters:
+      - description: Invoice ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Invoice Item ID
+        in: path
+        name: itemId
+        required: true
+        type: integer
+      - description: Update quantity
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/invoiceitemdto.UpdateInvoiceItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/docs.UpdateInvoiceItemSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update invoice item
+      tags:
+      - Invoice Items
+  /invoice/{id}/pay:
+    post:
+      consumes:
+      - application/json
+      description: Registers a payment for an invoice and updates payment status
+      parameters:
+      - description: Invoice ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Payment data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/invoicedto.PayInvoiceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/docs.PayInvoiceSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Pay invoice
+      tags:
+      - Invoice
+  /invoice/{id}/submit:
+    post:
+      consumes:
+      - application/json
+      description: Validates invoice items, reserves stock and changes invoice status
+        from draft to pending
+      parameters:
+      - description: Invoice ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/docs.SubmitInvoiceSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Submit invoice
+      tags:
+      - Invoice
+  /product:
+    get:
+      description: Returns a paginated list of products with filters
+      parameters:
+      - description: Search by name
+        in: query
+        name: search
+        type: string
+      - description: Product type
+        in: query
+        name: type
+        type: string
+      - description: Minimum price
+        in: query
+        name: min_price
+        type: number
+      - description: Maximum price
+        in: query
+        name: max_price
+        type: number
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/docs.GetProductsSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List products
+      tags:
+      - Products
+  /product/{id}:
+    get:
+      description: Returns a product by id
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/docs.ProductDetailSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get product
+      tags:
+      - Products
+  /store/checkout:
+    post:
+      consumes:
+      - application/json
+      description: Submits the user's draft invoice and reserves stock
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/docs.CheckoutSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Checkout cart
+      tags:
+      - Store
+  /store/products:
+    get:
+      description: Returns products available for ecommerce purchase
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Product name
+        in: query
+        name: name
+        type: string
+      - description: Product type
+        in: query
+        name: type
+        type: string
+      - description: Sort column
+        in: query
+        name: sort_column
+        type: string
+      - description: Sort order
+        in: query
+        name: order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/docs.GetStoreProductsSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Store catalog
+      tags:
+      - Store
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

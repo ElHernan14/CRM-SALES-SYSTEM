@@ -4,7 +4,6 @@ import (
 	errorHandler "crm-system-sales/internal/core/error"
 	helper "crm-system-sales/internal/core/helper"
 	"crm-system-sales/internal/core/response"
-	"crm-system-sales/internal/core/utils"
 	validatorx "crm-system-sales/internal/core/validator"
 	invoiceitemdto "crm-system-sales/internal/modules/invoice_item/dto"
 	"encoding/json"
@@ -22,6 +21,25 @@ func NewInvoiceItemController(service InvoiceItemService) *InvoiceItemController
 	return &InvoiceItemController{service: service}
 }
 
+// Create godoc
+//
+// @Summary Add item to invoice
+// @Description Adds a product to a draft invoice or increases quantity if already exists
+// @Tags Invoice Items
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+//
+// @Param id path int true "Invoice ID"
+// @Param request body invoiceitemdto.CreateInvoiceItemRequest true "Invoice Item"
+//
+// @Success 200 {object} docs.CreateInvoiceItemSuccessResponse
+// @Failure 400 {object} response.APIResponse
+// @Failure 401 {object} response.APIResponse
+// @Failure 403 {object} response.APIResponse
+// @Failure 404 {object} response.APIResponse
+//
+// @Router /invoice/{id}/items [post]
 func (c *InvoiceItemController) Create(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -71,15 +89,32 @@ func (c *InvoiceItemController) Create(
 	return nil
 }
 
+// Update godoc
+//
+// @Summary Update invoice item
+// @Description Updates item quantity and recalculates subtotal
+// @Tags Invoice Items
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+//
+// @Param id path int true "Invoice ID"
+// @Param itemId path int true "Invoice Item ID"
+// @Param request body invoiceitemdto.UpdateInvoiceItemRequest true "Update quantity"
+//
+// @Success 200 {object} docs.UpdateInvoiceItemSuccessResponse
+// @Failure 400 {object} response.APIResponse
+// @Failure 401 {object} response.APIResponse
+// @Failure 403 {object} response.APIResponse
+// @Failure 404 {object} response.APIResponse
+//
+// @Router /invoice/{id}/items/{itemId} [patch]
 func (c *InvoiceItemController) Update(
 	w http.ResponseWriter,
 	r *http.Request,
 ) error {
 
 	var err error
-	defer func() {
-		utils.Trace(r.Context(), "CONTROLLER UpdateInvoiceItem")(err)
-	}()
 
 	params := mux.Vars(r)
 
@@ -121,15 +156,30 @@ func (c *InvoiceItemController) Update(
 	return nil
 }
 
+// Delete godoc
+//
+// @Summary Delete invoice item
+// @Description Removes an item from a draft invoice
+// @Tags Invoice Items
+// @Produce json
+// @Security BearerAuth
+//
+// @Param id path int true "Invoice ID"
+// @Param itemId path int true "Invoice Item ID"
+//
+// @Success 200 {object} docs.DeleteInvoiceItemSuccessResponse
+// @Failure 400 {object} response.APIResponse
+// @Failure 401 {object} response.APIResponse
+// @Failure 403 {object} response.APIResponse
+// @Failure 404 {object} response.APIResponse
+//
+// @Router /invoice/{id}/items/{itemId} [delete]
 func (c *InvoiceItemController) Delete(
 	w http.ResponseWriter,
 	r *http.Request,
 ) error {
 
 	var err error
-	defer func() {
-		utils.Trace(r.Context(), "CONTROLLER DeleteInvoiceItem")(err)
-	}()
 
 	params := mux.Vars(r)
 
@@ -160,9 +210,6 @@ func (c *InvoiceItemController) GetInvoiceItems(
 	r *http.Request,
 ) error {
 	var err error
-	defer func() {
-		utils.Trace(r.Context(), "CONTROLLER GetInvoiceItems")(err)
-	}()
 
 	params := mux.Vars(r)
 

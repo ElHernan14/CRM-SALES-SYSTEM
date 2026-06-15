@@ -10,7 +10,6 @@ import (
 	tenantHelper "crm-system-sales/internal/core/tenant"
 	tenantctx "crm-system-sales/internal/core/tenant"
 	core "crm-system-sales/internal/core/transaction"
-	"crm-system-sales/internal/core/utils"
 
 	"crm-system-sales/internal/modules/client"
 	"crm-system-sales/internal/modules/inventory"
@@ -270,9 +269,6 @@ func (s *invoiceItemService) Update(
 ) (*invoiceitemdto.InvoiceItemResponse, error) {
 
 	var err error
-	defer func() {
-		utils.Trace(ctx, "SERVICE UpdateInvoiceItem")(err)
-	}()
 
 	tenant := tenantctx.GetTenant(ctx)
 
@@ -420,9 +416,6 @@ func (s *invoiceItemService) Delete(
 ) error {
 
 	var err error
-	defer func() {
-		utils.Trace(ctx, "SERVICE DeleteInvoiceItem")(err)
-	}()
 
 	tenant := tenantctx.GetTenant(ctx)
 
@@ -526,9 +519,6 @@ func (s *invoiceItemService) GetInvoiceItems(
 	req *invoiceItemDTO.GetInvoiceItemsRequest,
 ) (*invoiceItemDTO.GetInvoiceItemsResponse, error) {
 	var err error
-	defer func() {
-		utils.Trace(ctx, "SERVICE GetInvoiceItems")(err)
-	}()
 
 	tenant := tenantHelper.GetTenant(ctx)
 

@@ -4,7 +4,6 @@ import (
 	errorHandler "crm-system-sales/internal/core/error"
 	helper "crm-system-sales/internal/core/helper"
 	"crm-system-sales/internal/core/response"
-	"crm-system-sales/internal/core/utils"
 	validatorx "crm-system-sales/internal/core/validator"
 	invoicedto "crm-system-sales/internal/modules/invoice/dto"
 	invoiceService "crm-system-sales/internal/modules/invoice/service"
@@ -31,6 +30,23 @@ func NewInvoiceController(
 	}
 }
 
+// CreateDraft godoc
+//
+// @Summary Create invoice draft
+// @Description Creates a new draft invoice for a buyer and seller relationship
+// @Tags Invoice
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+//
+// @Param request body invoicedto.CreateInvoiceRequest true "Invoice data"
+//
+// @Success 200 {object} docs.CreateInvoiceSuccessResponse
+// @Failure 400 {object} response.APIResponse
+// @Failure 401 {object} response.APIResponse
+// @Failure 403 {object} response.APIResponse
+//
+// @Router /invoice [post]
 func (c *InvoiceController) CreateDraft(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -63,14 +79,29 @@ func (c *InvoiceController) CreateDraft(
 	)
 }
 
+// Submit godoc
+//
+// @Summary Submit invoice
+// @Description Validates invoice items, reserves stock and changes invoice status from draft to pending
+// @Tags Invoice
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+//
+// @Param id path int true "Invoice ID"
+//
+// @Success 200 {object} docs.SubmitInvoiceSuccessResponse
+// @Failure 400 {object} response.APIResponse
+// @Failure 401 {object} response.APIResponse
+// @Failure 403 {object} response.APIResponse
+// @Failure 404 {object} response.APIResponse
+//
+// @Router /invoice/{id}/submit [post]
 func (c *InvoiceController) Submit(
 	w http.ResponseWriter,
 	r *http.Request,
 ) error {
 	var err error
-	defer func() {
-		utils.Trace(r.Context(), "CONTROLLER SubmitInvoice")(err)
-	}()
 
 	params := mux.Vars(r)
 
@@ -105,15 +136,31 @@ func (c *InvoiceController) Submit(
 	)
 }
 
+// Pay godoc
+//
+// @Summary Pay invoice
+// @Description Registers a payment for an invoice and updates payment status
+// @Tags Invoice
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+//
+// @Param id path int true "Invoice ID"
+// @Param request body invoicedto.PayInvoiceRequest true "Payment data"
+//
+// @Success 200 {object} docs.PayInvoiceSuccessResponse
+// @Failure 400 {object} response.APIResponse
+// @Failure 401 {object} response.APIResponse
+// @Failure 403 {object} response.APIResponse
+// @Failure 404 {object} response.APIResponse
+//
+// @Router /invoice/{id}/pay [post]
 func (c *InvoiceController) Pay(
 	w http.ResponseWriter,
 	r *http.Request,
 ) error {
 
 	var err error
-	defer func() {
-		utils.Trace(r.Context(), "CONTROLLER PayInvoice")(err)
-	}()
 
 	params := mux.Vars(r)
 
@@ -156,6 +203,23 @@ func (c *InvoiceController) Pay(
 	)
 }
 
+// GetByID godoc
+//
+// @Summary Get invoice by ID
+// @Description Returns invoice details and financial information
+// @Tags Invoice
+// @Produce json
+// @Security BearerAuth
+//
+// @Param id path int true "Invoice ID"
+//
+// @Success 200 {object} docs.GetInvoiceSuccessResponse
+// @Failure 400 {object} response.APIResponse
+// @Failure 401 {object} response.APIResponse
+// @Failure 403 {object} response.APIResponse
+// @Failure 404 {object} response.APIResponse
+//
+// @Router /invoice/{id} [get]
 func (c *InvoiceController) GetByID(
 	w http.ResponseWriter,
 	r *http.Request,
