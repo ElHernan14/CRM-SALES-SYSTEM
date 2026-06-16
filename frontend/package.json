@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "@tanstack/vue-query": "^5.101.0",
+    "@vueuse/core": "^14.3.0",
+    "axios": "^1.18.0",
+    "dayjs": "^1.11.21",
+    "lucide-vue-next": "^1.0.0",
+    "pinia": "^3.0.4",
+    "vue-router": "^5.1.0"
+  }
+}
