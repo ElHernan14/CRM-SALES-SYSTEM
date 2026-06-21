@@ -15,16 +15,30 @@ const routes = [
       //   component: LandingPage
       // },
       {
+        path: "",
+        redirect: { name: "login" }
+      },
+      {
         path: "login",
         name:"login",
-        component: LoginPage
+        component: LoginPage,
+        meta: {
+          guestOnly: true
+        }
       }
     ]
   },
   {
     path: "/erp",
     component: ERPLayout,
+    meta: {
+      requiresAuth: true
+    },
     children: [
+      {
+        path: "",
+        redirect: { name: "dashboard" }
+      },
       {
         path: "dashboard",
         component: DashboardPage

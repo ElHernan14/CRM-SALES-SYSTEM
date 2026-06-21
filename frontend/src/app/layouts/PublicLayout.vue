@@ -1,5 +1,3 @@
 <template>
-  <div>
-    Public Layout
-  </div>
+  <router-view />
 </template>

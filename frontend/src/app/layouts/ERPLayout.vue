@@ -1,5 +1,3 @@
 <template>
-  <div>
-    ERP Layout
-  </div>
+  <router-view />
 </template>

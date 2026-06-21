@@ -9,10 +9,9 @@ export async function login(credentials: LoginRequest) {
   try {
     // 1. POST /auth/login
     const response = await loginApi(credentials)
-
+console.log("LOGIN RESPONSE", response)
     // 2. Guardar token
     auth.setToken(response.token)
-    localStorage.setItem("access_token", response.token)
 
     // 3. GET /auth/me
     const user: TenantContext = await me()
@@ -26,8 +25,8 @@ export async function login(credentials: LoginRequest) {
     } else {
       router.push("/store/dashboard")
     }
-  } catch (error) {
-    console.error("Login error:", error)
+  } catch (error: any) {
+    console.error("Login error:", error.message)
     throw error
   }
 }
