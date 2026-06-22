@@ -1,12 +1,3 @@
-// @title CRM System Sales API
-// @version 1.0
-// @description Multi-tenant ERP & Commerce SaaS API
-// @BasePath /api
-//
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
-// @schemes http
 package main
 
 import (
@@ -17,25 +8,14 @@ import (
 	"crm-system-sales/internal/controllers"
 	"crm-system-sales/internal/db"
 	"crm-system-sales/internal/middleware"
-
 	"crm-system-sales/routes"
 
 	_ "crm-system-sales/docs"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
-	/*"golang.org/x/crypto/bcrypt"*/)
-
-//
-//	-- Departamentos de Ventas, Servicio de Atención al Cliente, Marketing y Medios de Comunicación (historial de compras del cliente,
-// 	el estado de sus pedidos, los problemas pendientes del servicio de atención al cliente, etc),
-// 	y un panel de administración para gestionar productos, pedidos, clientes, etc. cada uno de estos con su propio conjunto de rutas y controladores.
-//
-//	- Gestión de Clientes: CRUD de clientes, historial de compras, preferencias, etc.
-//	- Gestión de Productos: CRUD de productos, categorías, precios, etc.
-//	- Gestión de Pedidos: CRUD de pedidos, seguimiento, estado, etc.
-//	- Gestión de Inventario: CRUD de inventario, niveles de stock, alertas, etc.
-//	- Gestión de Usuarios y Roles: CRUD de usuarios, asignación de roles, permisos, etc.
+)
 
 func main() {
 	cfg := config.LoadConfig()
@@ -49,30 +29,106 @@ func main() {
 		SSLMode:  cfg.DBSSLMode,
 	})
 
-	_ = database
-
 	healthHandler := controllers.NewHealthHandler(database)
 
-	// router
+	// =========================
+	// ROOT ROUTER
+	// =========================
 	r := mux.NewRouter()
 
-	// Health check route
+	// =========================
+	// GLOBAL MIDDLEWARES
+	// =========================
+	r.Use(middleware.RecoverMiddleware)
+	r.Use(middleware.RequestIDMiddleware)
+	r.Use(middleware.ObservabilityMiddleware)
+
+	// =========================
+	// OPTIONS GLOBAL HANDLER
+	// (IMPORTANTE para preflight)
+	// =========================
+	// r.Use(func(next http.Handler) http.Handler {
+	// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+	// 		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+	// 		w.Header().Set("Vary", "Origin")
+	// 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	// 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+
+	// 		if r.Method == "OPTIONS" {
+	// 			w.WriteHeader(204)
+	// 			return
+	// 		}
+
+	// 		next.ServeHTTP(w, r)
+	// 	})
+	// })
+
+	// =========================
+	// HEALTH + SWAGGER
+	// =========================
 	r.HandleFunc("/health", healthHandler.Check).Methods("GET")
 
-	// Swagger route
 	r.PathPrefix("/swagger/").Handler(
 		httpSwagger.WrapHandler,
 	)
 
-	//Tracing middleware
-	r.Use(middleware.ObservabilityMiddleware)
+	// =========================
+	// API SUBROUTER (OK ACA)
+	// =========================
+	api := r.PathPrefix("/api").Subrouter()
 
-	routes.SetupRoutes(r, database)
+	// rutas de la app
+	routes.SetupRoutes(api, database)
+	// r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+	// 	path, _ := route.GetPathTemplate()
+	// 	methods, _ := route.GetMethods()
+	// 	log.Println("ROUTE:", path, methods)
+	// 	return nil
+	// })
 
-	// hash, _ := bcrypt.GenerateFromPassword([]byte("asd123"), bcrypt.DefaultCost)
-	// log.Println(string(hash))
-
+	// =========================
+	// START SERVER
+	// =========================
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	log.Println("Server running on :8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Println("Server running on :8081")
+
+	// r.HandleFunc("/api/auth/login", func(w http.ResponseWriter, r *http.Request) {
+	// 	log.Println("MANUAL OPTIONS HIT")
+
+	// 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+	// 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	// 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+
+	// 	w.WriteHeader(http.StatusNoContent)
+	// }).Methods("OPTIONS")
+
+	cors := handlers.CORS(
+		handlers.AllowedOrigins(
+			[]string{"http://localhost:5173"},
+		),
+		handlers.AllowedMethods(
+			[]string{
+				"GET",
+				"POST",
+				"PUT",
+				"PATCH",
+				"DELETE",
+				"OPTIONS",
+			},
+		),
+		handlers.AllowedHeaders(
+			[]string{
+				"Content-Type",
+				"Authorization",
+			},
+		),
+	)
+
+	log.Fatal(
+		http.ListenAndServe(
+			":8081",
+			cors(r),
+		),
+	)
 }

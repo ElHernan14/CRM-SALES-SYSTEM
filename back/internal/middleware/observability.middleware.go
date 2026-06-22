@@ -1,14 +1,11 @@
 package middleware
 
 import (
-	"context"
-	"fmt"
+	"log"
 	"net/http"
 	"time"
 
 	corecontext "crm-system-sales/internal/core/utils"
-
-	"github.com/google/uuid"
 )
 
 type responseWriter struct {
@@ -24,35 +21,24 @@ func (rw *responseWriter) WriteHeader(code int) {
 // middleware global
 func ObservabilityMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
 		start := time.Now()
-		requestID := r.Header.Get("X-Request-ID")
-		if requestID == "" {
-			requestID = uuid.New().String()
-		}
 
-		w.Header().Set(
-			"X-Request-ID",
-			requestID,
-		)
-		// meter request_id en contexto
-		ctx := context.WithValue(r.Context(), corecontext.RequestIDKey, requestID)
-
-		// ejecutar request
 		rw := &responseWriter{ResponseWriter: w, statusCode: 200}
-		next.ServeHTTP(rw, r.WithContext(ctx))
 
-		// métricas + log
+		next.ServeHTTP(rw, r)
+
 		duration := time.Since(start)
-		timestamp := time.Now().Format("2006-01-02 15:04:05")
 
-		fmt.Printf("[%s] ObservabilityMiddleware → REQUEST id=%s method=%s path=%s status=%d duration=%fs\n",
-			timestamp,
-			requestID,
+		reqID := r.Context().Value(corecontext.RequestIDKey)
+
+		log.Printf(
+			"[OBS] id=%v method=%s path=%s status=%d duration=%s",
+			reqID,
 			r.Method,
 			r.URL.Path,
 			rw.statusCode,
-			duration.Seconds(),
+			duration,
 		)
-		fmt.Printf("[%s] --------------------------------------------------------------------------------------------------------\n", timestamp)
 	})
 }

@@ -41,14 +41,13 @@ type AppContainer struct {
 }
 
 func SetupRoutes(r *mux.Router, db *sql.DB) {
-	api := r.PathPrefix("/api").Subrouter()
 
 	// auth (público)
 	// Rutas públicas
-	authRouter := api.PathPrefix("/auth").Subrouter()
+	authRouter := r.PathPrefix("/auth").Subrouter()
 
 	// rutas protegidos
-	protected := api.NewRoute().Subrouter()
+	protected := r.PathPrefix("").Subrouter()
 	protected.Use(middleware.AuthMiddleware)
 
 	// Repos
