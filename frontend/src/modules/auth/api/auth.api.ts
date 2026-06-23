@@ -1,26 +1,28 @@
-import { http } from "@/shared/api/http";
+// auth.api.ts
+import { http } from "@/shared/api/http"
+import { unwrapResponse } from "@/shared/utils/response"
+import {
+  LoginResponseSchema,
+  TenantContextSchema,
+} from "../types/auth.types"
 import type {
   LoginRequest,
   LoginResponse,
   TenantContext,
-} from "../types/auth.types";
+} from "../types/auth.types"
 
-export async function login(
-  payload: LoginRequest
-) {
-  const { data } = await http.post<LoginResponse>(
-    "/auth/login",
-    payload
-  );
+export async function login(payload: LoginRequest) {
+  const response = await http.post("/auth/login", payload)
 
-  return data;
+  // Validar y extraer solo data
+  const data: LoginResponse = unwrapResponse(LoginResponseSchema, response.data)
+  return data
 }
 
 export async function me() {
-  const { data } =
-    await http.get<TenantContext>(
-      "/auth/me"
-    );
+  const response = await http.get("/me")
 
-  return data;
+  // Validar y extraer solo data
+  const data: TenantContext = unwrapResponse(TenantContextSchema, response.data)
+  return data
 }

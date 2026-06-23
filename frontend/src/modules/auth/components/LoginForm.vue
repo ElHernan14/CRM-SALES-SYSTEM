@@ -27,7 +27,6 @@ async function onSubmit() {
 
     // el redirect ya lo maneja loginAction (ERP / STORE)
   } catch (e: any) {
-    console.log("respuesta: - ", e)
     error.value =
       e?.response?.data?.errorMessage ||
       "Invalid credentials. Please try again."

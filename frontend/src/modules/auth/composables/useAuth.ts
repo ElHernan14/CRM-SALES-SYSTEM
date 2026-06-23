@@ -2,16 +2,13 @@ import { useAuthStore } from "@/modules/auth/stores/auth.store"
 import { login as loginApi, me } from "@/modules/auth/api/auth.api"
 import { router } from "@/app/router"
 import type { LoginRequest, TenantContext } from "@/modules/auth/types/auth.types"
-import { env } from "@/shared/config/env";
 
 export async function login(credentials: LoginRequest) {
   const auth = useAuthStore()
 
   try {
-    console.log(env.apiUrl)
     // 1. POST /auth/login
     const response = await loginApi(credentials)
-
     // 2. Guardar token
     auth.setToken(response.token)
 
@@ -22,7 +19,7 @@ export async function login(credentials: LoginRequest) {
     auth.setUser(user)
 
     // 5. Redirección según TenantContext
-    if (user.companyID) {
+    if (user.company_id) {
       router.push("/erp/dashboard")
     } else {
       router.push("/store/dashboard")
