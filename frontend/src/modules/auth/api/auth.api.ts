@@ -22,7 +22,7 @@ export async function login(payload: LoginRequest) {
 export async function me() {
   const response = await http.get("/me")
 
-  // Validar y extraer solo data
-  const data: TenantContext = unwrapResponse(TenantContextSchema, response.data)
+  // /me devuelve directamente TenantContext, sin envoltorio
+  const data: TenantContext = TenantContextSchema.parse(response.data)
   return data
 }

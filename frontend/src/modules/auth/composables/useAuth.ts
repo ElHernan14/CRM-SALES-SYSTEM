@@ -17,6 +17,7 @@ export async function login(credentials: LoginRequest) {
 
     // 4. Guardar user
     auth.setUser(user)
+    auth.setInitialized(true)
 
     // 5. Redirección según TenantContext
     if (user.company_id) {
@@ -64,5 +65,10 @@ export async function bootstrap() {
   } finally {
     // 6. Inicializar
     auth.setInitialized(true)
+
+    // Si ya estoy autenticado y estoy en /login, redirigir
+    if (auth.isAuthenticated && router.currentRoute.value.name === "login") {
+      router.replace("/erp/dashboard")
+    }
   }
 }

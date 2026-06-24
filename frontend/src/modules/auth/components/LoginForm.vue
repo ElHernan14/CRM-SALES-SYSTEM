@@ -3,6 +3,7 @@ import { ref } from "vue"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { toast } from "vue-sonner"
 
 import { login as loginAction } from "@/modules/auth/composables/useAuth"
 // import { useAuthStore } from "@/modules/auth/stores/auth.store"
@@ -11,12 +12,10 @@ const email = ref("")
 const password = ref("")
 
 const loading = ref(false)
-const error = ref<string | null>(null)
 
 // const auth = useAuthStore()
 
 async function onSubmit() {
-  error.value = null
   loading.value = true
 
   try {
@@ -25,11 +24,13 @@ async function onSubmit() {
       password: password.value
     })
 
+    toast.success("Login successful")
     // el redirect ya lo maneja loginAction (ERP / STORE)
   } catch (e: any) {
-    error.value =
+    const errorMessage =
       e?.response?.data?.errorMessage ||
       "Invalid credentials. Please try again."
+      toast.error(errorMessage)
   } finally {
     loading.value = false
   }
@@ -52,11 +53,6 @@ async function onSubmit() {
 
       <CardContent>
         <form @submit.prevent="onSubmit" class="space-y-4">
-
-          <!-- ERROR -->
-          <div v-if="error" class="text-sm text-red-500">
-            {{ error }}
-          </div>
 
           <!-- EMAIL -->
           <div class="space-y-2">

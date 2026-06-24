@@ -18,6 +18,8 @@ import { createPinia } from "pinia"
 
 import "@/style.css"
 
+import "vue-sonner/style.css"
+
 setupInterceptors();
 
 const app = createApp(App);
