@@ -21,9 +21,10 @@ func (c *UserController) Me(w http.ResponseWriter, r *http.Request) {
 	tenant := tenantHelper.GetTenant(r.Context())
 
 	response := map[string]interface{}{
-		"id":          tenant.UserID,
+		"userID":      tenant.UserID,
 		"email":       tenant.Email,
 		"company_id":  tenant.CompanyID,
+		"client_id":   tenant.ClientID,
 		"roles":       tenant.Roles,
 		"permissions": tenant.Permissions,
 	}
