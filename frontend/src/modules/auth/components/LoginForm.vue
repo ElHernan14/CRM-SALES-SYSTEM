@@ -45,6 +45,19 @@ async function onSubmit() {
   }
 }
 
+function testConfirm() {
+  ui.openConfirm({
+    title: "Cancel invoice?",
+    description: "This action will cancel the invoice and release reserved stock.",
+    confirmText: "Cancel invoice",
+    cancelText: "Keep invoice",
+    variant: "destructive",
+    onConfirm: async () => {
+      toast.success("Invoice cancelled")
+    }
+  })
+}
+
 </script>
 
 <template>
@@ -107,6 +120,10 @@ async function onSubmit() {
           </span>
         </div>
       </form>
+      <br>
+        <Button variant="destructive" @click="testConfirm">
+          Test confirm
+        </Button>
     </CardContent>
   </Card>
 </template>
