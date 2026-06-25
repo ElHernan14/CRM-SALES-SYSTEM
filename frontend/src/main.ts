@@ -16,6 +16,8 @@ import { setupAuthGuard } from "@/modules/auth/guards/auth.guard.ts"
 
 import { createPinia } from "pinia"
 
+import { initializeTheme } from "@/shared/composables/useThemePersistence.ts"
+
 import "@/style.css"
 
 import "vue-sonner/style.css"
@@ -31,6 +33,8 @@ app.use(router);
 app.use(VueQueryPlugin, { queryClient });
 
 await bootstrap()
+
+initializeTheme()
 
 setupAuthGuard(router)
 
