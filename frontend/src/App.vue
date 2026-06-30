@@ -7,8 +7,10 @@ import GlobalConfirmDialog from "@/shared/components/GlobalConfirmDialog.vue"
 <template>
   <router-view />
 
+  <!-- Global loader que muestra el estado de carga en toda la aplicación -->
   <GlobalLoader />
 
+  <!-- Diálogo de confirmación global reutilizable -->
   <GlobalConfirmDialog />
 
   <Toaster

@@ -2,6 +2,7 @@ import { defineStore } from "pinia"
 
 export type ThemeMode = "light" | "dark"
 
+//UI store
 interface ConfirmDialogOptions {
   title: string
   description?: string
