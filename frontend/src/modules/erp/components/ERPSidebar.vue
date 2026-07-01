@@ -1,0 +1,65 @@
+<script setup lang="ts">
+import {
+  LayoutDashboard,
+  Package,
+  FileText,
+  CreditCard,
+  Settings,
+} from "lucide-vue-next"
+
+const navItems = [
+  {
+    label: "Dashboard",
+    to: "/erp/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    label: "Products",
+    to: "/erp/products",
+    icon: Package,
+  },
+  {
+    label: "Invoices",
+    to: "/erp/invoices",
+    icon: FileText,
+  },
+  {
+    label: "Payments",
+    to: "/erp/payments",
+    icon: CreditCard,
+  },
+  {
+    label: "Settings",
+    to: "/erp/settings",
+    icon: Settings,
+  },
+]
+</script>
+
+<template>
+  <aside class="hidden w-64 border-r border-border bg-card/60 lg:flex lg:flex-col">
+    <div class="flex h-16 items-center border-b border-border px-6">
+      <div>
+        <p class="text-sm font-semibold text-foreground">
+          CRM Commerce
+        </p>
+        <p class="text-xs text-muted-foreground">
+          ERP Workspace
+        </p>
+      </div>
+    </div>
+
+    <nav class="flex-1 space-y-1 p-3">
+      <RouterLink
+        v-for="item in navItems"
+        :key="item.to"
+        :to="item.to"
+        class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
+        active-class="bg-muted text-foreground"
+      >
+        <component :is="item.icon" class="h-4 w-4" />
+        <span>{{ item.label }}</span>
+      </RouterLink>
+    </nav>
+  </aside>
+</template>

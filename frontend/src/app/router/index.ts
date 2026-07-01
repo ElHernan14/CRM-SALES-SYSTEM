@@ -1,9 +1,8 @@
 import { createRouter, createWebHistory } from "vue-router";
 import PublicLayout from "@/app/layouts/PublicLayout.vue";
-import ERPLayout from "@/app/layouts/ERPLayout.vue";
+import ERPLayout from "@/modules/erp/layouts/ERPLayout.vue"
+import DashboardPage from "@/modules/erp/pages/DashboardPage.vue"
 import LoginPage from "@/modules/auth/pages/LoginPage.vue";
-import DashboardPage from "@/modules/dashboard/pages/DashboardPage.vue";
-import ProductsPage from "@/modules/products/pages/ProductPage.vue";
 
 const routes = [
   {
@@ -32,22 +31,15 @@ const routes = [
     path: "/erp",
     component: ERPLayout,
     meta: {
-      requiresAuth: true
+      requiresAuth: true,
     },
     children: [
       {
-        path: "",
-        redirect: { name: "dashboard" }
-      },
-      {
         path: "dashboard",
-        component: DashboardPage
+        name: "erp-dashboard",
+        component: DashboardPage,
       },
-      {
-        path: "products",
-        component: ProductsPage
-      }
-    ]
+    ],
   }
 ];
 
