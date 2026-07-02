@@ -4,11 +4,15 @@ import {
   FileText,
   Package,
   Wallet,
+  FileSearch,
 } from "lucide-vue-next"
 
 import PageContainer from "@/shared/components/erp/PageContainer.vue"
 import PageHeader from "@/shared/components/erp/PageHeader.vue"
 import StatCard from "@/shared/components/erp/StatCard.vue"
+import EmptyState from "@/shared/components/erp/EmptyState.vue"
+import SectionCard from "@/shared/components/erp/SectionCard.vue"
+import { Button } from "@/components/ui/button"
 </script>
 
 <template>
@@ -47,5 +51,20 @@ import StatCard from "@/shared/components/erp/StatCard.vue"
         :icon="CreditCard"
       />
     </div>
+
+    <SectionCard
+      title="Recent activity"
+      description="Latest commercial operations across your workspace."
+    >
+      <EmptyState
+        title="No recent activity yet"
+        description="Once invoices, payments or products start moving, activity will appear here."
+        :icon="FileSearch"
+      >
+        <Button variant="outline" size="sm">
+          View documentation
+        </Button>
+      </EmptyState>
+    </SectionCard>    
   </PageContainer>
 </template>

@@ -1,0 +1,30 @@
+<script setup lang="ts">
+defineProps<{
+  title?: string
+  description?: string
+}>()
+</script>
+
+<template>
+  <div class="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+    <div v-if="title || description">
+      <h2
+        v-if="title"
+        class="text-sm font-medium text-foreground"
+      >
+        {{ title }}
+      </h2>
+
+      <p
+        v-if="description"
+        class="mt-1 text-sm text-muted-foreground"
+      >
+        {{ description }}
+      </p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <slot />
+    </div>
+  </div>
+</template>
