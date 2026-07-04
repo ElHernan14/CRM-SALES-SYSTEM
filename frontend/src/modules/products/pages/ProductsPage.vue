@@ -1,37 +1,66 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { Package, RefreshCw } from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue';
+import { Package, RefreshCw, MoreHorizontal } from 'lucide-vue-next';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 import PageContainer from '@/shared/components/erp/PageContainer.vue';
 import PageHeader from '@/shared/components/erp/PageHeader.vue';
 import SectionCard from '@/shared/components/erp/SectionCard.vue';
 import EmptyState from '@/shared/components/erp/EmptyState.vue';
 import DataTable from '@/shared/components/erp/DataTable.vue';
+import ProductsFilters from '../components/ProductsFilters.vue';
+import DataPagination from '@/shared/components/erp/DataPagination.vue';
 
 import { storeToRefs } from 'pinia';
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
 
 import { useProducts } from '../composables/useProducts';
 
+// User store
 const auth = useAuthStore();
 const { user } = storeToRefs(auth);
 
+// Filters
 const search = ref('');
 const page = ref(1);
 const limit = ref(10);
+const type = ref('');
+const minPrice = ref('');
+const maxPrice = ref('');
 
 const productParams = computed(() => ({
   search: search.value || undefined,
+  type: type.value || undefined,
+  min_price: minPrice.value ? Number(minPrice.value) : undefined,
+  max_price: maxPrice.value ? Number(maxPrice.value) : undefined,
   company_id: user.value?.company_id,
   page: page.value,
   limit: limit.value,
 }));
 
+watch([search, type, minPrice, maxPrice], () => {
+  page.value = 1;
+});
+
+function clearFilters() {
+  search.value = '';
+  type.value = '';
+  minPrice.value = '';
+  maxPrice.value = '';
+  page.value = 1;
+}
+
+// Fetch products
 const { data, isLoading, isError, refetch } = useProducts(productParams);
 
+// Table columns and rows
 const columns = [
   { key: 'id', label: 'ID' },
   { key: 'name', label: 'Name' },
@@ -39,6 +68,7 @@ const columns = [
   { key: 'price', label: 'Price' },
   { key: 'stock', label: 'Stock' },
   { key: 'status', label: 'Status' },
+  { key: 'actions', label: '' },
 ];
 
 const rows = computed(() => {
@@ -50,8 +80,14 @@ const rows = computed(() => {
       price: product.price,
       stock: product.stock,
       status: product.status,
+      actions: product.id,
     })) ?? []
   );
+});
+
+// Pagination
+const totalPages = computed(() => {
+  return data.value?.meta.total_pages ?? 1;
 });
 </script>
 
@@ -70,11 +106,14 @@ const rows = computed(() => {
         </Button>
       </template>
 
-      <div class="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <Input v-model="search" class="max-w-sm" placeholder="Search products..." />
-
-        <p class="text-sm text-muted-foreground">Total: {{ data?.meta.total ?? 0 }}</p>
-      </div>
+      <ProductsFilters
+        v-model:search="search"
+        v-model:type="type"
+        v-model:min-price="minPrice"
+        v-model:max-price="maxPrice"
+        :total="data?.meta.total ?? 0"
+        @clear="clearFilters"
+      />
 
       <div
         v-if="isLoading"
@@ -122,7 +161,37 @@ const rows = computed(() => {
             {{ value === 1 ? 'Active' : 'Inactive' }}
           </span>
         </template>
+
+        <template #cell-actions="{ row }">
+          <div class="flex justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger as-child>
+                <Button variant="ghost" size="icon">
+                  <MoreHorizontal class="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem> View details </DropdownMenuItem>
+
+                <DropdownMenuItem> Edit product </DropdownMenuItem>
+
+                <DropdownMenuItem class="text-destructive"> Delete product </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </template>
       </DataTable>
+
+      <DataPagination
+        v-if="data?.meta"
+        class="mt-4"
+        :page="page"
+        :total-pages="totalPages"
+        :total="data.meta.total"
+        @previous="page--"
+        @next="page++"
+      />
     </SectionCard>
   </PageContainer>
 </template>

@@ -5,6 +5,13 @@ defineProps<{
     label: string;
   }[];
   rows: Record<string, unknown>[];
+  selectable?: boolean;
+  selectedRows?: unknown[];
+}>();
+
+const emit = defineEmits<{
+  toggleRow: [row: Record<string, unknown>];
+  toggleAll: [];
 }>();
 </script>
 
