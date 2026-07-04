@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { Package, RefreshCw, MoreHorizontal } from 'lucide-vue-next';
+import { toast } from 'vue-sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -17,15 +18,18 @@ import EmptyState from '@/shared/components/erp/EmptyState.vue';
 import DataTable from '@/shared/components/erp/DataTable.vue';
 import ProductsFilters from '../components/ProductsFilters.vue';
 import DataPagination from '@/shared/components/erp/DataPagination.vue';
+import BulkActionBar from '@/shared/components/erp/BulkActionBar.vue';
 
 import { storeToRefs } from 'pinia';
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
+import { useUiStore } from '@/shared/stores/ui.store';
 
 import { useProducts } from '../composables/useProducts';
 
-// User store
+// Store
 const auth = useAuthStore();
 const { user } = storeToRefs(auth);
+const ui = useUiStore();
 
 // Filters
 const search = ref('');
@@ -89,6 +93,71 @@ const rows = computed(() => {
 const totalPages = computed(() => {
   return data.value?.meta.total_pages ?? 1;
 });
+
+// Selected product IDs
+const selectedProductIds = ref<number[]>([]);
+
+function toggleProduct(row: Record<string, unknown>) {
+  const id = Number(row.id);
+
+  if (selectedProductIds.value.includes(id)) {
+    selectedProductIds.value = selectedProductIds.value.filter((productId) => productId !== id);
+    return;
+  }
+
+  selectedProductIds.value.push(id);
+}
+
+function toggleAllProducts() {
+  const currentIds = rows.value.map((row) => Number(row.id));
+
+  const allSelected = currentIds.every((id) => selectedProductIds.value.includes(id));
+
+  if (allSelected) {
+    selectedProductIds.value = selectedProductIds.value.filter((id) => !currentIds.includes(id));
+    return;
+  }
+
+  selectedProductIds.value = Array.from(new Set([...selectedProductIds.value, ...currentIds]));
+}
+
+const allSelected = computed(() => {
+  if (rows.value.length === 0) return false;
+
+  return rows.value.every((row) => selectedProductIds.value.includes(Number(row.id)));
+});
+
+function confirmBulkDelete() {
+  ui.openConfirm({
+    title: 'Delete selected products?',
+    description: `This action will delete ${selectedProductIds.value.length} selected products.`,
+    confirmText: 'Delete products',
+    cancelText: 'Cancel',
+    variant: 'destructive',
+    onConfirm: async () => {
+      toast.success('Selected products deleted');
+      selectedProductIds.value = [];
+    },
+  });
+}
+
+// Confirm delete product
+function confirmDeleteProduct(row: Record<string, unknown>) {
+  const id = Number(row.id);
+  const name = String(row.name);
+
+  ui.openConfirm({
+    title: 'Delete product?',
+    description: `This will delete "${name}" from the product catalog.`,
+    confirmText: 'Delete product',
+    cancelText: 'Cancel',
+    variant: 'destructive',
+    onConfirm: async () => {
+      toast.success('Product deleted');
+      selectedProductIds.value = selectedProductIds.value.filter((productId) => productId !== id);
+    },
+  });
+}
 </script>
 
 <template>
@@ -115,6 +184,14 @@ const totalPages = computed(() => {
         @clear="clearFilters"
       />
 
+      <BulkActionBar :selected-count="selectedProductIds.length">
+        <Button variant="outline" size="sm"> Export </Button>
+
+        <Button variant="destructive" size="sm" @click="confirmBulkDelete">
+          Delete selected
+        </Button>
+      </BulkActionBar>
+
       <div
         v-if="isLoading"
         class="rounded-xl border border-border bg-muted/30 p-8 text-center text-sm text-muted-foreground"
@@ -138,7 +215,16 @@ const totalPages = computed(() => {
         />
       </div>
 
-      <DataTable v-else :columns="columns" :rows="rows">
+      <DataTable
+        v-else
+        selectable
+        :columns="columns"
+        :rows="rows"
+        :selected-rows="selectedProductIds"
+        :header-checked="allSelected"
+        @toggle-row="toggleProduct"
+        @toggle-all="toggleAllProducts"
+      >
         <template #cell-price="{ value }"> ${{ Number(value).toFixed(2) }} </template>
 
         <template #cell-type="{ value }">
@@ -176,7 +262,9 @@ const totalPages = computed(() => {
 
                 <DropdownMenuItem> Edit product </DropdownMenuItem>
 
-                <DropdownMenuItem class="text-destructive"> Delete product </DropdownMenuItem>
+                <DropdownMenuItem class="text-destructive" @click="confirmDeleteProduct(row)">
+                  Delete product
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

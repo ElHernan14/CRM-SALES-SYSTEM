@@ -7,6 +7,7 @@ defineProps<{
   rows: Record<string, unknown>[];
   selectable?: boolean;
   selectedRows?: unknown[];
+  headerChecked?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -20,6 +21,15 @@ const emit = defineEmits<{
     <table class="w-full border-collapse text-sm">
       <thead class="bg-muted/50">
         <tr>
+          <th v-if="selectable" class="w-10 border-b border-border px-4 py-3">
+            <input
+              type="checkbox"
+              class="h-4 w-4 rounded border-border"
+              :checked="headerChecked"
+              @change="emit('toggleAll')"
+            />
+          </th>
+
           <th
             v-for="column in columns"
             :key="column.key"
@@ -32,6 +42,15 @@ const emit = defineEmits<{
 
       <tbody>
         <tr v-for="(row, index) in rows" :key="index" class="transition hover:bg-muted/40">
+          <td v-if="selectable" class="w-10 border-b border-border px-4 py-3">
+            <input
+              type="checkbox"
+              class="h-4 w-4 rounded border-border"
+              :checked="selectedRows?.includes(row.id)"
+              @change="emit('toggleRow', row)"
+            />
+          </td>
+
           <td
             v-for="column in columns"
             :key="column.key"
