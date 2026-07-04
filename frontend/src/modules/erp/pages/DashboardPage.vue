@@ -5,14 +5,41 @@ import {
   Package,
   Wallet,
   FileSearch,
-} from "lucide-vue-next"
+  Plus,
+  RefreshCw,
+} from 'lucide-vue-next';
 
-import PageContainer from "@/shared/components/erp/PageContainer.vue"
-import PageHeader from "@/shared/components/erp/PageHeader.vue"
-import StatCard from "@/shared/components/erp/StatCard.vue"
-import EmptyState from "@/shared/components/erp/EmptyState.vue"
-import SectionCard from "@/shared/components/erp/SectionCard.vue"
-import { Button } from "@/components/ui/button"
+import PageContainer from '@/shared/components/erp/PageContainer.vue';
+import PageHeader from '@/shared/components/erp/PageHeader.vue';
+import StatCard from '@/shared/components/erp/StatCard.vue';
+import EmptyState from '@/shared/components/erp/EmptyState.vue';
+import SectionCard from '@/shared/components/erp/SectionCard.vue';
+import PageActionBarTable from '@/shared/components/erp/PageActionBarTable.vue';
+import DataPreviewTable from '@/shared/components/erp/DataPreviewTable.vue';
+import { Button } from '@/components/ui/button';
+
+const recentInvoiceColumns = ['Invoice', 'Client', 'Status', 'Amount'];
+
+const recentInvoiceRows = [
+  {
+    Invoice: '#INV-1024',
+    Client: 'Acme Corp',
+    Status: 'Pending',
+    Amount: '$1,250',
+  },
+  {
+    Invoice: '#INV-1023',
+    Client: 'Northwind',
+    Status: 'Paid',
+    Amount: '$820',
+  },
+  {
+    Invoice: '#INV-1022',
+    Client: 'Globex',
+    Status: 'Draft',
+    Amount: '$430',
+  },
+];
 </script>
 
 <template>
@@ -37,12 +64,7 @@ import { Button } from "@/components/ui/button"
         :icon="FileText"
       />
 
-      <StatCard
-        title="Products"
-        value="342"
-        description="Available in inventory"
-        :icon="Package"
-      />
+      <StatCard title="Products" value="342" description="Available in inventory" :icon="Package" />
 
       <StatCard
         title="Payments"
@@ -61,10 +83,30 @@ import { Button } from "@/components/ui/button"
         description="Once invoices, payments or products start moving, activity will appear here."
         :icon="FileSearch"
       >
-        <Button variant="outline" size="sm">
-          View documentation
-        </Button>
+        <Button variant="outline" size="sm"> View documentation </Button>
       </EmptyState>
-    </SectionCard>    
+    </SectionCard>
+
+    <PageActionBarTable
+      title="Workspace actions"
+      description="Quick actions for daily ERP operations."
+    >
+      <Button variant="outline" size="sm">
+        <RefreshCw class="mr-2 h-4 w-4" />
+        Refresh
+      </Button>
+
+      <Button size="sm">
+        <Plus class="mr-2 h-4 w-4" />
+        New invoice
+      </Button>
+    </PageActionBarTable>
+
+    <SectionCard
+      title="Recent invoices"
+      description="Latest invoice activity across your workspace."
+    >
+      <DataPreviewTable :columns="recentInvoiceColumns" :rows="recentInvoiceRows" />
+    </SectionCard>
   </PageContainer>
 </template>
