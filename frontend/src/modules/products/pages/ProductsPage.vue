@@ -16,9 +16,12 @@ import PageHeader from '@/shared/components/erp/PageHeader.vue';
 import SectionCard from '@/shared/components/erp/SectionCard.vue';
 import EmptyState from '@/shared/components/erp/EmptyState.vue';
 import DataTable from '@/shared/components/erp/DataTable.vue';
-import ProductsFilters from '../components/ProductsFilters.vue';
 import DataPagination from '@/shared/components/erp/DataPagination.vue';
 import BulkActionBar from '@/shared/components/erp/BulkActionBar.vue';
+
+import ProductsFilters from '../components/ProductsFilters.vue';
+import ProductDetailsDrawer from '../components/ProductDetailsDrawer.vue';
+import type { ProductListItem } from '../types/product.types';
 
 import { storeToRefs } from 'pinia';
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
@@ -31,11 +34,24 @@ const auth = useAuthStore();
 const { user } = storeToRefs(auth);
 const ui = useUiStore();
 
+// State for product details drawer
+const selectedProduct = ref<ProductListItem | null>(null);
+const detailsOpen = ref(false);
+
+function openProductDetails(row: Record<string, unknown>) {
+  const product = data.value?.data.find((item) => item.id === Number(row.id));
+
+  if (!product) return;
+
+  selectedProduct.value = product;
+  detailsOpen.value = true;
+}
+
 // Filters
 const search = ref('');
 const page = ref(1);
 const limit = ref(10);
-const type = ref('');
+const type = ref<'product' | 'service' | ''>('');
 const minPrice = ref('');
 const maxPrice = ref('');
 
@@ -258,7 +274,7 @@ function confirmDeleteProduct(row: Record<string, unknown>) {
               </DropdownMenuTrigger>
 
               <DropdownMenuContent align="end">
-                <DropdownMenuItem> View details </DropdownMenuItem>
+                <DropdownMenuItem @click="openProductDetails(row)"> View details </DropdownMenuItem>
 
                 <DropdownMenuItem> Edit product </DropdownMenuItem>
 
@@ -281,5 +297,8 @@ function confirmDeleteProduct(row: Record<string, unknown>) {
         @next="page++"
       />
     </SectionCard>
+
+    <!-- Product Details Drawer -->
+    <ProductDetailsDrawer v-model:open="detailsOpen" :product="selectedProduct" />
   </PageContainer>
 </template>

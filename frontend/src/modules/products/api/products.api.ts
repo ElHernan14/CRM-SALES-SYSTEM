@@ -1,7 +1,11 @@
 import { http } from '@/shared/api/http';
 import { unwrapResponse } from '@/shared/utils/response';
-
 import {
+  // ProductTypeSchema
+  ProductDetailResponseSchema,
+  type ProductDetailResponse,
+  type UpdateProductRequest,
+  // ProductListItemSchema
   GetProductsResponseSchema,
   type GetProductsRequest,
   type GetProductsResponse,
@@ -13,4 +17,13 @@ export async function getProducts(params: GetProductsRequest): Promise<GetProduc
   });
 
   return unwrapResponse(GetProductsResponseSchema, response.data);
+}
+
+export async function updateProduct(
+  id: number,
+  payload: UpdateProductRequest
+): Promise<ProductDetailResponse> {
+  const response = await http.patch(`/product/${id}`, payload);
+
+  return unwrapResponse(ProductDetailResponseSchema, response.data);
 }
