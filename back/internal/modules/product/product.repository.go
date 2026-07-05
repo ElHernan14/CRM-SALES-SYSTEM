@@ -70,7 +70,6 @@ func (r *productRepository) GetAll(
 	baseQuery := `
 		FROM product
 		WHERE deleted_at IS NULL
-		  AND status = 1
 	`
 
 	var args []interface{}
@@ -159,7 +158,6 @@ func (r *productRepository) GetByID(ctx context.Context, id int) (*models.Produc
 		FROM product
 		WHERE id = $1
 		  AND deleted_at IS NULL
-		  AND status = 1
 	`
 
 	var p models.Product
