@@ -19,6 +19,9 @@ type CompanyInvoiceResponse struct {
 	PaidAmount float64 `json:"paid_amount"`
 
 	CreatedAt time.Time `json:"created_at"`
+
+	BuyerName       string    `json:"buyer_name"`
+    SellerCompany   string    `json:"seller_company"`
 }
 
 type GetCompanyInvoicesResponse struct {

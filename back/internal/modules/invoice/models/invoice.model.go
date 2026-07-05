@@ -20,4 +20,7 @@ type Invoice struct {
 	DeletedAt *time.Time
 
 	Status int
+
+	BuyerName       string
+    SellerName      string
 }

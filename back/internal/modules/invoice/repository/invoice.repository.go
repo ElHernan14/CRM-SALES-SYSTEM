@@ -300,18 +300,23 @@ func (r *invoiceRepository) ListBySellerCompanyID(
 
 	selectQuery := `
         SELECT
-            id,
-            buyer_client_id,
-            seller_company_id,
-            status_invoice,
-            total_amount,
-            paid_amount,
-            created_at
+            i.id,
+			i.buyer_client_id,
+			i.seller_company_id,
+			i.status_invoice,
+			i.total_amount,
+			i.paid_amount,
+			i.created_at,
+			cb.first_name AS buyer_first_name,
+			cb.last_name AS buyer_last_name,
+			co.name AS seller_company_name
     `
 
 	baseQuery := `
-        FROM invoice
-        WHERE seller_company_id = $1
+        FROM invoice i
+		LEFT JOIN client cb ON cb.id = i.buyer_client_id
+		LEFT JOIN company co ON co.id = i.seller_company_id
+		WHERE i.seller_company_id = $1
     `
 
 	args := []interface{}{companyID}
@@ -365,6 +370,9 @@ func (r *invoiceRepository) ListBySellerCompanyID(
 	invoices := make([]*invoiceModel.Invoice, 0)
 	for rows.Next() {
 		var inv invoiceModel.Invoice
+		var buyerFirstName, buyerLastName sql.NullString
+		var sellerCompanyName sql.NullString
+
 		err := rows.Scan(
 			&inv.ID,
 			&inv.BuyerClientID,
@@ -373,10 +381,17 @@ func (r *invoiceRepository) ListBySellerCompanyID(
 			&inv.TotalAmount,
 			&inv.PaidAmount,
 			&inv.CreatedAt,
+			&buyerFirstName,
+			&buyerLastName,
+			&sellerCompanyName,
 		)
 		if err != nil {
 			return nil, 0, err
 		}
+
+		inv.BuyerName = strings.TrimSpace(buyerLastName.String + " " + buyerFirstName.String)
+		inv.SellerName = sellerCompanyName.String
+
 		invoices = append(invoices, &inv)
 	}
 

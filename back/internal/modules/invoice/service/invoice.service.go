@@ -453,6 +453,8 @@ func (s *invoiceService) GetCompanyInvoices(
 			TotalAmount:     inv.TotalAmount,
 			PaidAmount:      inv.PaidAmount,
 			CreatedAt:       inv.CreatedAt,
+			BuyerName:       inv.BuyerName,
+    		SellerCompany:   inv.SellerName,
 		})
 	}
 
