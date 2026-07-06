@@ -5,7 +5,7 @@ import DashboardPage from '@/modules/erp/pages/DashboardPage.vue';
 import LoginPage from '@/modules/auth/pages/LoginPage.vue';
 
 const ProductsPage = () => import('@/modules/products/pages/ProductsPage.vue');
-const InvoicesPage = () => import('@/modules/erp/pages/InvoicesPage.vue');
+const InvoicesPage = () => import('@/modules/invoices/pages/InvoicesPage.vue');
 const PaymentsPage = () => import('@/modules/erp/pages/PaymentsPage.vue');
 const SettingsPage = () => import('@/modules/erp/pages/SettingsPage.vue');
 const routes = [

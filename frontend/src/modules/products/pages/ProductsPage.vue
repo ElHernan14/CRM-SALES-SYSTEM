@@ -21,6 +21,7 @@ import BulkActionBar from '@/shared/components/erp/BulkActionBar.vue';
 
 import ProductsFilters from '../components/ProductsFilters.vue';
 import ProductDetailsDrawer from '../components/ProductDetailsDrawer.vue';
+import ProductEditDrawer from '../components/ProductEditDrawer.vue';
 import type { ProductListItem } from '../types/product.types';
 
 import { storeToRefs } from 'pinia';
@@ -28,6 +29,7 @@ import { useAuthStore } from '@/modules/auth/stores/auth.store';
 import { useUiStore } from '@/shared/stores/ui.store';
 
 import { useProducts } from '../composables/useProducts';
+import { useDeleteProduct } from '../composables/useDeleteProduct';
 
 // Store
 const auth = useAuthStore();
@@ -45,6 +47,19 @@ function openProductDetails(row: Record<string, unknown>) {
 
   selectedProduct.value = product;
   detailsOpen.value = true;
+}
+
+// State for product edit drawer
+const editOpen = ref(false);
+const editingProduct = ref<ProductListItem | null>(null);
+
+function openEditProduct(row: Record<string, unknown>) {
+  const product = data.value?.data.find((item) => item.id === Number(row.id));
+
+  if (!product) return;
+
+  editingProduct.value = product;
+  editOpen.value = true;
 }
 
 // Filters
@@ -169,11 +184,16 @@ function confirmDeleteProduct(row: Record<string, unknown>) {
     cancelText: 'Cancel',
     variant: 'destructive',
     onConfirm: async () => {
+      await deleteMutation.mutateAsync(id);
+
       toast.success('Product deleted');
+
       selectedProductIds.value = selectedProductIds.value.filter((productId) => productId !== id);
     },
   });
 }
+
+const deleteMutation = useDeleteProduct();
 </script>
 
 <template>
@@ -276,7 +296,7 @@ function confirmDeleteProduct(row: Record<string, unknown>) {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem @click="openProductDetails(row)"> View details </DropdownMenuItem>
 
-                <DropdownMenuItem> Edit product </DropdownMenuItem>
+                <DropdownMenuItem @click="openEditProduct(row)"> Edit product </DropdownMenuItem>
 
                 <DropdownMenuItem class="text-destructive" @click="confirmDeleteProduct(row)">
                   Delete product
@@ -300,5 +320,8 @@ function confirmDeleteProduct(row: Record<string, unknown>) {
 
     <!-- Product Details Drawer -->
     <ProductDetailsDrawer v-model:open="detailsOpen" :product="selectedProduct" />
+
+    <!-- Product Edit Drawer -->
+    <ProductEditDrawer v-model:open="editOpen" :product="editingProduct" />
   </PageContainer>
 </template>

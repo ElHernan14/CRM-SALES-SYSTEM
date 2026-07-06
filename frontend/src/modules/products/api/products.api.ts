@@ -27,3 +27,7 @@ export async function updateProduct(
 
   return unwrapResponse(ProductDetailResponseSchema, response.data);
 }
+
+export async function deleteProduct(id: number): Promise<void> {
+  await http.delete(`/product/${id}`);
+}
