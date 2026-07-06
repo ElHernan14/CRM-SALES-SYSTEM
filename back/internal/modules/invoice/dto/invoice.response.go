@@ -29,4 +29,7 @@ type GetInvoiceResponse struct {
 	CreatedAt time.Time  `json:"created_at" example:"2026-06-15T10:00:00Z"`
 	UpdatedAt *time.Time `json:"updated_at,omitempty"`
 	DeletedAt *time.Time `json:"deleted_at,omitempty"`
+
+	BuyerName       string    `json:"buyer_name"`
+    SellerCompany   string    `json:"seller_company"`
 }

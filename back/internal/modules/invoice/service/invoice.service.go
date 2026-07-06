@@ -334,6 +334,14 @@ func (s *invoiceService) GetByID(
 		return nil, err
 	}
 
+	seller, err := s.CompanyRepo.GetByID(
+		ctx,
+		invoice.SellerCompanyID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &invoicedto.GetInvoiceResponse{
 		ID:              invoice.ID,
 		BuyerClientID:   invoice.BuyerClientID,
@@ -348,6 +356,8 @@ func (s *invoiceService) GetByID(
 		CreatedAt:       invoice.CreatedAt,
 		UpdatedAt:       invoice.UpdatedAt,
 		DeletedAt:       invoice.DeletedAt,
+		BuyerName:       buyer.FirstName + " " + buyer.LastName,
+		SellerCompany:   seller.Name,
 	}, nil
 }
 
