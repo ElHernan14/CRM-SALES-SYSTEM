@@ -1,98 +1,100 @@
-import { defineStore } from "pinia"
+import { defineStore } from 'pinia';
 
-export type ThemeMode = "light" | "dark"
+export type ThemeMode = 'light' | 'dark';
 
 //UI store
 interface ConfirmDialogOptions {
-  title: string
-  description?: string
-  confirmText?: string
-  cancelText?: string
-  variant?: "default" | "destructive"
-  onConfirm?: () => void | Promise<void>
+  title: string;
+  description?: string;
+  confirmText?: string;
+  cancelText?: string;
+  variant?: 'default' | 'destructive';
+  onConfirm?: () => void | Promise<void>;
 }
 
 interface UiState {
-  loading: boolean
-  loadingMessage: string | null
-  theme: ThemeMode
+  loading: boolean;
+  loadingMessage: string | null;
+  theme: ThemeMode;
 
-  confirmOpen: boolean
-  confirmTitle: string
-  confirmDescription: string | null
-  confirmText: string
-  cancelText: string
-  confirmVariant: "default" | "destructive"
-  confirmAction: (() => void | Promise<void>) | null
+  confirmOpen: boolean;
+  confirmTitle: string;
+  confirmDescription: string | null;
+  confirmText: string;
+  cancelText: string;
+  confirmVariant: 'default' | 'destructive';
+  confirmAction: (() => void | Promise<void>) | null;
+  confirmLoading: boolean;
 }
 
-export const useUiStore = defineStore("ui", {
+export const useUiStore = defineStore('ui', {
   state: (): UiState => ({
     loading: false,
     loadingMessage: null,
-    theme: "light",
-    
+    theme: 'light',
+
     confirmOpen: false,
-    confirmTitle: "",
+    confirmTitle: '',
     confirmDescription: null,
-    confirmText: "Confirm",
-    cancelText: "Cancel",
-    confirmVariant: "default",
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    confirmVariant: 'default',
     confirmAction: null,
+    confirmLoading: false,
   }),
 
   getters: {
-    isDark: (state) => state.theme === "dark"
+    isDark: (state) => state.theme === 'dark',
   },
 
   actions: {
-    setLoading(
-      loading: boolean,
-      message?: string
-    ) {
-      this.loading = loading
-      this.loadingMessage = loading
-        ? message ?? null
-        : null
+    setLoading(loading: boolean, message?: string) {
+      this.loading = loading;
+      this.loadingMessage = loading ? (message ?? null) : null;
     },
 
     setTheme(theme: ThemeMode) {
-      this.theme = theme
+      this.theme = theme;
     },
 
     toggleTheme() {
-      this.theme =
-        this.theme === "light"
-          ? "dark"
-          : "light"
+      this.theme = this.theme === 'light' ? 'dark' : 'light';
     },
 
     openConfirm(options: ConfirmDialogOptions) {
-      this.confirmOpen = true
-      this.confirmTitle = options.title
-      this.confirmDescription = options.description ?? null
-      this.confirmText = options.confirmText ?? "Confirm"
-      this.cancelText = options.cancelText ?? "Cancel"
-      this.confirmVariant = options.variant ?? "default"
-      this.confirmAction = options.onConfirm ?? null
+      this.confirmOpen = true;
+      this.confirmTitle = options.title;
+      this.confirmDescription = options.description ?? null;
+      this.confirmText = options.confirmText ?? 'Confirm';
+      this.cancelText = options.cancelText ?? 'Cancel';
+      this.confirmVariant = options.variant ?? 'default';
+      this.confirmAction = options.onConfirm ?? null;
     },
 
     closeConfirm() {
-      this.confirmOpen = false
-      this.confirmTitle = ""
-      this.confirmDescription = null
-      this.confirmText = "Confirm"
-      this.cancelText = "Cancel"
-      this.confirmVariant = "default"
-      this.confirmAction = null
+      this.confirmOpen = false;
+      this.confirmTitle = '';
+      this.confirmDescription = null;
+      this.confirmText = 'Confirm';
+      this.cancelText = 'Cancel';
+      this.confirmVariant = 'default';
+      this.confirmAction = null;
+      this.confirmLoading = false;
     },
 
     async confirm() {
-      if (this.confirmAction) {
-        await this.confirmAction()
+      if (!this.confirmAction) {
+        this.closeConfirm();
+        return;
       }
 
-      this.closeConfirm()
-    }
-  }
-})
+      try {
+        this.confirmLoading = true;
+        await this.confirmAction();
+        this.closeConfirm();
+      } finally {
+        this.confirmLoading = false;
+      }
+    },
+  },
+});

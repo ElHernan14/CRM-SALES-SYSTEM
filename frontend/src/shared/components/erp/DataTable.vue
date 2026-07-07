@@ -1,5 +1,7 @@
 <script setup lang="ts">
-defineProps<{
+import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-vue-next';
+
+const props = defineProps<{
   columns: {
     key: string;
     label: string;
@@ -8,12 +10,20 @@ defineProps<{
   selectable?: boolean;
   selectedRows?: unknown[];
   headerChecked?: boolean;
+  sortColumn?: string;
+  sortOrder?: 'asc' | 'desc';
+  sortableColumns?: string[];
 }>();
 
 const emit = defineEmits<{
   toggleRow: [row: Record<string, unknown>];
   toggleAll: [];
+  sort: [columnKey: string];
 }>();
+
+function isSortable(columnKey: string) {
+  return props.sortableColumns?.includes(columnKey);
+}
 </script>
 
 <template>
@@ -35,7 +45,30 @@ const emit = defineEmits<{
             :key="column.key"
             class="border-b border-border px-4 py-3 text-left font-medium text-muted-foreground"
           >
-            {{ column.label }}
+            <button
+              v-if="isSortable(column.key)"
+              type="button"
+              class="inline-flex items-center gap-2 transition hover:text-foreground"
+              @click="emit('sort', column.key)"
+            >
+              <span>{{ column.label }}</span>
+
+              <ArrowUp
+                v-if="sortColumn === column.key && sortOrder === 'asc'"
+                class="h-3.5 w-3.5"
+              />
+
+              <ArrowDown
+                v-else-if="sortColumn === column.key && sortOrder === 'desc'"
+                class="h-3.5 w-3.5"
+              />
+
+              <ChevronsUpDown v-else class="h-3.5 w-3.5 opacity-50" />
+            </button>
+
+            <span v-else>
+              {{ column.label }}
+            </span>
           </th>
         </tr>
       </thead>

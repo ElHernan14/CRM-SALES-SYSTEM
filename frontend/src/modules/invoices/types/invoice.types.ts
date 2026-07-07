@@ -65,6 +65,28 @@ export const InvoiceDetailSchema = z.object({
   created_at: z.string(),
   updated_at: z.string().nullable().optional(),
   deleted_at: z.string().nullable().optional(),
+  buyer_name: z.string(),
+  seller_company: z.string(),
 });
 
 export type InvoiceDetail = z.infer<typeof InvoiceDetailSchema>;
+
+// Pay Invoice
+export const PaymentMethodSchema = z.enum(['transfer', 'cash', 'card']);
+
+export const PayInvoiceRequestSchema = z.object({
+  amount: z.number().positive(),
+  payment_method: PaymentMethodSchema,
+});
+
+export type PayInvoiceRequest = z.infer<typeof PayInvoiceRequestSchema>;
+
+export const PayInvoiceResponseSchema = z.object({
+  payment_id: z.number(),
+  status_invoice: InvoiceStatusSchema,
+  total_amount: z.number(),
+  paid_amount: z.number(),
+  remaining_amount: z.number(),
+});
+
+export type PayInvoiceResponse = z.infer<typeof PayInvoiceResponseSchema>;

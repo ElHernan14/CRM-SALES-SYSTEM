@@ -1,41 +1,44 @@
-import { createApp } from "vue";
+import { createApp } from 'vue';
 
-import { VueQueryPlugin } from "@tanstack/vue-query";
+import { VueQueryPlugin } from '@tanstack/vue-query';
 
-import App from "./App.vue";
+import App from './App.vue';
 
-import { router } from "./app/router";
+import { router } from './app/router';
 
-import { queryClient } from "./app/providers/query-client";
+import { queryClient } from './app/providers/query-client';
 
-import { setupInterceptors } from "./shared/api/interceptors";
+import { setupInterceptors } from './shared/api/interceptors';
 
-import { bootstrap } from "@/modules/auth/composables/useAuth.ts" // tu composable bootstrap
+import { bootstrap } from '@/modules/auth/composables/useAuth.ts'; // tu composable bootstrap
 
-import { setupAuthGuard } from "@/modules/auth/guards/auth.guard.ts"
+import { setupAuthGuard } from '@/modules/auth/guards/auth.guard.ts';
 
-import { createPinia } from "pinia"
+import { setupUIGuard } from '@/app/router/guards/ui.guard.ts';
 
-import { initializeTheme } from "@/shared/composables/useThemePersistence.ts"
+import { createPinia } from 'pinia';
 
-import "@/style.css"
+import { initializeTheme } from '@/shared/composables/useThemePersistence.ts';
 
-import "vue-sonner/style.css"
+import '@/style.css';
+
+import 'vue-sonner/style.css';
 
 setupInterceptors();
 
 const app = createApp(App);
 
-const pinia = createPinia()
+const pinia = createPinia();
 
-app.use(pinia)
+app.use(pinia);
 app.use(router);
 app.use(VueQueryPlugin, { queryClient });
 
-await bootstrap()
+await bootstrap();
 
-initializeTheme()
+initializeTheme();
 
-setupAuthGuard(router)
+setupAuthGuard(router);
+setupUIGuard(router);
 
-app.mount("#app");
+app.mount('#app');

@@ -1,13 +1,22 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { FileText, RefreshCw } from 'lucide-vue-next';
+import { FileText, RefreshCw, MoreHorizontal } from 'lucide-vue-next';
+import { toast } from 'vue-sonner';
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 
 import {
   type InvoiceStatus,
   type SortOrder,
   type SortColumn,
+  SortColumnSchema,
 } from '@/modules/invoices/types/invoice.types.ts';
 
 import PageContainer from '@/shared/components/erp/PageContainer.vue';
@@ -25,7 +34,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+import InvoiceDetailsDrawer from '../components/InvoiceDetailsDrawer.vue';
+import InvoiceItemsDrawer from '../components/InvoiceItemsDrawer.vue';
+
+import { useSubmitInvoice } from '../composables/useSubmitInvoice';
 import { useInvoices } from '../composables/useInvoices';
+import { useCancelInvoice } from '../composables/useCancelInvoice';
+
+import { useUiStore } from '@/shared/stores/ui.store';
+
+const ui = useUiStore();
 
 const page = ref(1);
 const limit = ref(10);
@@ -33,6 +51,17 @@ const limit = ref(10);
 const statusInvoice = defineModel<InvoiceStatus>('statusInvoice');
 const sortColumn = defineModel<SortColumn>('sortColumn');
 const order = defineModel<SortOrder>('order');
+
+function handleSort(columnKey: string) {
+  const key = columnKey as SortColumn;
+  if (sortColumn.value === key) {
+    order.value = order.value === 'asc' ? 'desc' : 'asc';
+    return;
+  }
+
+  sortColumn.value = key;
+  order.value = 'desc';
+}
 
 watch([statusInvoice, sortColumn, order], () => {
   page.value = 1;
@@ -63,6 +92,7 @@ const columns = [
   { key: 'total_amount', label: 'Total' },
   { key: 'paid_amount', label: 'Paid' },
   { key: 'created_at', label: 'Created' },
+  { key: 'actions', label: '' },
 ];
 
 const rows = computed(() => {
@@ -73,6 +103,7 @@ const rows = computed(() => {
     total_amount: invoice.total_amount,
     paid_amount: invoice.paid_amount ?? 0,
     created_at: invoice.created_at,
+    actions: invoice.id,
   }));
 });
 
@@ -90,18 +121,93 @@ function formatCurrency(value: unknown) {
 function formatDate(value: unknown) {
   return new Date(String(value)).toLocaleDateString();
 }
+
+// Permissions and actions based on invoice status
+function canManageItems(status: string) {
+  return status === 'draft';
+}
+
+function canSubmit(status: string) {
+  return status === 'draft';
+}
+
+function canCancel(status: string) {
+  return status === 'pending';
+}
+
+function canViewPayments(status: string) {
+  return status === 'paid' || status === 'pending';
+}
+
+// Invoice details drawer state
+const detailsOpen = ref(false);
+const selectedInvoiceId = ref<number | null>(null);
+
+function openInvoiceDetails(row: Record<string, unknown>) {
+  selectedInvoiceId.value = Number(row.id);
+  detailsOpen.value = true;
+}
+
+// Submit invoice confirmation
+const submitMutation = useSubmitInvoice();
+
+function confirmSubmitInvoice(row: Record<string, unknown>) {
+  const id = Number(row.id);
+
+  ui.openConfirm({
+    title: 'Submit invoice?',
+    description: 'This will move the invoice from draft to pending and reserve product stock.',
+    confirmText: 'Submit invoice',
+    cancelText: 'Keep draft',
+    variant: 'default',
+    onConfirm: async () => {
+      await submitMutation.mutateAsync(id);
+
+      toast.success('Invoice submitted');
+    },
+  });
+}
+
+// Cancel invoice confirmation
+const cancelMutation = useCancelInvoice();
+
+function confirmCancelInvoice(row: Record<string, unknown>) {
+  const id = Number(row.id);
+
+  ui.openConfirm({
+    title: 'Cancel invoice?',
+    description: 'This will cancel the invoice and release reserved product stock.',
+    confirmText: 'Cancel invoice',
+    cancelText: 'Keep invoice',
+    variant: 'destructive',
+    onConfirm: async () => {
+      await cancelMutation.mutateAsync(id);
+
+      toast.success('Invoice cancelled');
+    },
+  });
+}
+
+// Invoice items drawer state
+const itemsOpen = ref(false);
+const selectedItemsInvoiceId = ref<number | null>(null);
+
+function openManageItems(row: Record<string, unknown>) {
+  selectedItemsInvoiceId.value = Number(row.id);
+  itemsOpen.value = true;
+}
 </script>
 
 <template>
   <PageContainer>
     <PageHeader
-      title="Invoices"
-      description="Manage commercial documents, workflow states and payments."
+      title="Sales invoices"
+      description="Manage invoices where your company acts as the seller."
     />
 
     <SectionCard
-      title="Company invoices"
-      description="Track invoices from draft to payment completion."
+      title="Sales invoice records"
+      description="Track sales invoices from draft to payment completion."
     >
       <template #actions>
         <Button variant="outline" size="sm" @click="refetch()">
@@ -125,34 +231,6 @@ function formatDate(value: unknown) {
               <SelectItem value="paid"> Paid </SelectItem>
 
               <SelectItem value="cancelled"> Cancelled </SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select v-model="sortColumn">
-            <SelectTrigger>
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-
-            <SelectContent>
-              <SelectItem value="created_at"> Created date </SelectItem>
-
-              <SelectItem value="total_amount"> Total amount </SelectItem>
-
-              <SelectItem value="paid_amount"> Paid amount </SelectItem>
-
-              <SelectItem value="status_invoice"> Status </SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select v-model="order">
-            <SelectTrigger>
-              <SelectValue placeholder="Order" />
-            </SelectTrigger>
-
-            <SelectContent>
-              <SelectItem value="desc"> Descending </SelectItem>
-
-              <SelectItem value="asc"> Ascending </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -186,7 +264,14 @@ function formatDate(value: unknown) {
       />
 
       <template v-else>
-        <DataTable :columns="columns" :rows="rows">
+        <DataTable
+          :columns="columns"
+          :rows="rows"
+          :sortable-columns="SortColumnSchema.options"
+          :sort-column="sortColumn"
+          :sort-order="order"
+          @sort="handleSort"
+        >
           <template #cell-id="{ value }">
             <span class="font-medium"> #INV-{{ value }} </span>
           </template>
@@ -216,6 +301,52 @@ function formatDate(value: unknown) {
           <template #cell-created_at="{ value }">
             {{ formatDate(value) }}
           </template>
+
+          <template #cell-actions="{ row }">
+            <div class="flex justify-end">
+              <DropdownMenu>
+                <DropdownMenuTrigger as-child>
+                  <Button variant="ghost" size="icon">
+                    <MoreHorizontal class="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem @click="openInvoiceDetails(row)">
+                    View invoice
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    v-if="canManageItems(String(row.status_invoice))"
+                    @click="openManageItems(row)"
+                  >
+                    Manage items
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    v-if="canSubmit(String(row.status_invoice))"
+                    @click="confirmSubmitInvoice(row)"
+                  >
+                    Submit invoice
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem v-if="canViewPayments(String(row.status_invoice))">
+                    View payments
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator v-if="canCancel(String(row.status_invoice))" />
+
+                  <DropdownMenuItem
+                    v-if="canCancel(String(row.status_invoice))"
+                    class="text-destructive"
+                    @click="confirmCancelInvoice(row)"
+                  >
+                    Cancel invoice
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </template>
         </DataTable>
 
         <DataPagination
@@ -228,5 +359,11 @@ function formatDate(value: unknown) {
         />
       </template>
     </SectionCard>
+
+    <!-- Invoice details drawer -->
+    <InvoiceDetailsDrawer v-model:open="detailsOpen" :invoice-id="selectedInvoiceId" />
+
+    <!-- Invoice items drawer -->
+    <InvoiceItemsDrawer v-model:open="itemsOpen" :invoice-id="selectedItemsInvoiceId" />
   </PageContainer>
 </template>

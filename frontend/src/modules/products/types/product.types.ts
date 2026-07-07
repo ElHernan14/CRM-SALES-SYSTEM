@@ -14,6 +14,7 @@ export const ProductListItemSchema = z.object({
   stock: z.number(),
   status: z.number(),
   company_id: z.number(),
+  available_stock: z.number().optional(),
 });
 
 export type ProductListItem = z.infer<typeof ProductListItemSchema>;
