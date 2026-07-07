@@ -115,6 +115,7 @@ func (s *productService) GetProducts(
 	var data []productdto.ProductListItem
 
 	for _, p := range products {
+		available := p.Stock - p.ReservedStock
 		data = append(data, productdto.ProductListItem{
 			ID:          p.ID,
 			Name:        p.Name,
@@ -124,6 +125,7 @@ func (s *productService) GetProducts(
 			Stock:       p.Stock,
 			Status:      p.Status,
 			CompanyID:   p.CompanyID,
+			AvailableStock: available,
 		})
 	}
 

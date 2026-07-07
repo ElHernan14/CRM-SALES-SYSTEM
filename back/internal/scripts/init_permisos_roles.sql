@@ -184,6 +184,17 @@ JOIN permission p ON p.name IN (
 )
 WHERE r.name IN ('company_user');
 
+INSERT INTO role_permission (role_id, permission_id)
+SELECT r.id, p.id
+FROM rol r
+JOIN permission p ON p.name IN (
+
+    -- INVOICE ITEM DELETE
+    'invoice_item:delete'
+
+)
+WHERE r.name IN ('company_user');
+
 --Insertar permiso checkout de store
 INSERT INTO permission (name, description)
 VALUES

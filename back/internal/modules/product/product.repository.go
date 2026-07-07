@@ -115,7 +115,7 @@ func (r *productRepository) GetAll(
 	}
 
 	dataQuery := `
-		SELECT id, name, description, type, price, stock, status, company_id
+		SELECT id, name, description, type, price, stock, status, company_id, reserved_stock
 	` + baseQuery + fmt.Sprintf(`
 		ORDER BY id DESC
 		LIMIT $%d OFFSET $%d
@@ -142,6 +142,7 @@ func (r *productRepository) GetAll(
 			&p.Stock,
 			&p.Status,
 			&p.CompanyID,
+			&p.ReservedStock,
 		); err != nil {
 			return nil, 0, err
 		}

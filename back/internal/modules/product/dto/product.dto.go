@@ -43,6 +43,7 @@ type ProductListItem struct {
 	Stock       int     `json:"stock" example:"50"`
 	Status      int     `json:"status" example:"1"`
 	CompanyID   int     `json:"company_id" example:"1"`
+	AvailableStock int `json:"available_stock" example:"25"`
 }
 
 type GetProductsResponse struct {
