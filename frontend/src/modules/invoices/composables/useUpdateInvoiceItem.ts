@@ -29,6 +29,10 @@ export function useUpdateInvoiceItem() {
       queryClient.invalidateQueries({
         queryKey: ['invoices'],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ['products'],
+      });
     },
   });
 }

@@ -21,6 +21,10 @@ export function useDeleteInvoiceItem() {
       queryClient.invalidateQueries({
         queryKey: ['invoices'],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ['products'],
+      });
     },
   });
 }

@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import SkeletonBlock from '@/shared/components/erp/SkeletonBlock.vue';
 
 import { useInvoiceItems } from '../composables/useInvoiceItems';
 import { useUpdateInvoiceItem } from '../composables/useUpdateInvoiceItem';
@@ -58,7 +59,7 @@ const params = computed(() => ({
   limit: limit.value,
 }));
 
-const { data, isLoading, isError } = useInvoiceItems(invoiceIdRef, params);
+const { data, isLoading, isError, isFetching } = useInvoiceItems(invoiceIdRef, params);
 
 const items = computed(() => data.value?.items ?? []);
 
@@ -75,12 +76,8 @@ const updateItemMutation = useUpdateInvoiceItem();
 const deleteItemMutation = useDeleteInvoiceItem();
 const createItemMutation = useCreateInvoiceItem();
 
-const isMutatingItems = computed(() => {
-  return (
-    createItemMutation.isPending.value ||
-    updateItemMutation.isPending.value ||
-    deleteItemMutation.isPending.value
-  );
+const isRefreshingItems = computed(() => {
+  return isFetching.value && !isLoading.value;
 });
 
 const selectedProductId = ref('');
@@ -273,7 +270,7 @@ function confirmDeleteItem(item: InvoiceItem) {
         </div>
 
         <div
-          v-if="isLoading"
+          v-if="isLoading || isRefreshingItems"
           class="rounded-xl border border-border bg-muted/30 p-6 text-sm text-muted-foreground"
         >
           Loading invoice items...
@@ -298,11 +295,6 @@ function confirmDeleteItem(item: InvoiceItem) {
         </div>
 
         <div v-else class="relative space-y-3">
-          <div
-            v-if="isMutatingItems"
-            class="absolute inset-0 z-10 rounded-xl bg-background/60 backdrop-blur-[1px]"
-          />
-
           <div
             v-for="item in items"
             :key="item.id"
@@ -376,13 +368,12 @@ function confirmDeleteItem(item: InvoiceItem) {
           </div>
         </div>
 
-        <div class="relative rounded-xl border border-border bg-muted/40 p-4">
-          <div
-            v-if="isMutatingItems"
-            class="absolute inset-0 rounded-xl bg-background/50 backdrop-blur-[1px]"
-          />
+        <div class="relative overflow-hidden rounded-xl border border-border bg-muted/40 p-4">
+          <div v-if="isRefreshingItems">
+            <SkeletonBlock />
+          </div>
 
-          <div class="relative flex items-center justify-between">
+          <div v-else class="flex items-center justify-between">
             <p class="text-sm text-muted-foreground">Items subtotal</p>
 
             <p class="text-lg font-semibold text-foreground">
