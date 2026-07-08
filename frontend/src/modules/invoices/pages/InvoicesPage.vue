@@ -36,6 +36,7 @@ import {
 
 import InvoiceDetailsDrawer from '../components/InvoiceDetailsDrawer.vue';
 import InvoiceItemsDrawer from '../components/InvoiceItemsDrawer.vue';
+import InvoicePaymentsDrawer from '../components/InvoicePaymentsDrawer.vue';
 
 import { useSubmitInvoice } from '../composables/useSubmitInvoice';
 import { useInvoices } from '../composables/useInvoices';
@@ -196,6 +197,15 @@ function openManageItems(row: Record<string, unknown>) {
   selectedItemsInvoiceId.value = Number(row.id);
   itemsOpen.value = true;
 }
+
+// Invoice payments drawer state
+const paymentsOpen = ref(false);
+const selectedPaymentsInvoiceId = ref<number | null>(null);
+
+function openInvoicePayments(row: Record<string, unknown>) {
+  selectedPaymentsInvoiceId.value = Number(row.id);
+  paymentsOpen.value = true;
+}
 </script>
 
 <template>
@@ -330,7 +340,10 @@ function openManageItems(row: Record<string, unknown>) {
                     Submit invoice
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem v-if="canViewPayments(String(row.status_invoice))">
+                  <DropdownMenuItem
+                    v-if="canViewPayments(String(row.status_invoice))"
+                    @click="openInvoicePayments(row)"
+                  >
                     View payments
                   </DropdownMenuItem>
 
@@ -365,5 +378,8 @@ function openManageItems(row: Record<string, unknown>) {
 
     <!-- Invoice items drawer -->
     <InvoiceItemsDrawer v-model:open="itemsOpen" :invoice-id="selectedItemsInvoiceId" />
+
+    <!-- Invoice payments drawer -->
+    <InvoicePaymentsDrawer v-model:open="paymentsOpen" :invoice-id="selectedPaymentsInvoiceId" />
   </PageContainer>
 </template>

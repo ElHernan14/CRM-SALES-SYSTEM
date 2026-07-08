@@ -74,6 +74,8 @@ export type InvoiceDetail = z.infer<typeof InvoiceDetailSchema>;
 // Pay Invoice
 export const PaymentMethodSchema = z.enum(['transfer', 'cash', 'card']);
 
+export type PaymentMethod = z.infer<typeof PaymentMethodSchema>;
+
 export const PayInvoiceRequestSchema = z.object({
   amount: z.number().positive(),
   payment_method: PaymentMethodSchema,
