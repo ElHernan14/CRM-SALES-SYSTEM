@@ -9,4 +9,6 @@ type InvoicePayment struct {
 	PaymentMethod string    `db:"payment_method" json:"payment_method"`
 	PaidByUserID  int       `db:"paid_by_user_id" json:"paid_by_user_id"`
 	CreatedAt     time.Time `db:"created_at" json:"created_at"`
+
+	ClientName string `db:"client_name" json:"client_name"`
 }

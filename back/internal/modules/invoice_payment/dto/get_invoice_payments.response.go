@@ -17,6 +17,8 @@ type PaymentResponse struct {
 	PaidByUserID int `json:"paid_by_user_id"`
 
 	CreatedAt time.Time `json:"created_at"`
+
+	ClientName    string    `json:"client_name"`
 }
 
 type GetInvoicePaymentsResponse struct {

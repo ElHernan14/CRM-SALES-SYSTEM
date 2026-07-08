@@ -81,16 +81,20 @@ func (r *invoicePaymentRepository) ListByInvoiceID(
 
 	selectQuery := `
 		SELECT
-			id,
-			invoice_id,
-			amount,
-			payment_method,
-			paid_by_user_id,
-			created_at 
-	`
+			ip.id,
+			ip.invoice_id,
+			ip.amount,
+			ip.payment_method,
+			ip.paid_by_user_id,
+			ip.created_at,
+			COALESCE(c.first_name, '') AS client_first_name,
+			COALESCE(c.last_name, '') AS client_last_name
+			`
 	baseQuery := `
-		 FROM invoice_payment
-		WHERE invoice_id = $1
+		FROM invoice_payment ip
+		LEFT JOIN users u ON u.id = ip.paid_by_user_id
+		LEFT JOIN client c ON c.user_id = u.id
+		WHERE ip.invoice_id = $1 
 	`
 
 	args := []interface{}{
@@ -174,6 +178,8 @@ func (r *invoicePaymentRepository) ListByInvoiceID(
 
 		var payment invoicepaymentmodel.InvoicePayment
 
+		var clientFirstName, clientLastName sql.NullString
+
 		err := rows.Scan(
 			&payment.ID,
 			&payment.InvoiceID,
@@ -181,11 +187,15 @@ func (r *invoicePaymentRepository) ListByInvoiceID(
 			&payment.PaymentMethod,
 			&payment.PaidByUserID,
 			&payment.CreatedAt,
+			&clientFirstName,
+			&clientLastName,
 		)
-
 		if err != nil {
 			return nil, 0, err
 		}
+
+		payment.ClientName = strings.TrimSpace(clientLastName.String + " " + clientFirstName.String)
+
 
 		payments = append(
 			payments,

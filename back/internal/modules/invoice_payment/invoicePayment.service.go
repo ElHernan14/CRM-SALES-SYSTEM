@@ -105,6 +105,7 @@ func (s *invoicePaymentService) GetByInvoice(
 				PaymentMethod: payment.PaymentMethod,
 				PaidByUserID:  payment.PaidByUserID,
 				CreatedAt:     payment.CreatedAt,
+				ClientName:    payment.ClientName,
 			},
 		)
 	}
