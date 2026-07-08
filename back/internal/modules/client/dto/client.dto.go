@@ -20,6 +20,7 @@ type ClientResponse struct {
 	Phone     string  `json:"phone"`
 	Status    int     `json:"status,omitempty"`
 	DeletedAt *string `json:"deleted_at,omitempty"`
+	CompanyName *string `json:"company_name,omitempty"`
 }
 
 type GetClientsRequest struct {

@@ -219,6 +219,7 @@ func (s *clientService) GetClients(ctx context.Context, req *clientdto.GetClient
 				}
 				return nil
 			}(),
+			CompanyName: c.CompanyName,
 		})
 	}
 

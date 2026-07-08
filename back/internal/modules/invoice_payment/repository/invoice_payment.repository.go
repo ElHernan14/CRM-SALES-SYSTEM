@@ -92,8 +92,7 @@ func (r *invoicePaymentRepository) ListByInvoiceID(
 			`
 	baseQuery := `
 		FROM invoice_payment ip
-		LEFT JOIN users u ON u.id = ip.paid_by_user_id
-		LEFT JOIN client c ON c.user_id = u.id
+		LEFT JOIN client c ON c.user_id = ip.paid_by_user_id
 		WHERE ip.invoice_id = $1 
 	`
 
