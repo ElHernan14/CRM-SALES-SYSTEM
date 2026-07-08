@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { FileText, RefreshCw, MoreHorizontal } from 'lucide-vue-next';
+import { FileText, RefreshCw, MoreHorizontal, Plus } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
+import { useQueryClient } from '@tanstack/vue-query';
 
 import {
   DropdownMenu,
@@ -33,10 +34,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
 import InvoiceDetailsDrawer from '../components/InvoiceDetailsDrawer.vue';
 import InvoiceItemsDrawer from '../components/InvoiceItemsDrawer.vue';
 import InvoicePaymentsDrawer from '../components/InvoicePaymentsDrawer.vue';
+import CreateInvoiceDrawer from '../components/CreateInvoiceDrawer.vue';
 
 import { useSubmitInvoice } from '../composables/useSubmitInvoice';
 import { useInvoices } from '../composables/useInvoices';
@@ -45,6 +46,17 @@ import { useCancelInvoice } from '../composables/useCancelInvoice';
 import { useUiStore } from '@/shared/stores/ui.store';
 
 const ui = useUiStore();
+
+const queryClient = useQueryClient();
+
+async function refreshInvoicesWorkspace() {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['invoices'] }),
+    queryClient.invalidateQueries({ queryKey: ['invoice'] }),
+    queryClient.invalidateQueries({ queryKey: ['invoice-items'] }),
+    queryClient.invalidateQueries({ queryKey: ['invoice-payments'] }),
+  ]);
+}
 
 const page = ref(1);
 const limit = ref(10);
@@ -76,7 +88,7 @@ const invoiceParams = computed(() => ({
   order: order.value || undefined,
 }));
 
-const { data, isLoading, isError, refetch } = useInvoices(invoiceParams);
+const { data, isLoading, isError } = useInvoices(invoiceParams);
 
 const invoiceItems = computed(() => {
   return data.value?.items ?? [];
@@ -206,6 +218,14 @@ function openInvoicePayments(row: Record<string, unknown>) {
   selectedPaymentsInvoiceId.value = Number(row.id);
   paymentsOpen.value = true;
 }
+
+// Create invoice drawer state
+const createOpen = ref(false);
+
+function handleInvoiceCreated(invoiceId: number) {
+  selectedItemsInvoiceId.value = invoiceId;
+  itemsOpen.value = true;
+}
 </script>
 
 <template>
@@ -220,10 +240,17 @@ function openInvoicePayments(row: Record<string, unknown>) {
       description="Track sales invoices from draft to payment completion."
     >
       <template #actions>
-        <Button variant="outline" size="sm" @click="refetch()">
-          <RefreshCw class="mr-2 h-4 w-4" />
-          Refresh
-        </Button>
+        <div class="flex items-center gap-2">
+          <Button variant="outline" size="sm" @click="refreshInvoicesWorkspace">
+            <RefreshCw class="mr-2 h-4 w-4" />
+            Refresh
+          </Button>
+
+          <Button size="sm" @click="createOpen = true">
+            <Plus class="mr-2 h-4 w-4" />
+            New invoice
+          </Button>
+        </div>
       </template>
 
       <div class="mb-5 space-y-4">
@@ -381,5 +408,8 @@ function openInvoicePayments(row: Record<string, unknown>) {
 
     <!-- Invoice payments drawer -->
     <InvoicePaymentsDrawer v-model:open="paymentsOpen" :invoice-id="selectedPaymentsInvoiceId" />
+
+    <!-- Create invoice drawer -->
+    <CreateInvoiceDrawer v-model:open="createOpen" @created="handleInvoiceCreated" />
   </PageContainer>
 </template>

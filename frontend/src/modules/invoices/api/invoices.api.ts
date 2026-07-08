@@ -49,3 +49,15 @@ export async function payInvoice(
 
   return unwrapResponse(PayInvoiceResponseSchema, response.data);
 }
+
+import {
+  InvoiceResponseSchema,
+  type CreateInvoiceRequest,
+  type InvoiceResponse,
+} from '../types/invoice.types';
+
+export async function createInvoice(payload: CreateInvoiceRequest): Promise<InvoiceResponse> {
+  const response = await http.post('/invoice', payload);
+
+  return unwrapResponse(InvoiceResponseSchema, response.data);
+}

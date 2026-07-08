@@ -92,3 +92,23 @@ export const PayInvoiceResponseSchema = z.object({
 });
 
 export type PayInvoiceResponse = z.infer<typeof PayInvoiceResponseSchema>;
+
+// Create invoice
+export const CreateInvoiceRequestSchema = z.object({
+  buyer_client_id: z.number(),
+  seller_company_id: z.number(),
+});
+
+export type CreateInvoiceRequest = z.infer<typeof CreateInvoiceRequestSchema>;
+
+export const InvoiceResponseSchema = z.object({
+  id: z.number(),
+  buyer_client_id: z.number(),
+  seller_company_id: z.number(),
+  created_by_user_id: z.number(),
+  status_invoice: InvoiceStatusSchema,
+  total_amount: z.number(),
+  created_at: z.string(),
+});
+
+export type InvoiceResponse = z.infer<typeof InvoiceResponseSchema>;

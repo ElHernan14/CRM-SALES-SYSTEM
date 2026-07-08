@@ -9,6 +9,7 @@ export const PaymentResponseSchema = z.object({
   payment_method: PaymentMethodSchema,
   paid_by_user_id: z.number(),
   created_at: z.string(),
+  client_name: z.string().optional(),
 });
 
 export type PaymentResponse = z.infer<typeof PaymentResponseSchema>;

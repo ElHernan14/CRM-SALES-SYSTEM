@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, toRef, watch } from 'vue';
-import { CreditCard } from 'lucide-vue-next';
+import { CreditCard, Banknote, Landmark, CircleDollarSign } from 'lucide-vue-next';
 
 import {
   Sheet,
@@ -63,7 +63,7 @@ const rows = computed(() => {
       id: payment.id,
       amount: payment.amount,
       payment_method: payment.payment_method,
-      paid_by_user_id: payment.paid_by_user_id,
+      client_name: payment.client_name,
       created_at: payment.created_at,
     })) ?? []
   );
@@ -73,11 +73,15 @@ const columns = [
   { key: 'id', label: 'Payment' },
   { key: 'amount', label: 'Amount' },
   { key: 'payment_method', label: 'Method' },
-  { key: 'paid_by_user_id', label: 'Paid by' },
+  { key: 'client_name', label: 'Paid by' },
   { key: 'created_at', label: 'Created' },
 ];
 
 const totalPages = computed(() => data.value?.meta.total_pages ?? 1);
+
+const totalPaid = computed(() => {
+  return rows.value.reduce((acc, payment) => acc + Number(payment.amount), 0);
+});
 
 function formatCurrency(value: unknown) {
   return `$${Number(value).toFixed(2)}`;
@@ -95,6 +99,43 @@ function handleSort(columnKey: string) {
 
   sortColumn.value = columnKey;
   order.value = 'desc';
+}
+
+// Helper functions for payment method labels, icons, and classes
+function getPaymentMethodLabel(value: unknown) {
+  const method = String(value);
+
+  const labels: Record<string, string> = {
+    cash: 'Cash',
+    transfer: 'Transfer',
+    card: 'Card',
+  };
+
+  return labels[method] ?? method;
+}
+
+function getPaymentMethodIcon(value: unknown) {
+  const method = String(value);
+
+  const icons: Record<string, unknown> = {
+    cash: Banknote,
+    transfer: Landmark,
+    card: CreditCard,
+  };
+
+  return icons[method] ?? CircleDollarSign;
+}
+
+function getPaymentMethodClass(value: unknown) {
+  const method = String(value);
+
+  const classes: Record<string, string> = {
+    cash: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    transfer: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+    card: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
+  };
+
+  return classes[method] ?? 'bg-muted text-muted-foreground';
 }
 </script>
 
@@ -148,6 +189,22 @@ function handleSort(columnKey: string) {
           </Select>
         </div>
 
+        <div class="rounded-xl border border-border bg-muted/40 p-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-muted-foreground">Total registered payments</p>
+
+              <p class="mt-1 text-xl font-semibold text-foreground">
+                {{ formatCurrency(totalPaid) }}
+              </p>
+            </div>
+
+            <div class="rounded-xl border border-border bg-card p-3 text-muted-foreground">
+              <CircleDollarSign class="h-5 w-5" />
+            </div>
+          </div>
+        </div>
+
         <div
           v-if="isLoading"
           class="rounded-xl border border-border bg-muted/30 p-6 text-sm text-muted-foreground"
@@ -183,18 +240,23 @@ function handleSort(columnKey: string) {
             </template>
 
             <template #cell-amount="{ value }">
-              {{ formatCurrency(value) }}
+              <span class="font-medium text-foreground">
+                {{ formatCurrency(value) }}
+              </span>
             </template>
 
             <template #cell-payment_method="{ value }">
               <span
-                class="rounded-full border border-border bg-muted px-2 py-1 text-xs font-medium text-muted-foreground"
+                class="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium"
+                :class="getPaymentMethodClass(value)"
               >
-                {{ value }}
+                <component :is="getPaymentMethodIcon(value)" class="h-3.5 w-3.5" />
+
+                {{ getPaymentMethodLabel(value) }}
               </span>
             </template>
 
-            <template #cell-paid_by_user_id="{ value }"> User #{{ value }} </template>
+            <template #cell-client_name="{ value }"> {{ value }} </template>
 
             <template #cell-created_at="{ value }">
               {{ formatDate(value) }}
