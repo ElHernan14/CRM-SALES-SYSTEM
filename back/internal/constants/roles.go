@@ -10,7 +10,7 @@ var RolePermissions = map[string][]string{
 	RoleAdmin: {
 		// todo
 		ClientCreate, ClientRead, ClientUpdate, ClientDelete,
-		CompanyCreate, CompanyRead, CompanyUpdate, CompanyDelete,
+		CompanyCreate, CompanyRead, CompanyUpdate, CompanyDelete, CompanyView,
 		ProductCreate, ProductRead, ProductUpdate, ProductDelete,
 		InvoiceCreate, InvoiceRead, InvoiceUpdate, InvoiceDelete,
 		InvoicePay, InvoiceCancel,
@@ -19,6 +19,7 @@ var RolePermissions = map[string][]string{
 
 	RoleManager: {
 		ClientRead, ClientUpdate,
+		CompanyRead, CompanyUpdate, CompanyView,
 		ProductCreate, ProductRead, ProductUpdate,
 		InvoiceCreate, InvoiceRead, InvoiceUpdate,
 		InvoicePay,

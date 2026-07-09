@@ -15,13 +15,8 @@ import (
 )
 
 type StoreService interface {
-	GetProducts(
-		ctx context.Context,
-		req *storedto.GetStoreProductsRequest,
-	) (*storedto.GetStoreProductsResponse, error)
-	Checkout(
-		ctx context.Context,
-	) (*storedto.CheckoutResponse, error)
+	GetProducts(ctx context.Context, req *storedto.GetStoreProductsRequest) (*storedto.GetStoreProductsResponse, error)
+	Checkout(ctx context.Context) (*storedto.CheckoutResponse, error)
 }
 
 type storeService struct {
@@ -31,22 +26,11 @@ type storeService struct {
 	SubmitWorkflow submitInvoiceWorkflow.SubmitInvoiceWorkflow
 }
 
-func NewStoreService(
-	db *sql.DB,
-	repo productrepo.ProductRepository,
-	submitWorkflow submitInvoiceWorkflow.SubmitInvoiceWorkflow,
-) StoreService {
-	return &storeService{
-		db:             db,
-		ProductRepo:    repo,
-		SubmitWorkflow: submitWorkflow,
-	}
+func NewStoreService(db *sql.DB, repo productrepo.ProductRepository, submitWorkflow submitInvoiceWorkflow.SubmitInvoiceWorkflow) StoreService {
+	return &storeService{db: db, ProductRepo: repo, SubmitWorkflow: submitWorkflow}
 }
 
-func (s *storeService) GetProducts(
-	ctx context.Context,
-	req *storedto.GetStoreProductsRequest,
-) (*storedto.GetStoreProductsResponse, error) {
+func (s *storeService) GetProducts(ctx context.Context, req *storedto.GetStoreProductsRequest) (*storedto.GetStoreProductsResponse, error) {
 	products, total, err := s.ProductRepo.ListAvailableProducts(ctx, req)
 	if err != nil {
 		return nil, err
@@ -55,9 +39,10 @@ func (s *storeService) GetProducts(
 	items := make([]storedto.StoreProductResponse, 0, len(products))
 	for _, p := range products {
 		available := p.Stock - p.ReservedStock
-
 		items = append(items, storedto.StoreProductResponse{
 			ID:             p.ID,
+			CompanyID:      p.CompanyID,
+			CompanyName:    p.CompanyName,
 			Name:           p.Name,
 			Type:           p.Type,
 			Description:    p.Description,
@@ -66,45 +51,25 @@ func (s *storeService) GetProducts(
 		})
 	}
 
-	meta := metadto.Meta{
-		Page:  req.Page,
-		Limit: req.Limit,
-		Total: total,
-	}
-
-	return &storedto.GetStoreProductsResponse{
-		Items: items,
-		Meta:  meta,
-	}, nil
+	meta := metadto.Meta{Page: req.Page, Limit: req.Limit, Total: total}
+	return &storedto.GetStoreProductsResponse{Items: items, Meta: meta}, nil
 }
 
-func (s *storeService) Checkout(
-	ctx context.Context,
-) (*storedto.CheckoutResponse, error) {
+func (s *storeService) Checkout(ctx context.Context) (*storedto.CheckoutResponse, error) {
 	tenant := tenantHelper.GetTenant(ctx)
 	if tenant == nil {
-		return nil, errorHandler.NewAppError(
-			http.StatusUnauthorized,
-			"Usuario no autenticado",
-		)
+		return nil, errorHandler.NewAppError(http.StatusUnauthorized, "Usuario no autenticado")
 	}
 
-	draft, err := s.InvoiceRepo.GetActiveDraftByTenant(
-		ctx,
-		tenant,
-	)
+	draft, err := s.InvoiceRepo.GetActiveDraftByTenant(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
 
-	// SUbmit Workflow service
-	err = s.SubmitWorkflow.Submit(
-		ctx,
-		draft.ID,
-	)
+	err = s.SubmitWorkflow.Submit(ctx, draft.ID)
+	if err != nil {
+		return nil, err
+	}
 
-	return &storedto.CheckoutResponse{
-		InvoiceID: draft.ID,
-		Status:    constants.InvoicePending,
-	}, nil
+	return &storedto.CheckoutResponse{InvoiceID: draft.ID, Status: constants.InvoicePending}, nil
 }

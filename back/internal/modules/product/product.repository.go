@@ -17,15 +17,8 @@ type ProductRepository interface {
 	Update(ctx context.Context, p *models.Product) error
 	SoftDelete(ctx context.Context, id int) error
 	GetByIDForUpdate(ctx context.Context, tx *sql.Tx, id int) (*models.Product, error)
-	ListByCompanyID(
-		ctx context.Context,
-		companyID int,
-		req *productdto.GetCompanyProductsRequest,
-	) ([]*models.Product, int, error)
-	ListAvailableProducts(
-		ctx context.Context,
-		req *storedto.GetStoreProductsRequest,
-	) ([]*models.Product, int, error)
+	ListByCompanyID(ctx context.Context, companyID int, req *productdto.GetCompanyProductsRequest) ([]*models.Product, int, error)
+	ListAvailableProducts(ctx context.Context, req *storedto.GetStoreProductsRequest) ([]*models.Product, int, error)
 }
 
 type productRepository struct {
@@ -37,39 +30,19 @@ func NewProductRepository(db *sql.DB) ProductRepository {
 }
 
 func (r *productRepository) Create(ctx context.Context, p *models.Product) error {
-
 	query := `
 		INSERT INTO product (company_id, name, description, type, price, stock, status)
 		VALUES ($1, $2, $3, $4, $5, $6, 1)
 		RETURNING id
 	`
 
-	return r.db.QueryRowContext(
-		ctx,
-		query,
-		p.CompanyID,
-		p.Name,
-		p.Description,
-		p.Type,
-		p.Price,
-		p.Stock,
-	).Scan(&p.ID)
+	return r.db.QueryRowContext(ctx, query, p.CompanyID, p.Name, p.Description, p.Type, p.Price, p.Stock).Scan(&p.ID)
 }
 
-func (r *productRepository) GetAll(
-	ctx context.Context,
-	search string,
-	productType string,
-	minPrice float64,
-	maxPrice float64,
-	companyID *int,
-	limit int,
-	offset int,
-) ([]models.Product, int, error) {
-
+func (r *productRepository) GetAll(ctx context.Context, search string, productType string, minPrice float64, maxPrice float64, companyID *int, limit int, offset int) ([]models.Product, int, error) {
 	baseQuery := `
-		FROM product 
-		where true = true
+		FROM product
+		WHERE true = true
 	`
 
 	var args []interface{}
@@ -82,9 +55,7 @@ func (r *productRepository) GetAll(
 	}
 
 	if search != "" {
-		baseQuery += fmt.Sprintf(`
-			AND LOWER(name) LIKE LOWER($%d)
-		`, i)
+		baseQuery += fmt.Sprintf(` AND LOWER(name) LIKE LOWER($%d)`, i)
 		args = append(args, "%"+search+"%")
 		i++
 	}
@@ -108,15 +79,12 @@ func (r *productRepository) GetAll(
 	}
 
 	countQuery := "SELECT COUNT(*) " + baseQuery
-
 	var total int
 	if err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
-	dataQuery := `
-		SELECT id, name, description, type, price, stock, status, company_id, reserved_stock
-	` + baseQuery + fmt.Sprintf(`
+	dataQuery := `SELECT id, name, description, type, price, stock, status, company_id, reserved_stock ` + baseQuery + fmt.Sprintf(`
 		ORDER BY id DESC
 		LIMIT $%d OFFSET $%d
 	`, i, i+1)
@@ -130,30 +98,18 @@ func (r *productRepository) GetAll(
 	defer rows.Close()
 
 	var products []models.Product
-
 	for rows.Next() {
 		var p models.Product
-		if err := rows.Scan(
-			&p.ID,
-			&p.Name,
-			&p.Description,
-			&p.Type,
-			&p.Price,
-			&p.Stock,
-			&p.Status,
-			&p.CompanyID,
-			&p.ReservedStock,
-		); err != nil {
+		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Type, &p.Price, &p.Stock, &p.Status, &p.CompanyID, &p.ReservedStock); err != nil {
 			return nil, 0, err
 		}
 		products = append(products, p)
 	}
 
-	return products, total, nil
+	return products, total, rows.Err()
 }
 
 func (r *productRepository) GetByID(ctx context.Context, id int) (*models.Product, error) {
-
 	query := `
 		SELECT id, name, description, type, price, stock, status, company_id
 		FROM product
@@ -161,18 +117,7 @@ func (r *productRepository) GetByID(ctx context.Context, id int) (*models.Produc
 	`
 
 	var p models.Product
-
-	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&p.ID,
-		&p.Name,
-		&p.Description,
-		&p.Type,
-		&p.Price,
-		&p.Stock,
-		&p.Status,
-		&p.CompanyID,
-	)
-
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&p.ID, &p.Name, &p.Description, &p.Type, &p.Price, &p.Stock, &p.Status, &p.CompanyID)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -184,7 +129,6 @@ func (r *productRepository) GetByID(ctx context.Context, id int) (*models.Produc
 }
 
 func (r *productRepository) Update(ctx context.Context, p *models.Product) error {
-
 	query := `
 		UPDATE product SET
 			name = $1,
@@ -196,69 +140,30 @@ func (r *productRepository) Update(ctx context.Context, p *models.Product) error
 		WHERE id = $7
 	`
 
-	_, err := r.db.ExecContext(
-		ctx,
-		query,
-		p.Name,
-		p.Description,
-		p.Type,
-		p.Price,
-		p.Stock,
-		p.Status,
-		p.ID,
-	)
-
+	_, err := r.db.ExecContext(ctx, query, p.Name, p.Description, p.Type, p.Price, p.Stock, p.Status, p.ID)
 	return err
 }
 
 func (r *productRepository) SoftDelete(ctx context.Context, id int) error {
-
 	query := `
 		UPDATE product
-		SET 
-			deleted_at = NOW(),
-			status = 0
+		SET deleted_at = NOW(), status = 0
 		WHERE id = $1
 	`
-
 	_, err := r.db.ExecContext(ctx, query, id)
 	return err
 }
 
-func (r *productRepository) GetByIDForUpdate(
-	ctx context.Context,
-	tx *sql.Tx,
-	id int,
-) (*models.Product, error) {
-
+func (r *productRepository) GetByIDForUpdate(ctx context.Context, tx *sql.Tx, id int) (*models.Product, error) {
 	query := `
-		SELECT
-			id,
-			name,
-			price,
-			stock,
-			reserved_stock,
-			company_id
+		SELECT id, name, price, stock, reserved_stock, company_id
 		FROM product
 		WHERE id = $1
 		FOR UPDATE
 	`
 
 	product := &models.Product{}
-
-	err := tx.QueryRowContext(
-		ctx,
-		query,
-		id,
-	).Scan(
-		&product.ID,
-		&product.Name,
-		&product.Price,
-		&product.Stock,
-		&product.ReservedStock,
-		&product.CompanyID,
-	)
-
+	err := tx.QueryRowContext(ctx, query, id).Scan(&product.ID, &product.Name, &product.Price, &product.Stock, &product.ReservedStock, &product.CompanyID)
 	if err != nil {
 		return nil, err
 	}
@@ -266,78 +171,39 @@ func (r *productRepository) GetByIDForUpdate(
 	return product, nil
 }
 
-func (r *productRepository) ListByCompanyID(
-	ctx context.Context,
-	companyID int,
-	req *productdto.GetCompanyProductsRequest,
-) ([]*models.Product, int, error) {
-	var err error
+func (r *productRepository) ListByCompanyID(ctx context.Context, companyID int, req *productdto.GetCompanyProductsRequest) ([]*models.Product, int, error) {
+	allowedSortColumns := map[string]string{"name": "name", "description": "description", "type": "type", "price": "price", "stock": "stock"}
+	allowedOrders := map[string]string{"asc": "ASC", "desc": "DESC"}
 
-	allowedSortColumns := map[string]string{
-		"name":        "name",
-		"description": "description",
-		"type":        "type",
-		"price":       "price",
-		"stock":       "stock",
-	}
-
-	allowedOrders := map[string]string{
-		"asc":  "ASC",
-		"desc": "DESC",
-	}
-
-	selectQuery := `
-        SELECT
-            id,
-            name,
-            description,
-			type,
-            price,
-            stock,
-            reserved_stock,
-            status
-    `
-
-	baseQuery := `
-        FROM product
-        WHERE company_id = $1
-    `
-
+	selectQuery := `SELECT id, name, description, type, price, stock, reserved_stock, status `
+	baseQuery := `FROM product WHERE company_id = $1`
 	args := []interface{}{companyID}
 	argPos := 2
 
-	// Filtro por nombre
 	if req.Name != "" {
 		baseQuery += fmt.Sprintf(" AND name ILIKE $%d", argPos)
 		args = append(args, "%"+req.Name+"%")
 		argPos++
 	}
-
-	// Filtro por tipo
 	if req.Type != "" {
 		baseQuery += fmt.Sprintf(" AND type = $%d", argPos)
 		args = append(args, req.Type)
 		argPos++
 	}
-
-	// Filtro por status
 	if req.Status != 0 {
 		baseQuery += fmt.Sprintf(" AND status = $%d", argPos)
 		args = append(args, req.Status)
 		argPos++
 	}
 
-	// Count
 	countQuery := "SELECT COUNT(*) " + baseQuery
 	var total int
 	if err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
-	// Ordenamiento
 	sortColumn := "created_at"
 	order := "DESC"
-
 	if v, ok := allowedSortColumns[req.SortColumn]; ok {
 		sortColumn = v
 	}
@@ -346,10 +212,8 @@ func (r *productRepository) ListByCompanyID(
 	}
 
 	offset := (req.Page - 1) * req.Limit
-
 	baseQuery += fmt.Sprintf(" ORDER BY %s %s", sortColumn, order)
 	baseQuery += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argPos, argPos+1)
-
 	args = append(args, req.Limit, offset)
 
 	rows, err := r.db.QueryContext(ctx, selectQuery+baseQuery, args...)
@@ -361,89 +225,85 @@ func (r *productRepository) ListByCompanyID(
 	products := make([]*models.Product, 0)
 	for rows.Next() {
 		var p models.Product
-		err := rows.Scan(
-			&p.ID,
-			&p.Name,
-			&p.Description,
-			&p.Type,
-			&p.Price,
-			&p.Stock,
-			&p.ReservedStock,
-			&p.Status,
-		)
-		if err != nil {
+		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Type, &p.Price, &p.Stock, &p.ReservedStock, &p.Status); err != nil {
 			return nil, 0, err
 		}
 		products = append(products, &p)
 	}
 
-	return products, total, nil
+	return products, total, rows.Err()
 }
 
-func (r *productRepository) ListAvailableProducts(
-	ctx context.Context,
-	req *storedto.GetStoreProductsRequest,
-) ([]*models.Product, int, error) {
-	var err error
-
-	allowedSortColumns := map[string]string{
-		"name":       "name",
-		"created_at": "created_at",
-		"type":       "type",
-		"price":      "price",
-		"stock":      "stock",
-	}
-
-	allowedOrders := map[string]string{
-		"asc":  "ASC",
-		"desc": "DESC",
-	}
+func (r *productRepository) ListAvailableProducts(ctx context.Context, req *storedto.GetStoreProductsRequest) ([]*models.Product, int, error) {
+	allowedSortColumns := map[string]string{"name": "p.name", "created_at": "p.created_at", "type": "p.type", "price": "p.price", "stock": "p.stock"}
+	allowedOrders := map[string]string{"asc": "ASC", "desc": "DESC"}
 
 	selectQuery := `
-        SELECT
-            id,
-            name,
-            description,
-			type,
-            price,
-            stock,
-            reserved_stock
-    `
+		SELECT
+			p.id,
+			p.company_id,
+			c.name AS company_name,
+			p.name,
+			p.description,
+			p.type,
+			p.price,
+			p.stock,
+			p.reserved_stock
+	`
 
 	baseQuery := `
-        FROM product
-        WHERE status = 1
-        AND stock > reserved_stock
-    `
+		FROM product p
+		INNER JOIN company c ON c.id = p.company_id
+		WHERE p.status = 1
+		  AND p.deleted_at IS NULL
+		  AND c.status = 1
+		  AND c.deleted_at IS NULL
+		  AND p.stock > p.reserved_stock
+	`
 
 	args := []interface{}{}
 	argPos := 1
 
-	// Filtro por nombre
-	if req.Name != "" {
-		baseQuery += fmt.Sprintf(" AND LOWER(name) LIKE LOWER($%d)", argPos)
-		args = append(args, "%"+req.Name+"%")
+	if req.CompanyID != nil {
+		baseQuery += fmt.Sprintf(" AND p.company_id = $%d", argPos)
+		args = append(args, *req.CompanyID)
 		argPos++
 	}
 
-	// Filtro por tipo
+	search := req.Search
+	if search == "" {
+		search = req.Name
+	}
+	if search != "" {
+		baseQuery += fmt.Sprintf(" AND (p.name ILIKE $%d OR p.description ILIKE $%d)", argPos, argPos)
+		args = append(args, "%"+search+"%")
+		argPos++
+	}
+
 	if req.Type != "" {
-		baseQuery += fmt.Sprintf(" AND type = $%d", argPos)
+		baseQuery += fmt.Sprintf(" AND p.type = $%d", argPos)
 		args = append(args, req.Type)
 		argPos++
 	}
+	if req.MinPrice > 0 {
+		baseQuery += fmt.Sprintf(" AND p.price >= $%d", argPos)
+		args = append(args, req.MinPrice)
+		argPos++
+	}
+	if req.MaxPrice > 0 {
+		baseQuery += fmt.Sprintf(" AND p.price <= $%d", argPos)
+		args = append(args, req.MaxPrice)
+		argPos++
+	}
 
-	// Count
 	countQuery := "SELECT COUNT(*) " + baseQuery
 	var total int
 	if err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
-	// Ordenamiento
-	sortColumn := "created_at"
+	sortColumn := "p.created_at"
 	order := "DESC"
-
 	if v, ok := allowedSortColumns[req.SortColumn]; ok {
 		sortColumn = v
 	}
@@ -452,10 +312,8 @@ func (r *productRepository) ListAvailableProducts(
 	}
 
 	offset := (req.Page - 1) * req.Limit
-
 	baseQuery += fmt.Sprintf(" ORDER BY %s %s", sortColumn, order)
 	baseQuery += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argPos, argPos+1)
-
 	args = append(args, req.Limit, offset)
 
 	rows, err := r.db.QueryContext(ctx, selectQuery+baseQuery, args...)
@@ -467,20 +325,11 @@ func (r *productRepository) ListAvailableProducts(
 	products := make([]*models.Product, 0)
 	for rows.Next() {
 		var p models.Product
-		err := rows.Scan(
-			&p.ID,
-			&p.Name,
-			&p.Description,
-			&p.Type,
-			&p.Price,
-			&p.Stock,
-			&p.ReservedStock,
-		)
-		if err != nil {
+		if err := rows.Scan(&p.ID, &p.CompanyID, &p.CompanyName, &p.Name, &p.Description, &p.Type, &p.Price, &p.Stock, &p.ReservedStock); err != nil {
 			return nil, 0, err
 		}
 		products = append(products, &p)
 	}
 
-	return products, total, nil
+	return products, total, rows.Err()
 }

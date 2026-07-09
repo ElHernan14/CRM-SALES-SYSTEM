@@ -3,6 +3,8 @@ package routes
 import (
 	"database/sql"
 
+	"crm-system-sales/internal/config"
+	"crm-system-sales/internal/middleware"
 	"crm-system-sales/internal/modules/auth"
 	"crm-system-sales/internal/modules/client"
 	"crm-system-sales/internal/modules/company"
@@ -14,6 +16,7 @@ import (
 	invoiceitem "crm-system-sales/internal/modules/invoice_item"
 	invoicepayment "crm-system-sales/internal/modules/invoice_payment"
 	invoicepaymentrepo "crm-system-sales/internal/modules/invoice_payment/repository"
+	"crm-system-sales/internal/modules/marketplace"
 	"crm-system-sales/internal/modules/product"
 	storecontroller "crm-system-sales/internal/modules/store/controller"
 	storeroutes "crm-system-sales/internal/modules/store/routes"
@@ -21,8 +24,6 @@ import (
 	"crm-system-sales/internal/modules/users"
 	paymentworkflow "crm-system-sales/internal/services/invoice_workflow/service"
 	submitInvoiceWorkflow "crm-system-sales/internal/services/invoice_workflow/service"
-
-	"crm-system-sales/internal/middleware"
 
 	"github.com/gorilla/mux"
 )
@@ -38,15 +39,12 @@ type AppContainer struct {
 	InvoiceItemController    *invoiceitem.InvoiceItemController
 	InvoicePaymentController *invoicepayment.InvoicePaymentController
 	StoreController          *storecontroller.StoreController
+	MarketplaceController    *marketplace.MarketplaceController
 }
 
-func SetupRoutes(r *mux.Router, db *sql.DB) {
-
-	// auth (público)
-	// Rutas públicas
+func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 	authRouter := r.PathPrefix("/auth").Subrouter()
 
-	// rutas protegidos
 	protected := r.PathPrefix("").Subrouter()
 	protected.Use(middleware.AuthMiddleware)
 
@@ -59,21 +57,22 @@ func SetupRoutes(r *mux.Router, db *sql.DB) {
 	invoiceRepo := invoiceRepository.NewInvoiceRepository(db)
 	invoiceItemRepo := invoiceitem.NewInvoiceItemRepository(db)
 	invoicePaymentRepo := invoicepaymentrepo.NewInvoicePaymentRepository(db)
+	marketplaceRepo := marketplace.NewMarketplaceRepository(db)
 
 	// Services
 	authService := auth.NewAuthService(userRepository)
 	userService := users.NewUserService(userRepository)
 	clientService := client.NewClientService(db, clientRepo, userRepository, authRepo)
-	companyService := company.NewCompanyService(db, companyRepo, authRepo, userRepository)
+	companyService := company.NewCompanyService(db, companyRepo, authRepo, userRepository, cfg.UploadDir)
 	productService := product.NewProductService(db, productRepo)
 	inventoryService := inventory.NewInventoryService(productRepo)
 	invoiceItemService := invoiceitem.NewInvoiceItemService(db, invoiceItemRepo, invoiceRepo, clientRepo, productRepo, inventoryService)
-	// Workflow
 	submitWorkflow := submitInvoiceWorkflow.NewSubmitInvoiceWorkflow(invoiceRepo, invoiceItemRepo, clientRepo, inventoryService, db)
 	paymentWorkflow := paymentworkflow.NewPayInvoiceWorkflow(invoiceItemRepo, inventoryService)
 	invoiceService := invoiceService.NewInvoiceService(db, invoiceRepo, clientRepo, companyRepo, invoiceItemRepo, inventoryService, invoicePaymentRepo, paymentWorkflow)
 	invoicePaymentService := invoicepayment.NewInvoicePaymentService(db, invoiceRepo, clientRepo, invoicePaymentRepo)
 	storeService := storeservice.NewStoreService(db, productRepo, submitWorkflow)
+	marketplaceService := marketplace.NewMarketplaceService(marketplaceRepo)
 
 	// Controllers
 	authController := auth.NewAuthController(authService)
@@ -85,8 +84,8 @@ func SetupRoutes(r *mux.Router, db *sql.DB) {
 	invoiceItemController := invoiceitem.NewInvoiceItemController(invoiceItemService)
 	invoicePaymentController := invoicepayment.NewInvoicePaymentController(invoicePaymentService)
 	storeController := storecontroller.NewStoreController(storeService)
+	marketplaceController := marketplace.NewMarketplaceController(marketplaceService)
 
-	// Container para inyección de dependencias
 	container := &AppContainer{
 		UserController:           userController,
 		AuthController:           authController,
@@ -97,9 +96,9 @@ func SetupRoutes(r *mux.Router, db *sql.DB) {
 		InvoiceItemController:    invoiceItemController,
 		InvoicePaymentController: invoicePaymentController,
 		StoreController:          storeController,
+		MarketplaceController:    marketplaceController,
 	}
 
-	// Registrar rutas endpoints
 	auth.RegisterAuthRoutes(authRouter, container.AuthController)
 	users.RegisterUserRoutes(protected, container.UserController)
 	client.RegisterClientRoutes(protected, container.ClientController)
@@ -109,4 +108,5 @@ func SetupRoutes(r *mux.Router, db *sql.DB) {
 	invoiceitem.RegisterInvoiceItemRoutes(protected, container.InvoiceItemController)
 	invoicepayment.RegisterInvoicePaymentRoutes(protected, container.InvoicePaymentController)
 	storeroutes.RegisterInvoiceItemRoutes(protected, container.StoreController)
+	marketplace.RegisterMarketplaceRoutes(protected, container.MarketplaceController)
 }

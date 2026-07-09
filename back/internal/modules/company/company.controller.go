@@ -21,11 +21,7 @@ func NewCompanyController(service CompanyService) *CompanyController {
 }
 
 func (c *CompanyController) Create(w http.ResponseWriter, r *http.Request) error {
-
-	var err error
-
 	var req companydto.CreateCompanyRequest
-
 	if errDecode := json.NewDecoder(r.Body).Decode(&req); errDecode != nil {
 		return errorHandler.NewAppError(http.StatusBadRequest, "body inválido")
 	}
@@ -40,14 +36,10 @@ func (c *CompanyController) Create(w http.ResponseWriter, r *http.Request) error
 		return err
 	}
 
-	json.NewEncoder(w).Encode(response.Success(res))
-	return nil
+	return json.NewEncoder(w).Encode(response.Success(res))
 }
 
 func (c *CompanyController) GetMyCompany(w http.ResponseWriter, r *http.Request) error {
-
-	var err error
-
 	res, err := c.service.GetMyCompany(r.Context())
 	if err != nil {
 		return err
@@ -57,17 +49,8 @@ func (c *CompanyController) GetMyCompany(w http.ResponseWriter, r *http.Request)
 }
 
 func (c *CompanyController) GetCompanies(w http.ResponseWriter, r *http.Request) error {
-
-	var err error
-
 	q := r.URL.Query()
-
-	req := companydto.GetCompaniesRequest{
-		Search: q.Get("search"),
-	}
-
-	req.Page = 1
-	req.Limit = 10
+	req := companydto.GetCompaniesRequest{Search: q.Get("search"), Page: 1, Limit: 10}
 
 	if v := q.Get("page"); v != "" {
 		p, err := strconv.Atoi(v)
@@ -103,17 +86,32 @@ func (c *CompanyController) GetCompanies(w http.ResponseWriter, r *http.Request)
 }
 
 func (c *CompanyController) GetCompanyByID(w http.ResponseWriter, r *http.Request) error {
-
-	var err error
-
 	vars := mux.Vars(r)
-
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil || id <= 0 {
 		return errorHandler.NewAppError(http.StatusBadRequest, "id inválido en path")
 	}
 
 	res, err := c.service.GetByID(r.Context(), id)
+	if err != nil {
+		return err
+	}
+
+	return json.NewEncoder(w).Encode(response.Success(res))
+}
+
+func (c *CompanyController) UploadLogo(w http.ResponseWriter, r *http.Request) error {
+	if err := r.ParseMultipartForm(5 << 20); err != nil {
+		return errorHandler.NewAppError(http.StatusBadRequest, "imagen inválida")
+	}
+
+	file, header, err := r.FormFile("logo")
+	if err != nil {
+		return errorHandler.NewAppError(http.StatusBadRequest, "logo es requerido")
+	}
+	defer file.Close()
+
+	res, err := c.service.UploadLogo(r.Context(), file, header)
 	if err != nil {
 		return err
 	}

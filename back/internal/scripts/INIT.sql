@@ -1,4 +1,4 @@
-/*--------------------------------------------TABLAS AUTENTICACIÓN--------------------------------------------*/
+﻿/*--------------------------------------------TABLAS AUTENTICACIÃ“N--------------------------------------------*/
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -74,7 +74,9 @@ CREATE TABLE company (
     name VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
-    status INT DEFAULT 1 -- 1 activo, 0 inactivo
+    status INT DEFAULT 1, -- 1 activo, 0 inactivo
+    description TEXT,
+    logo_path TEXT
 );
 
 ALTER TABLE client

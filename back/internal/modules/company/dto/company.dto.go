@@ -3,17 +3,24 @@ package companydto
 import "crm-system-sales/internal/core/dto"
 
 type CreateCompanyRequest struct {
-	Name     string `json:"name" validate:"required,min=2,max=100"`
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,strong_password"`
+	Name        string  `json:"name" validate:"required,min=2,max=100"`
+	Email       string  `json:"email" validate:"required,email"`
+	Password    string  `json:"password" validate:"required,strong_password"`
+	Description *string `json:"description" validate:"omitempty,max=500"`
 }
 
 type CompanyResponse struct {
-	ID        int     `json:"id"`
-	Name      string  `json:"name"`
-	CreatedAt *string `json:"created_at,omitempty"`
-	DeletedAt *string `json:"deleted_at,omitempty"`
-	Status    *int    `json:"status,omitempty"`
+	ID          int     `json:"id"`
+	Name        string  `json:"name"`
+	Description *string `json:"description,omitempty"`
+	Logo        *string `json:"logo,omitempty"`
+	CreatedAt   *string `json:"created_at,omitempty"`
+	DeletedAt   *string `json:"deleted_at,omitempty"`
+	Status      *int    `json:"status,omitempty"`
+}
+
+type UploadCompanyLogoResponse struct {
+	Logo string `json:"logo"`
 }
 
 type GetCompaniesRequest struct {
@@ -23,8 +30,9 @@ type GetCompaniesRequest struct {
 }
 
 type CompanyListItem struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID   int     `json:"id"`
+	Name string  `json:"name"`
+	Logo *string `json:"logo,omitempty"`
 }
 
 type GetCompaniesResponse struct {

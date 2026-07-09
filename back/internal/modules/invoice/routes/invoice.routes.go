@@ -17,4 +17,5 @@ func RegisterInvoiceRoutes(r *mux.Router, controller *controller.InvoiceControll
 
 	// ERP Machine
 	r.HandleFunc("/company/invoices", middleware.RequirePermission("invoice:read")(middleware.ErrorMiddleware(controller.GetCompanyInvoices))).Methods("GET")
+	r.HandleFunc("/company/purchases", middleware.RequirePermission("invoice:read")(middleware.ErrorMiddleware(controller.GetCompanyPurchases))).Methods("GET")
 }

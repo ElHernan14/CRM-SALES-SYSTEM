@@ -16,12 +16,13 @@ type Config struct {
 	DBName     string
 	DBSSLMode  string
 	ServerPort string
+	UploadDir  string
 }
 
 func LoadConfig() Config {
 	err := godotenv.Load()
 	if err != nil {
-		log.Println("⚠️ No .env file found, using system env")
+		log.Println("No .env file found, using system env")
 	}
 
 	port, _ := strconv.Atoi(getEnv("DB_PORT", "5432"))
@@ -34,6 +35,7 @@ func LoadConfig() Config {
 		DBName:     getEnv("DB_NAME", "postgres"),
 		DBSSLMode:  getEnv("DB_SSLMODE", "disable"),
 		ServerPort: getEnv("SERVER_PORT", "8080"),
+		UploadDir:  getEnv("UPLOAD_DIR", "C:/upload/files"),
 	}
 }
 

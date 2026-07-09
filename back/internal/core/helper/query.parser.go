@@ -7,20 +7,16 @@ import (
 	invoicedto "crm-system-sales/internal/modules/invoice/dto"
 	invoiceitemdto "crm-system-sales/internal/modules/invoice_item/dto"
 	invoicepaymentdto "crm-system-sales/internal/modules/invoice_payment/dto"
+	marketplacedto "crm-system-sales/internal/modules/marketplace/dto"
 	productdto "crm-system-sales/internal/modules/product/dto"
 	storedto "crm-system-sales/internal/modules/store/dto"
-
 	"net/http"
 	"strconv"
 )
 
 func ParseGetClientsRequest(r *http.Request) (*clientdto.GetClientsRequest, error) {
 	q := r.URL.Query()
-
-	req := &clientdto.GetClientsRequest{}
-
-	req.Search = q.Get("search")
-	req.Email = q.Get("email")
+	req := &clientdto.GetClientsRequest{Search: q.Get("search"), Email: q.Get("email")}
 
 	if v := q.Get("company_id"); v != "" {
 		id, err := strconv.Atoi(v)
@@ -29,142 +25,34 @@ func ParseGetClientsRequest(r *http.Request) (*clientdto.GetClientsRequest, erro
 		}
 		req.CompanyID = &id
 	}
-
-	if v := q.Get("page"); v != "" {
-		page, err := strconv.Atoi(v)
-		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "page inválido")
-		}
-		req.Page = page
+	if err := parsePagination(q.Get("page"), q.Get("limit"), &req.Page, &req.Limit); err != nil {
+		return nil, err
 	}
 
-	if v := q.Get("limit"); v != "" {
-		limit, err := strconv.Atoi(v)
-		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "limit inválido")
-		}
-		req.Limit = limit
-	}
-
-	// defaults
-	if req.Page == 0 {
-		req.Page = 1
-	}
-	if req.Limit == 0 {
-		req.Limit = 10
-	}
-
-	// validate
-	msg, invalid := validatorx.ValidateStruct(req)
-	if invalid {
-		return nil, errorHandler.NewAppError(http.StatusBadRequest, msg)
-	}
-
-	return req, nil
+	return validateRequest(req)
 }
 
 func ParseGetInvoicesRequest(r *http.Request) (*invoiceitemdto.GetInvoiceItemsRequest, error) {
 	q := r.URL.Query()
-
 	req := &invoiceitemdto.GetInvoiceItemsRequest{}
-
-	if v := q.Get("page"); v != "" {
-		page, err := strconv.Atoi(v)
-		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "page inválido")
-		}
-		req.Page = page
+	if err := parsePagination(q.Get("page"), q.Get("limit"), &req.Page, &req.Limit); err != nil {
+		return nil, err
 	}
-
-	if v := q.Get("limit"); v != "" {
-		limit, err := strconv.Atoi(v)
-		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "limit inválido")
-		}
-		req.Limit = limit
-	}
-
-	// defaults
-	if req.Page == 0 {
-		req.Page = 1
-	}
-	if req.Limit == 0 {
-		req.Limit = 10
-	}
-
-	// validate
-	msg, invalid := validatorx.ValidateStruct(req)
-	if invalid {
-		return nil, errorHandler.NewAppError(http.StatusBadRequest, msg)
-	}
-
-	return req, nil
+	return validateRequest(req)
 }
 
 func ParseGetInvoicePaymentsRequest(r *http.Request) (*invoicepaymentdto.GetInvoicePaymentsRequest, error) {
 	q := r.URL.Query()
-
-	req := &invoicepaymentdto.GetInvoicePaymentsRequest{}
-	req.PaymentMethod = q.Get("payment_method")
-	req.SortColumn = q.Get("sort_column")
-	req.Order = q.Get("order")
-
-	if v := q.Get("page"); v != "" {
-		page, err := strconv.Atoi(v)
-		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "page inválido")
-		}
-		req.Page = page
+	req := &invoicepaymentdto.GetInvoicePaymentsRequest{PaymentMethod: q.Get("payment_method"), SortColumn: q.Get("sort_column"), Order: q.Get("order")}
+	if err := parsePagination(q.Get("page"), q.Get("limit"), &req.Page, &req.Limit); err != nil {
+		return nil, err
 	}
-
-	if v := q.Get("limit"); v != "" {
-		limit, err := strconv.Atoi(v)
-		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "limit inválido")
-		}
-		req.Limit = limit
-	}
-
-	// defaults
-	if req.Page == 0 {
-		req.Page = 1
-	}
-	if req.Limit == 0 {
-		req.Limit = 10
-	}
-
-	// validate
-	msg, invalid := validatorx.ValidateStruct(req)
-	if invalid {
-		return nil, errorHandler.NewAppError(http.StatusBadRequest, msg)
-	}
-
-	return req, nil
+	return validateRequest(req)
 }
 
 func ParseGetCompanyInvoicesRequest(r *http.Request) (*invoicedto.GetCompanyInvoicesRequest, error) {
 	q := r.URL.Query()
-
-	req := &invoicedto.GetCompanyInvoicesRequest{}
-	req.StatusInvoice = q.Get("status_invoice")
-	req.SortColumn = q.Get("sort_column")
-	req.Order = q.Get("order")
-
-	if v := q.Get("page"); v != "" {
-		page, err := strconv.Atoi(v)
-		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "page inválido")
-		}
-		req.Page = page
-	}
-
-	if v := q.Get("limit"); v != "" {
-		limit, err := strconv.Atoi(v)
-		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "limit inválido")
-		}
-		req.Limit = limit
-	}
+	req := &invoicedto.GetCompanyInvoicesRequest{StatusInvoice: q.Get("status_invoice"), SortColumn: q.Get("sort_column"), Order: q.Get("order")}
 
 	if v := q.Get("status"); v != "" {
 		status, err := strconv.Atoi(v)
@@ -173,48 +61,15 @@ func ParseGetCompanyInvoicesRequest(r *http.Request) (*invoicedto.GetCompanyInvo
 		}
 		req.Status = status
 	}
-
-	// defaults
-	if req.Page == 0 {
-		req.Page = 1
+	if err := parsePagination(q.Get("page"), q.Get("limit"), &req.Page, &req.Limit); err != nil {
+		return nil, err
 	}
-	if req.Limit == 0 {
-		req.Limit = 10
-	}
-
-	// validate
-	msg, invalid := validatorx.ValidateStruct(req)
-	if invalid {
-		return nil, errorHandler.NewAppError(http.StatusBadRequest, msg)
-	}
-
-	return req, nil
+	return validateRequest(req)
 }
 
 func ParseGetCompanyProductsRequest(r *http.Request) (*productdto.GetCompanyProductsRequest, error) {
 	q := r.URL.Query()
-
-	req := &productdto.GetCompanyProductsRequest{}
-	req.Name = q.Get("name")
-	req.Type = q.Get("type")
-	req.SortColumn = q.Get("sort_column")
-	req.Order = q.Get("order")
-
-	if v := q.Get("page"); v != "" {
-		page, err := strconv.Atoi(v)
-		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "page inválido")
-		}
-		req.Page = page
-	}
-
-	if v := q.Get("limit"); v != "" {
-		limit, err := strconv.Atoi(v)
-		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "limit inválido")
-		}
-		req.Limit = limit
-	}
+	req := &productdto.GetCompanyProductsRequest{Name: q.Get("name"), Type: q.Get("type"), SortColumn: q.Get("sort_column"), Order: q.Get("order")}
 
 	if v := q.Get("status"); v != "" {
 		status, err := strconv.Atoi(v)
@@ -223,103 +78,95 @@ func ParseGetCompanyProductsRequest(r *http.Request) (*productdto.GetCompanyProd
 		}
 		req.Status = status
 	}
-
-	// defaults
-	if req.Page == 0 {
-		req.Page = 1
+	if err := parsePagination(q.Get("page"), q.Get("limit"), &req.Page, &req.Limit); err != nil {
+		return nil, err
 	}
-	if req.Limit == 0 {
-		req.Limit = 10
-	}
-
-	// validate
-	msg, invalid := validatorx.ValidateStruct(req)
-	if invalid {
-		return nil, errorHandler.NewAppError(http.StatusBadRequest, msg)
-	}
-
-	return req, nil
+	return validateRequest(req)
 }
 
 func ParseGetCompanyCustomersRequest(r *http.Request) (*clientdto.GetCompanyCustomersRequest, error) {
 	q := r.URL.Query()
-
-	req := &clientdto.GetCompanyCustomersRequest{}
-	req.Name = q.Get("name")
-	req.SortColumn = q.Get("sort_column")
-	req.Order = q.Get("order")
-
-	if v := q.Get("page"); v != "" {
-		page, err := strconv.Atoi(v)
-		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "page inválido")
-		}
-		req.Page = page
+	req := &clientdto.GetCompanyCustomersRequest{Name: q.Get("name"), SortColumn: q.Get("sort_column"), Order: q.Get("order")}
+	if err := parsePagination(q.Get("page"), q.Get("limit"), &req.Page, &req.Limit); err != nil {
+		return nil, err
 	}
-
-	if v := q.Get("limit"); v != "" {
-		limit, err := strconv.Atoi(v)
-		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "limit inválido")
-		}
-		req.Limit = limit
-	}
-
-	// defaults
-	if req.Page == 0 {
-		req.Page = 1
-	}
-	if req.Limit == 0 {
-		req.Limit = 10
-	}
-
-	// validate
-	msg, invalid := validatorx.ValidateStruct(req)
-	if invalid {
-		return nil, errorHandler.NewAppError(http.StatusBadRequest, msg)
-	}
-
-	return req, nil
+	return validateRequest(req)
 }
 
 func ParseGetStoreProductsRequest(r *http.Request) (*storedto.GetStoreProductsRequest, error) {
 	q := r.URL.Query()
+	req := &storedto.GetStoreProductsRequest{
+		Search:     q.Get("search"),
+		Name:       q.Get("name"),
+		Type:       q.Get("type"),
+		SortColumn: q.Get("sort_column"),
+		Order:      q.Get("order"),
+	}
 
-	req := &storedto.GetStoreProductsRequest{}
-	req.Name = q.Get("name")
-	req.Type = q.Get("type")
-	req.SortColumn = q.Get("sort_column")
-	req.Order = q.Get("order")
-
-	if v := q.Get("page"); v != "" {
-		page, err := strconv.Atoi(v)
+	if v := q.Get("company_id"); v != "" {
+		companyID, err := strconv.Atoi(v)
 		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "page inválido")
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "company_id inválido")
 		}
-		req.Page = page
+		req.CompanyID = &companyID
 	}
-
-	if v := q.Get("limit"); v != "" {
-		limit, err := strconv.Atoi(v)
+	if v := q.Get("min_price"); v != "" {
+		minPrice, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "limit inválido")
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "min_price inválido")
 		}
-		req.Limit = limit
+		req.MinPrice = minPrice
 	}
+	if v := q.Get("max_price"); v != "" {
+		maxPrice, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "max_price inválido")
+		}
+		req.MaxPrice = maxPrice
+	}
+	if err := parsePagination(q.Get("page"), q.Get("limit"), &req.Page, &req.Limit); err != nil {
+		return nil, err
+	}
+	return validateRequest(req)
+}
 
-	// defaults
-	if req.Page == 0 {
-		req.Page = 1
+func ParseGetSuppliersRequest(r *http.Request) (*marketplacedto.GetSuppliersRequest, error) {
+	q := r.URL.Query()
+	req := &marketplacedto.GetSuppliersRequest{Search: q.Get("search"), SortColumn: q.Get("sort_column"), Order: q.Get("order")}
+	if err := parsePagination(q.Get("page"), q.Get("limit"), &req.Page, &req.Limit); err != nil {
+		return nil, err
 	}
-	if req.Limit == 0 {
-		req.Limit = 10
-	}
+	return validateRequest(req)
+}
 
-	// validate
+func parsePagination(rawPage string, rawLimit string, page *int, limit *int) error {
+	if rawPage != "" {
+		parsed, err := strconv.Atoi(rawPage)
+		if err != nil {
+			return errorHandler.NewAppError(http.StatusBadRequest, "page inválido")
+		}
+		*page = parsed
+	}
+	if rawLimit != "" {
+		parsed, err := strconv.Atoi(rawLimit)
+		if err != nil {
+			return errorHandler.NewAppError(http.StatusBadRequest, "limit inválido")
+		}
+		*limit = parsed
+	}
+	if *page == 0 {
+		*page = 1
+	}
+	if *limit == 0 {
+		*limit = 10
+	}
+	return nil
+}
+
+func validateRequest[T any](req *T) (*T, error) {
 	msg, invalid := validatorx.ValidateStruct(req)
 	if invalid {
 		return nil, errorHandler.NewAppError(http.StatusBadRequest, msg)
 	}
-
 	return req, nil
 }

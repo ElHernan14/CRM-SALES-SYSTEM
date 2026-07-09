@@ -302,3 +302,19 @@ func (c *InvoiceController) GetCompanyInvoices(
 		response.Success(res),
 	)
 }
+func (c *InvoiceController) GetCompanyPurchases(
+	w http.ResponseWriter,
+	r *http.Request,
+) error {
+	req, err := helper.ParseGetCompanyInvoicesRequest(r)
+	if err != nil {
+		return err
+	}
+
+	res, err := c.Service.GetCompanyPurchases(r.Context(), req)
+	if err != nil {
+		return err
+	}
+
+	return json.NewEncoder(w).Encode(response.Success(res))
+}

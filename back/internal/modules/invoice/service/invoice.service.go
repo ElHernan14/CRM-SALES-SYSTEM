@@ -33,10 +33,8 @@ type InvoiceService interface {
 		ctx context.Context,
 		invoiceID int,
 	) error
-	GetCompanyInvoices(
-		ctx context.Context,
-		req *invoicedto.GetCompanyInvoicesRequest,
-	) (*invoicedto.GetCompanyInvoicesResponse, error)
+	GetCompanyInvoices(ctx context.Context, req *invoicedto.GetCompanyInvoicesRequest) (*invoicedto.GetCompanyInvoicesResponse, error)
+	GetCompanyPurchases(ctx context.Context, req *invoicedto.GetCompanyInvoicesRequest) (*invoicedto.GetCompanyInvoicesResponse, error)
 }
 
 type invoiceService struct {
@@ -139,7 +137,7 @@ func (s *invoiceService) CreateDraft(
 
 		return nil, errorHandler.NewAppError(
 			http.StatusBadRequest,
-			"una empresa no puede facturarse a sí misma",
+			"una empresa no puede facturarse a sÃ­ misma",
 		)
 	}
 
@@ -464,7 +462,7 @@ func (s *invoiceService) GetCompanyInvoices(
 			PaidAmount:      inv.PaidAmount,
 			CreatedAt:       inv.CreatedAt,
 			BuyerName:       inv.BuyerName,
-    		SellerCompany:   inv.SellerName,
+			SellerCompany:   inv.SellerName,
 		})
 	}
 
@@ -479,4 +477,39 @@ func (s *invoiceService) GetCompanyInvoices(
 		Items: items,
 		Meta:  meta,
 	}, nil
+}
+func (s *invoiceService) GetCompanyPurchases(
+	ctx context.Context,
+	req *invoicedto.GetCompanyInvoicesRequest,
+) (*invoicedto.GetCompanyInvoicesResponse, error) {
+	tenant := tenantHelper.GetTenant(ctx)
+	if tenant == nil || tenant.ClientID == nil {
+		return nil, errorHandler.NewAppError(
+			http.StatusForbidden,
+			"Solo clientes compradores",
+		)
+	}
+
+	invoices, total, err := s.Repo.ListByBuyerClientID(ctx, *tenant.ClientID, req)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]invoicedto.CompanyInvoiceResponse, 0, len(invoices))
+	for _, inv := range invoices {
+		items = append(items, invoicedto.CompanyInvoiceResponse{
+			ID:              inv.ID,
+			BuyerClientID:   inv.BuyerClientID,
+			SellerCompanyID: inv.SellerCompanyID,
+			StatusInvoice:   inv.StatusInvoice,
+			TotalAmount:     inv.TotalAmount,
+			PaidAmount:      inv.PaidAmount,
+			CreatedAt:       inv.CreatedAt,
+			BuyerName:       inv.BuyerName,
+			SellerCompany:   inv.SellerName,
+		})
+	}
+
+	meta := dto.Meta{Page: req.Page, Limit: req.Limit, Total: total}
+	return &invoicedto.GetCompanyInvoicesResponse{Items: items, Meta: meta}, nil
 }

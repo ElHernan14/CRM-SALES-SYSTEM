@@ -17,11 +17,8 @@ type InvoiceRepository interface {
 	GetActiveDraft(ctx context.Context, buyerClientID int, sellerCompanyID int) (*invoiceModel.Invoice, error)
 	UpdateStatus(ctx context.Context, tx *sql.Tx, invoiceID int, status string) error
 	SetPaidAmount(ctx context.Context, tx *sql.Tx, invoiceID int, paidAmount float64) error
-	ListBySellerCompanyID(
-		ctx context.Context,
-		companyID int,
-		req *invoicedto.GetCompanyInvoicesRequest,
-	) ([]*invoiceModel.Invoice, int, error)
+	ListBySellerCompanyID(ctx context.Context, companyID int, req *invoicedto.GetCompanyInvoicesRequest) ([]*invoiceModel.Invoice, int, error)
+	ListByBuyerClientID(ctx context.Context, clientID int, req *invoicedto.GetCompanyInvoicesRequest) ([]*invoiceModel.Invoice, int, error)
 	GetActiveDraftByTenant(
 		ctx context.Context,
 		tenant *tenantHelper.TenantContext,
@@ -442,4 +439,108 @@ func (r *invoiceRepository) GetActiveDraftByTenant(
 	}
 
 	return invoice, nil
+}
+func (r *invoiceRepository) ListByBuyerClientID(
+	ctx context.Context,
+	clientID int,
+	req *invoicedto.GetCompanyInvoicesRequest,
+) ([]*invoiceModel.Invoice, int, error) {
+	allowedSortColumns := map[string]string{
+		"created_at":     "i.created_at",
+		"total_amount":   "i.total_amount",
+		"paid_amount":    "i.paid_amount",
+		"status_invoice": "i.status_invoice",
+	}
+
+	allowedOrders := map[string]string{
+		"asc":  "ASC",
+		"desc": "DESC",
+	}
+
+	selectQuery := `
+		SELECT
+			i.id,
+			i.buyer_client_id,
+			i.seller_company_id,
+			i.status_invoice,
+			i.total_amount,
+			i.paid_amount,
+			i.created_at,
+			(cb.first_name || ' ' || cb.last_name) AS buyer_name,
+			co.name AS seller_company_name
+	`
+
+	baseQuery := `
+		FROM invoice i
+		LEFT JOIN client cb ON cb.id = i.buyer_client_id
+		LEFT JOIN company co ON co.id = i.seller_company_id
+		WHERE i.buyer_client_id = $1
+	`
+
+	args := []interface{}{clientID}
+	argPos := 2
+
+	if req.StatusInvoice != "" {
+		baseQuery += fmt.Sprintf(" AND i.status_invoice = $%d", argPos)
+		args = append(args, req.StatusInvoice)
+		argPos++
+	}
+
+	if req.Status != 0 {
+		baseQuery += fmt.Sprintf(" AND i.status = $%d", argPos)
+		args = append(args, req.Status)
+		argPos++
+	}
+
+	countQuery := "SELECT COUNT(*) " + baseQuery
+	var total int
+	if err := r.DB.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	sortColumn := "i.created_at"
+	order := "DESC"
+	if v, ok := allowedSortColumns[req.SortColumn]; ok {
+		sortColumn = v
+	}
+	if v, ok := allowedOrders[strings.ToLower(req.Order)]; ok {
+		order = v
+	}
+
+	offset := (req.Page - 1) * req.Limit
+	baseQuery += fmt.Sprintf(" ORDER BY %s %s", sortColumn, order)
+	baseQuery += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argPos, argPos+1)
+	args = append(args, req.Limit, offset)
+
+	rows, err := r.DB.QueryContext(ctx, selectQuery+baseQuery, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	invoices := make([]*invoiceModel.Invoice, 0)
+	for rows.Next() {
+		var inv invoiceModel.Invoice
+		var buyerName, sellerCompanyName sql.NullString
+
+		if err := rows.Scan(
+			&inv.ID,
+			&inv.BuyerClientID,
+			&inv.SellerCompanyID,
+			&inv.StatusInvoice,
+			&inv.TotalAmount,
+			&inv.PaidAmount,
+			&inv.CreatedAt,
+			&buyerName,
+			&sellerCompanyName,
+		); err != nil {
+			return nil, 0, err
+		}
+
+		inv.BuyerName = buyerName.String
+		inv.SellerName = sellerCompanyName.String
+		invoices = append(invoices, &inv)
+	}
+
+	return invoices, total, rows.Err()
 }

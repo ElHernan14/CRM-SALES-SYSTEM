@@ -1,8 +1,6 @@
-package productdto
+﻿package productdto
 
-import (
-	meta "crm-system-sales/internal/core/dto"
-)
+import meta "crm-system-sales/internal/core/dto"
 
 type CreateProductRequest struct {
 	Name        string  `json:"name" validate:"required,min=2,max=100" example:"Notebook Lenovo ThinkPad"`
@@ -11,6 +9,7 @@ type CreateProductRequest struct {
 	Price       float64 `json:"price" validate:"required,gt=0" example:"1200.50"`
 	Stock       int     `json:"stock" validate:"gte=0" example:"50"`
 	CompanyID   *int    `json:"company_id,omitempty" example:"1"`
+	ImagePath   *string `json:"image_path,omitempty" validate:"omitempty,max=500" example:"/uploads/product/images/product_1.png"`
 }
 
 type ProductResponse struct {
@@ -22,6 +21,11 @@ type ProductResponse struct {
 	Stock          int     `json:"stock" example:"50"`
 	ReservedStock  int     `json:"reserved_stock" example:"5"`
 	AvailableStock int     `json:"available_stock" example:"45"`
+	ImagePath      *string `json:"image_path,omitempty" example:"/uploads/product/images/product_1.png"`
+}
+
+type UploadProductImageResponse struct {
+	ImagePath string `json:"image_path"`
 }
 
 type GetProductsRequest struct {
@@ -35,15 +39,16 @@ type GetProductsRequest struct {
 }
 
 type ProductListItem struct {
-	ID          int     `json:"id" example:"1"`
-	Name        string  `json:"name" example:"Notebook Lenovo ThinkPad"`
-	Description string  `json:"description" example:"Business laptop with Intel Core i7 processor"`
-	Type        string  `json:"type" example:"physical"`
-	Price       float64 `json:"price" example:"1200.50"`
-	Stock       int     `json:"stock" example:"50"`
-	Status      int     `json:"status" example:"1"`
-	CompanyID   int     `json:"company_id" example:"1"`
-	AvailableStock int `json:"available_stock" example:"25"`
+	ID             int     `json:"id" example:"1"`
+	Name           string  `json:"name" example:"Notebook Lenovo ThinkPad"`
+	Description    string  `json:"description" example:"Business laptop with Intel Core i7 processor"`
+	Type           string  `json:"type" example:"physical"`
+	Price          float64 `json:"price" example:"1200.50"`
+	Stock          int     `json:"stock" example:"50"`
+	Status         int     `json:"status" example:"1"`
+	CompanyID      int     `json:"company_id" example:"1"`
+	AvailableStock int     `json:"available_stock" example:"25"`
+	ImagePath      *string `json:"image_path,omitempty" example:"/uploads/product/images/product_1.png"`
 }
 
 type GetProductsResponse struct {
@@ -60,6 +65,7 @@ type ProductDetailResponse struct {
 	Stock       int     `json:"stock" example:"50"`
 	Status      int     `json:"status" example:"1"`
 	CompanyID   int     `json:"company_id" example:"1"`
+	ImagePath   *string `json:"image_path,omitempty" example:"/uploads/product/images/product_1.png"`
 }
 
 type UpdateProductRequest struct {
