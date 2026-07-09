@@ -2,27 +2,24 @@ package company
 
 import (
 	"context"
-	"fmt"
-	"io"
+	"database/sql"
 	"mime/multipart"
 	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
-	"time"
 
 	constants "crm-system-sales/internal/constants"
 	access "crm-system-sales/internal/core/access"
 	metadto "crm-system-sales/internal/core/dto"
 	errorHandler "crm-system-sales/internal/core/error"
+	"crm-system-sales/internal/core/files"
 	tenant "crm-system-sales/internal/core/tenant"
 	"crm-system-sales/internal/core/transaction"
+	clientModel "crm-system-sales/internal/models/client"
 	company "crm-system-sales/internal/models/company"
 	userModel "crm-system-sales/internal/models/users"
 	"crm-system-sales/internal/modules/auth"
+	"crm-system-sales/internal/modules/client"
 	companydto "crm-system-sales/internal/modules/company/dto"
 	"crm-system-sales/internal/modules/users"
-	"database/sql"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -36,20 +33,33 @@ type CompanyService interface {
 }
 
 type companyService struct {
-	db        *sql.DB
-	repo      CompanyRepository
-	authRepo  auth.AuthRepository
-	userRepo  users.UserRepository
-	uploadDir string
+	db           *sql.DB
+	repo         CompanyRepository
+	clientRepo   client.ClientRepository
+	authRepo     auth.AuthRepository
+	userRepo     users.UserRepository
+	imageStorage files.ImageStorage
 }
 
-func NewCompanyService(db *sql.DB, repo CompanyRepository, authRepo auth.AuthRepository, userRepo users.UserRepository, uploadDir string) CompanyService {
-	return &companyService{db: db, repo: repo, authRepo: authRepo, userRepo: userRepo, uploadDir: uploadDir}
+func NewCompanyService(
+	db *sql.DB,
+	repo CompanyRepository,
+	clientRepo client.ClientRepository,
+	authRepo auth.AuthRepository,
+	userRepo users.UserRepository,
+	imageStorage files.ImageStorage,
+) CompanyService {
+	return &companyService{
+		db:           db,
+		repo:         repo,
+		clientRepo:   clientRepo,
+		authRepo:     authRepo,
+		userRepo:     userRepo,
+		imageStorage: imageStorage,
+	}
 }
 
 func (s *companyService) CreateCompany(ctx context.Context, req *companydto.CreateCompanyRequest) (*companydto.CompanyResponse, error) {
-	var err error
-
 	exists, err := s.userRepo.EmailExists(req.Email)
 	if err != nil {
 		return nil, err
@@ -68,10 +78,23 @@ func (s *companyService) CreateCompany(ctx context.Context, req *companydto.Crea
 		}
 
 		hash, _ := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-		user := &userModel.User{Email: req.Email, PasswordHash: string(hash), CompanyID: &company.ID, Status: 1}
+		user := &userModel.User{Email: req.Email, PasswordHash: string(hash), Status: 1}
 
 		user, err = s.userRepo.Create(tx, user)
 		if err != nil {
+			return err
+		}
+
+		companyClient := &clientModel.Client{
+			UserID:    &user.ID,
+			CompanyID: &company.ID,
+			FirstName: company.Name,
+			LastName:  "Pioneer",
+			Email:     req.Email,
+			Status:    1,
+		}
+
+		if err := s.clientRepo.Create(tx, companyClient); err != nil {
 			return err
 		}
 
@@ -150,31 +173,11 @@ func (s *companyService) UploadLogo(ctx context.Context, file multipart.File, he
 		return nil, errorHandler.NewAppError(http.StatusForbidden, "usuario no pertenece a una empresa")
 	}
 
-	ext := strings.ToLower(filepath.Ext(header.Filename))
-	allowed := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true}
-	if !allowed[ext] {
-		return nil, errorHandler.NewAppError(http.StatusBadRequest, "formato de imagen inválido")
-	}
-
-	companyDir := filepath.Join(s.uploadDir, "company", "logos")
-	if err := os.MkdirAll(companyDir, 0755); err != nil {
-		return nil, err
-	}
-
-	filename := fmt.Sprintf("company_%d_%d%s", *tenant.CompanyID, time.Now().UnixNano(), ext)
-	absolutePath := filepath.Join(companyDir, filename)
-
-	dst, err := os.Create(absolutePath)
+	publicPath, err := s.imageStorage.SaveImage(file, header, "company/logos", "company", *tenant.CompanyID)
 	if err != nil {
-		return nil, err
-	}
-	defer dst.Close()
-
-	if _, err := io.Copy(dst, file); err != nil {
-		return nil, err
+		return nil, errorHandler.NewAppError(http.StatusBadRequest, err.Error())
 	}
 
-	publicPath := "/uploads/company/logos/" + filename
 	if err := s.repo.UpdateLogo(ctx, *tenant.CompanyID, publicPath); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errorHandler.NewAppError(http.StatusNotFound, "empresa no encontrada")

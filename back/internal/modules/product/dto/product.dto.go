@@ -1,4 +1,4 @@
-﻿package productdto
+package productdto
 
 import meta "crm-system-sales/internal/core/dto"
 

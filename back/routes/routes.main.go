@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"crm-system-sales/internal/config"
+	"crm-system-sales/internal/core/files"
 	"crm-system-sales/internal/middleware"
 	"crm-system-sales/internal/modules/auth"
 	"crm-system-sales/internal/modules/client"
@@ -59,12 +60,15 @@ func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 	invoicePaymentRepo := invoicepaymentrepo.NewInvoicePaymentRepository(db)
 	marketplaceRepo := marketplace.NewMarketplaceRepository(db)
 
+	// Shared services
+	imageStorage := files.NewLocalImageStorage(cfg.UploadDir)
+
 	// Services
 	authService := auth.NewAuthService(userRepository)
 	userService := users.NewUserService(userRepository)
 	clientService := client.NewClientService(db, clientRepo, userRepository, authRepo)
-	companyService := company.NewCompanyService(db, companyRepo, authRepo, userRepository, cfg.UploadDir)
-	productService := product.NewProductService(db, productRepo)
+	companyService := company.NewCompanyService(db, companyRepo, clientRepo, authRepo, userRepository, imageStorage)
+	productService := product.NewProductService(db, productRepo, imageStorage)
 	inventoryService := inventory.NewInventoryService(productRepo)
 	invoiceItemService := invoiceitem.NewInvoiceItemService(db, invoiceItemRepo, invoiceRepo, clientRepo, productRepo, inventoryService)
 	submitWorkflow := submitInvoiceWorkflow.NewSubmitInvoiceWorkflow(invoiceRepo, invoiceItemRepo, clientRepo, inventoryService, db)

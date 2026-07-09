@@ -18,6 +18,8 @@ type CompanyProductResponse struct {
 	ReservedStock int `json:"reserved_stock"`
 
 	Status int `json:"status"`
+
+	ImagePath *string `json:"image_path,omitempty"`
 }
 
 type GetCompanyProductsResponse struct {

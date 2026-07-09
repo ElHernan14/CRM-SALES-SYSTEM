@@ -15,6 +15,7 @@ type ProductRepository interface {
 	GetAll(ctx context.Context, search string, productType string, minPrice float64, maxPrice float64, companyID *int, limit int, offset int) ([]models.Product, int, error)
 	GetByID(ctx context.Context, id int) (*models.Product, error)
 	Update(ctx context.Context, p *models.Product) error
+	UpdateImage(ctx context.Context, productID int, imagePath string) error
 	SoftDelete(ctx context.Context, id int) error
 	GetByIDForUpdate(ctx context.Context, tx *sql.Tx, id int) (*models.Product, error)
 	ListByCompanyID(ctx context.Context, companyID int, req *productdto.GetCompanyProductsRequest) ([]*models.Product, int, error)
@@ -31,12 +32,12 @@ func NewProductRepository(db *sql.DB) ProductRepository {
 
 func (r *productRepository) Create(ctx context.Context, p *models.Product) error {
 	query := `
-		INSERT INTO product (company_id, name, description, type, price, stock, status)
-		VALUES ($1, $2, $3, $4, $5, $6, 1)
+		INSERT INTO product (company_id, name, description, type, price, stock, image_path, status)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, 1)
 		RETURNING id
 	`
 
-	return r.db.QueryRowContext(ctx, query, p.CompanyID, p.Name, p.Description, p.Type, p.Price, p.Stock).Scan(&p.ID)
+	return r.db.QueryRowContext(ctx, query, p.CompanyID, p.Name, p.Description, p.Type, p.Price, p.Stock, p.ImagePath).Scan(&p.ID)
 }
 
 func (r *productRepository) GetAll(ctx context.Context, search string, productType string, minPrice float64, maxPrice float64, companyID *int, limit int, offset int) ([]models.Product, int, error) {
@@ -84,7 +85,7 @@ func (r *productRepository) GetAll(ctx context.Context, search string, productTy
 		return nil, 0, err
 	}
 
-	dataQuery := `SELECT id, name, description, type, price, stock, status, company_id, reserved_stock ` + baseQuery + fmt.Sprintf(`
+	dataQuery := `SELECT id, name, description, type, price, stock, status, company_id, reserved_stock, image_path ` + baseQuery + fmt.Sprintf(`
 		ORDER BY id DESC
 		LIMIT $%d OFFSET $%d
 	`, i, i+1)
@@ -100,7 +101,7 @@ func (r *productRepository) GetAll(ctx context.Context, search string, productTy
 	var products []models.Product
 	for rows.Next() {
 		var p models.Product
-		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Type, &p.Price, &p.Stock, &p.Status, &p.CompanyID, &p.ReservedStock); err != nil {
+		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Type, &p.Price, &p.Stock, &p.Status, &p.CompanyID, &p.ReservedStock, &p.ImagePath); err != nil {
 			return nil, 0, err
 		}
 		products = append(products, p)
@@ -111,13 +112,13 @@ func (r *productRepository) GetAll(ctx context.Context, search string, productTy
 
 func (r *productRepository) GetByID(ctx context.Context, id int) (*models.Product, error) {
 	query := `
-		SELECT id, name, description, type, price, stock, status, company_id
+		SELECT id, name, description, type, price, stock, status, company_id, image_path
 		FROM product
 		WHERE id = $1
 	`
 
 	var p models.Product
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&p.ID, &p.Name, &p.Description, &p.Type, &p.Price, &p.Stock, &p.Status, &p.CompanyID)
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&p.ID, &p.Name, &p.Description, &p.Type, &p.Price, &p.Stock, &p.Status, &p.CompanyID, &p.ImagePath)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -142,6 +143,30 @@ func (r *productRepository) Update(ctx context.Context, p *models.Product) error
 
 	_, err := r.db.ExecContext(ctx, query, p.Name, p.Description, p.Type, p.Price, p.Stock, p.Status, p.ID)
 	return err
+}
+
+func (r *productRepository) UpdateImage(ctx context.Context, productID int, imagePath string) error {
+	query := `
+		UPDATE product
+		SET image_path = $1
+		WHERE id = $2
+		  AND deleted_at IS NULL
+	`
+
+	result, err := r.db.ExecContext(ctx, query, imagePath, productID)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
 }
 
 func (r *productRepository) SoftDelete(ctx context.Context, id int) error {
@@ -175,7 +200,7 @@ func (r *productRepository) ListByCompanyID(ctx context.Context, companyID int, 
 	allowedSortColumns := map[string]string{"name": "name", "description": "description", "type": "type", "price": "price", "stock": "stock"}
 	allowedOrders := map[string]string{"asc": "ASC", "desc": "DESC"}
 
-	selectQuery := `SELECT id, name, description, type, price, stock, reserved_stock, status `
+	selectQuery := `SELECT id, name, description, type, price, stock, reserved_stock, status, image_path `
 	baseQuery := `FROM product WHERE company_id = $1`
 	args := []interface{}{companyID}
 	argPos := 2
@@ -225,7 +250,7 @@ func (r *productRepository) ListByCompanyID(ctx context.Context, companyID int, 
 	products := make([]*models.Product, 0)
 	for rows.Next() {
 		var p models.Product
-		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Type, &p.Price, &p.Stock, &p.ReservedStock, &p.Status); err != nil {
+		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Type, &p.Price, &p.Stock, &p.ReservedStock, &p.Status, &p.ImagePath); err != nil {
 			return nil, 0, err
 		}
 		products = append(products, &p)
@@ -248,7 +273,8 @@ func (r *productRepository) ListAvailableProducts(ctx context.Context, req *stor
 			p.type,
 			p.price,
 			p.stock,
-			p.reserved_stock
+			p.reserved_stock,
+			p.image_path
 	`
 
 	baseQuery := `
@@ -325,7 +351,7 @@ func (r *productRepository) ListAvailableProducts(ctx context.Context, req *stor
 	products := make([]*models.Product, 0)
 	for rows.Next() {
 		var p models.Product
-		if err := rows.Scan(&p.ID, &p.CompanyID, &p.CompanyName, &p.Name, &p.Description, &p.Type, &p.Price, &p.Stock, &p.ReservedStock); err != nil {
+		if err := rows.Scan(&p.ID, &p.CompanyID, &p.CompanyName, &p.Name, &p.Description, &p.Type, &p.Price, &p.Stock, &p.ReservedStock, &p.ImagePath); err != nil {
 			return nil, 0, err
 		}
 		products = append(products, &p)

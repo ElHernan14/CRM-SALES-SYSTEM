@@ -2,16 +2,18 @@ package product
 
 import (
 	"context"
+	"database/sql"
+	"mime/multipart"
+	"net/http"
+
 	"crm-system-sales/internal/core/access"
 	"crm-system-sales/internal/core/dto"
 	meta "crm-system-sales/internal/core/dto"
 	errorHandler "crm-system-sales/internal/core/error"
+	"crm-system-sales/internal/core/files"
 	tenant "crm-system-sales/internal/core/tenant"
 	models "crm-system-sales/internal/models/product"
 	productdto "crm-system-sales/internal/modules/product/dto"
-	"database/sql"
-	"log"
-	"net/http"
 )
 
 type ProductService interface {
@@ -19,31 +21,23 @@ type ProductService interface {
 	GetProducts(ctx context.Context, req *productdto.GetProductsRequest) (*productdto.GetProductsResponse, error)
 	GetByID(ctx context.Context, id int) (*productdto.ProductDetailResponse, error)
 	Update(ctx context.Context, id int, req *productdto.UpdateProductRequest) (*productdto.ProductDetailResponse, error)
+	UploadImage(ctx context.Context, id int, file multipart.File, header *multipart.FileHeader) (*productdto.UploadProductImageResponse, error)
 	Delete(ctx context.Context, id int) error
-	GetCompanyProducts(
-		ctx context.Context,
-		req *productdto.GetCompanyProductsRequest,
-	) (*productdto.GetCompanyProductsResponse, error)
+	GetCompanyProducts(ctx context.Context, req *productdto.GetCompanyProductsRequest) (*productdto.GetCompanyProductsResponse, error)
 }
 
 type productService struct {
-	db   *sql.DB
-	repo ProductRepository
+	db           *sql.DB
+	repo         ProductRepository
+	imageStorage files.ImageStorage
 }
 
-func NewProductService(db *sql.DB, repo ProductRepository) ProductService {
-	return &productService{db: db, repo: repo}
+func NewProductService(db *sql.DB, repo ProductRepository, imageStorage files.ImageStorage) ProductService {
+	return &productService{db: db, repo: repo, imageStorage: imageStorage}
 }
 
-func (s *productService) Create(
-	ctx context.Context,
-	req *productdto.CreateProductRequest,
-) (*productdto.ProductResponse, error) {
-
-	var err error
-
+func (s *productService) Create(ctx context.Context, req *productdto.CreateProductRequest) (*productdto.ProductResponse, error) {
 	tenant := tenant.GetTenant(ctx)
-
 	if tenant == nil {
 		return nil, errorHandler.NewAppError(http.StatusUnauthorized, "Usuario no autorizado")
 	}
@@ -60,145 +54,65 @@ func (s *productService) Create(
 		Type:        req.Type,
 		Price:       req.Price,
 		Stock:       req.Stock,
+		ImagePath:   req.ImagePath,
 		Status:      1,
 	}
 
-	err = s.repo.Create(ctx, product)
-	if err != nil {
+	if err := s.repo.Create(ctx, product); err != nil {
 		return nil, err
 	}
 
-	return &productdto.ProductResponse{
-		ID:          product.ID,
-		Name:        product.Name,
-		Description: product.Description,
-		Type:        product.Type,
-		Price:       product.Price,
-		Stock:       product.Stock,
-	}, nil
+	return mapProductResponse(product), nil
 }
 
-func (s *productService) GetProducts(
-	ctx context.Context,
-	req *productdto.GetProductsRequest,
-) (*productdto.GetProductsResponse, error) {
-
-	var err error
-
+func (s *productService) GetProducts(ctx context.Context, req *productdto.GetProductsRequest) (*productdto.GetProductsResponse, error) {
 	tenant := tenant.GetTenant(ctx)
 	if tenant == nil {
-		log.Printf("Usuario no autorizado para ver productos.")
 		return nil, errorHandler.NewAppError(http.StatusUnauthorized, "Usuario no autorizado para ver productos.")
 	}
 
 	offset := (req.Page - 1) * req.Limit
-
 	companyID, err := access.ResolveGetProductsCompanyID(tenant, req.CompanyID)
 	if err != nil {
 		return nil, err
 	}
 
-	products, total, err := s.repo.GetAll(
-		ctx,
-		req.Search,
-		req.Type,
-		req.MinPrice,
-		req.MaxPrice,
-		companyID,
-		req.Limit,
-		offset,
-	)
+	products, total, err := s.repo.GetAll(ctx, req.Search, req.Type, req.MinPrice, req.MaxPrice, companyID, req.Limit, offset)
 	if err != nil {
 		return nil, err
 	}
 
-	var data []productdto.ProductListItem
-
+	data := make([]productdto.ProductListItem, 0, len(products))
 	for _, p := range products {
 		available := p.Stock - p.ReservedStock
 		data = append(data, productdto.ProductListItem{
-			ID:          p.ID,
-			Name:        p.Name,
-			Description: p.Description,
-			Type:        p.Type,
-			Price:       p.Price,
-			Stock:       p.Stock,
-			Status:      p.Status,
-			CompanyID:   p.CompanyID,
+			ID:             p.ID,
+			Name:           p.Name,
+			Description:    p.Description,
+			Type:           p.Type,
+			Price:          p.Price,
+			Stock:          p.Stock,
+			Status:         p.Status,
+			CompanyID:      p.CompanyID,
 			AvailableStock: available,
+			ImagePath:      p.ImagePath,
 		})
 	}
 
-	return &productdto.GetProductsResponse{
-		Data: data,
-		Meta: meta.Meta{
-			Page:  req.Page,
-			Limit: req.Limit,
-			Total: total,
-		},
-	}, nil
+	return &productdto.GetProductsResponse{Data: data, Meta: meta.Meta{Page: req.Page, Limit: req.Limit, Total: total}}, nil
 }
 
-func (s *productService) GetByID(
-	ctx context.Context,
-	id int,
-) (*productdto.ProductDetailResponse, error) {
-
-	var err error
-
-	tenant := tenant.GetTenant(ctx)
-	if tenant == nil {
-		return nil, errorHandler.NewAppError(http.StatusUnauthorized, "Usuario no autorizado")
-	}
-
-	product, err := s.repo.GetByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	if product == nil {
-		return nil, errorHandler.NewAppError(http.StatusNotFound, "Producto no encontrado")
-	}
-
-	_, err = access.ResolveGetProductsCompanyID(tenant, &product.CompanyID)
+func (s *productService) GetByID(ctx context.Context, id int) (*productdto.ProductDetailResponse, error) {
+	product, err := s.getOwnedProduct(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &productdto.ProductDetailResponse{
-		ID:          product.ID,
-		Name:        product.Name,
-		Description: product.Description,
-		Type:        product.Type,
-		Price:       product.Price,
-		Stock:       product.Stock,
-		Status:      product.Status,
-		CompanyID:   product.CompanyID,
-	}, nil
+	return mapProductDetailResponse(product), nil
 }
 
-func (s *productService) Update(
-	ctx context.Context,
-	id int,
-	req *productdto.UpdateProductRequest,
-) (*productdto.ProductDetailResponse, error) {
-
-	var err error
-
-	tenant := tenant.GetTenant(ctx)
-	if tenant == nil {
-		return nil, errorHandler.NewAppError(http.StatusUnauthorized, "Usuario no autorizado")
-	}
-
-	// 🔹 buscar producto
-	product, err := s.repo.GetByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	if product == nil {
-		return nil, errorHandler.NewAppError(http.StatusNotFound, "Producto no encontrado")
-	}
-
-	_, err = access.ResolveGetProductsCompanyID(tenant, &product.CompanyID)
+func (s *productService) Update(ctx context.Context, id int, req *productdto.UpdateProductRequest) (*productdto.ProductDetailResponse, error) {
+	product, err := s.getOwnedProduct(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -226,74 +140,54 @@ func (s *productService) Update(
 		return nil, err
 	}
 
-	return &productdto.ProductDetailResponse{
-		ID:          product.ID,
-		Name:        product.Name,
-		Description: product.Description,
-		Type:        product.Type,
-		Price:       product.Price,
-		Stock:       product.Stock,
-		Status:      product.Status,
-		CompanyID:   product.CompanyID,
-	}, nil
+	return mapProductDetailResponse(product), nil
+}
+
+func (s *productService) UploadImage(ctx context.Context, id int, file multipart.File, header *multipart.FileHeader) (*productdto.UploadProductImageResponse, error) {
+	product, err := s.getOwnedProduct(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	imagePath, err := s.imageStorage.SaveImage(file, header, "product/images", "product", product.ID)
+	if err != nil {
+		return nil, errorHandler.NewAppError(http.StatusBadRequest, err.Error())
+	}
+
+	if err := s.repo.UpdateImage(ctx, product.ID, imagePath); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errorHandler.NewAppError(http.StatusNotFound, "Producto no encontrado")
+		}
+		return nil, err
+	}
+
+	return &productdto.UploadProductImageResponse{ImagePath: imagePath}, nil
 }
 
 func (s *productService) Delete(ctx context.Context, id int) error {
-
-	var err error
-
-	tenant := tenant.GetTenant(ctx)
-	if tenant == nil {
-		return errorHandler.NewAppError(http.StatusUnauthorized, "Usuario no autorizado")
-	}
-
-	product, err := s.repo.GetByID(ctx, id)
+	product, err := s.getOwnedProduct(ctx, id)
 	if err != nil {
 		return err
-	}
-	if product == nil {
-		return errorHandler.NewAppError(http.StatusNotFound, "Producto no encontrado")
 	}
 
 	if product.Status == 0 {
 		return errorHandler.NewAppError(http.StatusBadRequest, "Producto ya fue eliminado")
 	}
 
-	_, err = access.ResolveGetProductsCompanyID(tenant, &product.CompanyID)
-	if err != nil {
-		return err
-	}
-
-	if err := s.repo.SoftDelete(ctx, id); err != nil {
-		return err
-	}
-
-	return nil
+	return s.repo.SoftDelete(ctx, id)
 }
 
-func (s *productService) GetCompanyProducts(
-	ctx context.Context,
-	req *productdto.GetCompanyProductsRequest,
-) (*productdto.GetCompanyProductsResponse, error) {
+func (s *productService) GetCompanyProducts(ctx context.Context, req *productdto.GetCompanyProductsRequest) (*productdto.GetCompanyProductsResponse, error) {
 	tenant := tenant.GetTenant(ctx)
-
-	if tenant.CompanyID == nil {
-		return nil, errorHandler.NewAppError(
-			http.StatusForbidden,
-			"Solo empresas",
-		)
+	if tenant == nil || tenant.CompanyID == nil {
+		return nil, errorHandler.NewAppError(http.StatusForbidden, "Solo empresas")
 	}
 
-	products, total, err := s.repo.ListByCompanyID(
-		ctx,
-		*tenant.CompanyID,
-		req,
-	)
+	products, total, err := s.repo.ListByCompanyID(ctx, *tenant.CompanyID, req)
 	if err != nil {
 		return nil, err
 	}
 
-	// Mapear a DTO de respuesta
 	items := make([]productdto.CompanyProductResponse, 0, len(products))
 	for _, p := range products {
 		items = append(items, productdto.CompanyProductResponse{
@@ -305,18 +199,59 @@ func (s *productService) GetCompanyProducts(
 			Stock:         p.Stock,
 			ReservedStock: p.ReservedStock,
 			Status:        p.Status,
+			ImagePath:     p.ImagePath,
 		})
 	}
 
-	// Meta info
-	meta := dto.Meta{
-		Page:  req.Page,
-		Limit: req.Limit,
-		Total: total,
+	return &productdto.GetCompanyProductsResponse{Items: items, Meta: dto.Meta{Page: req.Page, Limit: req.Limit, Total: total}}, nil
+}
+
+func (s *productService) getOwnedProduct(ctx context.Context, id int) (*models.Product, error) {
+	tenant := tenant.GetTenant(ctx)
+	if tenant == nil {
+		return nil, errorHandler.NewAppError(http.StatusUnauthorized, "Usuario no autorizado")
 	}
 
-	return &productdto.GetCompanyProductsResponse{
-		Items: items,
-		Meta:  meta,
-	}, nil
+	product, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if product == nil {
+		return nil, errorHandler.NewAppError(http.StatusNotFound, "Producto no encontrado")
+	}
+
+	if _, err := access.ResolveGetProductsCompanyID(tenant, &product.CompanyID); err != nil {
+		return nil, err
+	}
+
+	return product, nil
+}
+
+func mapProductResponse(product *models.Product) *productdto.ProductResponse {
+	available := product.Stock - product.ReservedStock
+	return &productdto.ProductResponse{
+		ID:             product.ID,
+		Name:           product.Name,
+		Description:    product.Description,
+		Type:           product.Type,
+		Price:          product.Price,
+		Stock:          product.Stock,
+		ReservedStock:  product.ReservedStock,
+		AvailableStock: available,
+		ImagePath:      product.ImagePath,
+	}
+}
+
+func mapProductDetailResponse(product *models.Product) *productdto.ProductDetailResponse {
+	return &productdto.ProductDetailResponse{
+		ID:          product.ID,
+		Name:        product.Name,
+		Description: product.Description,
+		Type:        product.Type,
+		Price:       product.Price,
+		Stock:       product.Stock,
+		Status:      product.Status,
+		CompanyID:   product.CompanyID,
+		ImagePath:   product.ImagePath,
+	}
 }

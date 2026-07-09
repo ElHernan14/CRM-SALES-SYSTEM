@@ -24,14 +24,10 @@ func NewProductController(service ProductService) *ProductController {
 }
 
 func (c *ProductController) CreateProduct(w http.ResponseWriter, r *http.Request) error {
-
-	var err error
-
 	var req productdto.CreateProductRequest
-
-	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		log.Println("Error decoding request body:", err)
-		return errorHandler.NewAppError(http.StatusBadRequest, "body inválido")
+		return errorHandler.NewAppError(http.StatusBadRequest, "body invÃ¡lido")
 	}
 
 	msg, invalid := validatorx.ValidateStruct(req)
@@ -47,73 +43,40 @@ func (c *ProductController) CreateProduct(w http.ResponseWriter, r *http.Request
 	return json.NewEncoder(w).Encode(response.Success(res))
 }
 
-// GetProducts godoc
-//
-// @Summary List products
-// @Description Returns a paginated list of products with filters
-// @Tags Products
-// @Produce json
-// @Security BearerAuth
-//
-// @Param search query string false "Search by name"
-// @Param type query string false "Product type"
-// @Param min_price query number false "Minimum price"
-// @Param max_price query number false "Maximum price"
-// @Param page query int false "Page number"
-// @Param limit query int false "Items per page"
-//
-// @Success 200 {object} docs.GetProductsSuccessResponse
-// @Failure 400 {object} response.APIResponse
-// @Failure 401 {object} response.APIResponse
-//
-// @Router /product [get]
 func (c *ProductController) GetProducts(w http.ResponseWriter, r *http.Request) error {
-
-	var err error
-
 	q := r.URL.Query()
-
-	req := productdto.GetProductsRequest{
-		Search: q.Get("search"),
-		Type:   q.Get("type"),
-		Page:   1,
-		Limit:  10,
-	}
+	req := productdto.GetProductsRequest{Search: q.Get("search"), Type: q.Get("type"), Page: 1, Limit: 10}
 
 	if v := q.Get("min_price"); v != "" {
 		min, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			return errorHandler.NewAppError(http.StatusBadRequest, "min_price debe ser un número válido")
+			return errorHandler.NewAppError(http.StatusBadRequest, "min_price debe ser un nÃºmero vÃ¡lido")
 		}
 		req.MinPrice = min
 	}
-
 	if v := q.Get("max_price"); v != "" {
 		max, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			return errorHandler.NewAppError(http.StatusBadRequest, "max_price debe ser un número válido")
+			return errorHandler.NewAppError(http.StatusBadRequest, "max_price debe ser un nÃºmero vÃ¡lido")
 		}
 		req.MaxPrice = max
 	}
-
 	if req.MinPrice > 0 && req.MaxPrice > 0 && req.MinPrice > req.MaxPrice {
 		return errorHandler.NewAppError(http.StatusBadRequest, "min_price no puede ser mayor que max_price")
 	}
-
 	if v := q.Get("page"); v != "" {
 		p, err := strconv.Atoi(v)
 		if err != nil {
-			return errorHandler.NewAppError(http.StatusBadRequest, "page debe ser un número entero")
+			return errorHandler.NewAppError(http.StatusBadRequest, "page debe ser un nÃºmero entero")
 		}
 		if p > 0 {
 			req.Page = p
 		}
 	}
-
 	if v := q.Get("limit"); v != "" {
 		l, err := strconv.Atoi(v)
 		if err != nil {
-			return errorHandler.NewAppError(http.StatusBadRequest, "limit debe ser un número entero")
+			return errorHandler.NewAppError(http.StatusBadRequest, "limit debe ser un nÃºmero entero")
 		}
 		if l > 0 {
 			req.Limit = l
@@ -133,31 +96,10 @@ func (c *ProductController) GetProducts(w http.ResponseWriter, r *http.Request) 
 	return json.NewEncoder(w).Encode(response.Success(res))
 }
 
-// GetProductByID godoc
-//
-// @Summary Get product
-// @Description Returns a product by id
-// @Tags Products
-// @Produce json
-// @Security BearerAuth
-//
-// @Param id path int true "Product ID"
-//
-// @Success 200 {object} docs.ProductDetailSuccessResponse
-// @Failure 400 {object} response.APIResponse
-// @Failure 404 {object} response.APIResponse
-// @Failure 401 {object} response.APIResponse
-//
-// @Router /product/{id} [get]
 func (c *ProductController) GetProductByID(w http.ResponseWriter, r *http.Request) error {
-
-	var err error
-
-	vars := mux.Vars(r)
-
-	id, err := strconv.Atoi(vars["id"])
+	id, err := strconv.Atoi(mux.Vars(r)["id"])
 	if err != nil || id <= 0 {
-		return errorHandler.NewAppError(http.StatusBadRequest, "id inválido")
+		return errorHandler.NewAppError(http.StatusBadRequest, "id invÃ¡lido")
 	}
 
 	res, err := c.service.GetByID(r.Context(), id)
@@ -169,20 +111,14 @@ func (c *ProductController) GetProductByID(w http.ResponseWriter, r *http.Reques
 }
 
 func (c *ProductController) UpdateProduct(w http.ResponseWriter, r *http.Request) error {
-
-	var err error
-
-	vars := mux.Vars(r)
-
-	id, err := strconv.Atoi(vars["id"])
+	id, err := strconv.Atoi(mux.Vars(r)["id"])
 	if err != nil || id <= 0 {
-		return errorHandler.NewAppError(http.StatusBadRequest, "id inválido")
+		return errorHandler.NewAppError(http.StatusBadRequest, "id invÃ¡lido")
 	}
 
 	var req productdto.UpdateProductRequest
-
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return errorHandler.NewAppError(http.StatusBadRequest, "body json inválido")
+		return errorHandler.NewAppError(http.StatusBadRequest, "body json invÃ¡lido")
 	}
 
 	msg, invalid := validatorx.ValidateStruct(req)
@@ -198,45 +134,53 @@ func (c *ProductController) UpdateProduct(w http.ResponseWriter, r *http.Request
 	return json.NewEncoder(w).Encode(response.Success(res))
 }
 
-func (c *ProductController) DeleteProduct(w http.ResponseWriter, r *http.Request) error {
-
-	var err error
-
-	vars := mux.Vars(r)
-
-	id, err := strconv.Atoi(vars["id"])
+func (c *ProductController) UploadProductImage(w http.ResponseWriter, r *http.Request) error {
+	id, err := strconv.Atoi(mux.Vars(r)["id"])
 	if err != nil || id <= 0 {
-		return errorHandler.NewAppError(http.StatusBadRequest, "id inválido")
+		return errorHandler.NewAppError(http.StatusBadRequest, "id invÃ¡lido")
 	}
 
-	err = c.service.Delete(r.Context(), id)
+	if err := r.ParseMultipartForm(5 << 20); err != nil {
+		return errorHandler.NewAppError(http.StatusBadRequest, "imagen invÃ¡lida")
+	}
+
+	file, header, err := r.FormFile("image")
 	if err != nil {
+		return errorHandler.NewAppError(http.StatusBadRequest, "image es requerido")
+	}
+	defer file.Close()
+
+	res, err := c.service.UploadImage(r.Context(), id, file, header)
+	if err != nil {
+		return err
+	}
+
+	return json.NewEncoder(w).Encode(response.Success(res))
+}
+
+func (c *ProductController) DeleteProduct(w http.ResponseWriter, r *http.Request) error {
+	id, err := strconv.Atoi(mux.Vars(r)["id"])
+	if err != nil || id <= 0 {
+		return errorHandler.NewAppError(http.StatusBadRequest, "id invÃ¡lido")
+	}
+
+	if err := c.service.Delete(r.Context(), id); err != nil {
 		return err
 	}
 
 	return json.NewEncoder(w).Encode(response.Success(nil))
 }
 
-func (c *ProductController) GetCompanyProducts(
-	w http.ResponseWriter,
-	r *http.Request,
-) error {
-
+func (c *ProductController) GetCompanyProducts(w http.ResponseWriter, r *http.Request) error {
 	req, err := helper.ParseGetCompanyProductsRequest(r)
 	if err != nil {
 		return err
 	}
 
-	res, err := c.service.GetCompanyProducts(
-		r.Context(),
-		req,
-	)
-
+	res, err := c.service.GetCompanyProducts(r.Context(), req)
 	if err != nil {
 		return err
 	}
 
-	return json.NewEncoder(w).Encode(
-		response.Success(res),
-	)
+	return json.NewEncoder(w).Encode(response.Success(res))
 }

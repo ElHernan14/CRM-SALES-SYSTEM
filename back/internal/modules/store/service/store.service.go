@@ -2,6 +2,9 @@ package service
 
 import (
 	"context"
+	"database/sql"
+	"net/http"
+
 	metadto "crm-system-sales/internal/core/dto"
 	errorHandler "crm-system-sales/internal/core/error"
 	tenantHelper "crm-system-sales/internal/core/tenant"
@@ -10,8 +13,6 @@ import (
 	productrepo "crm-system-sales/internal/modules/product"
 	storedto "crm-system-sales/internal/modules/store/dto"
 	submitInvoiceWorkflow "crm-system-sales/internal/services/invoice_workflow/service"
-	"database/sql"
-	"net/http"
 )
 
 type StoreService interface {
@@ -48,6 +49,7 @@ func (s *storeService) GetProducts(ctx context.Context, req *storedto.GetStorePr
 			Description:    p.Description,
 			Price:          p.Price,
 			AvailableStock: available,
+			ImagePath:      p.ImagePath,
 		})
 	}
 
