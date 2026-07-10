@@ -2,14 +2,15 @@ package marketplace
 
 import (
 	"context"
-	marketplacedto "crm-system-sales/internal/modules/marketplace/dto"
 	"database/sql"
 	"fmt"
 	"strings"
+
+	marketplacedto "crm-system-sales/internal/modules/marketplace/dto"
 )
 
 type MarketplaceRepository interface {
-	ListSuppliers(ctx context.Context, req *marketplacedto.GetSuppliersRequest) ([]marketplacedto.SupplierResponse, int, error)
+	ListSuppliers(ctx context.Context, req *marketplacedto.GetSuppliersRequest, excludedCompanyID *int) ([]marketplacedto.SupplierResponse, int, error)
 }
 
 type marketplaceRepository struct {
@@ -20,7 +21,7 @@ func NewMarketplaceRepository(db *sql.DB) MarketplaceRepository {
 	return &marketplaceRepository{db: db}
 }
 
-func (r *marketplaceRepository) ListSuppliers(ctx context.Context, req *marketplacedto.GetSuppliersRequest) ([]marketplacedto.SupplierResponse, int, error) {
+func (r *marketplaceRepository) ListSuppliers(ctx context.Context, req *marketplacedto.GetSuppliersRequest, excludedCompanyID *int) ([]marketplacedto.SupplierResponse, int, error) {
 	allowedSortColumns := map[string]string{
 		"name":           "c.name",
 		"total_products": "total_products",
@@ -36,7 +37,7 @@ func (r *marketplaceRepository) ListSuppliers(ctx context.Context, req *marketpl
 		SELECT
 			c.id,
 			c.name,
-			MIN(u.email) AS email,
+			MIN(cl.email) AS email,
 			c.logo_path,
 			c.description,
 			COUNT(p.id) AS total_products
@@ -44,7 +45,7 @@ func (r *marketplaceRepository) ListSuppliers(ctx context.Context, req *marketpl
 
 	baseQuery := `
 		FROM company c
-		LEFT JOIN users u ON u.company_id = c.id AND u.status = 1 AND u.deleted_at IS NULL
+		LEFT JOIN client cl ON cl.company_id = c.id AND cl.status = 1 AND cl.deleted_at IS NULL
 		LEFT JOIN product p ON p.company_id = c.id AND p.status = 1 AND p.deleted_at IS NULL AND p.stock > p.reserved_stock
 		WHERE c.status = 1
 		  AND c.deleted_at IS NULL
@@ -53,6 +54,12 @@ func (r *marketplaceRepository) ListSuppliers(ctx context.Context, req *marketpl
 	args := []interface{}{}
 	argPos := 1
 
+	if excludedCompanyID != nil {
+		baseQuery += fmt.Sprintf(" AND c.id <> $%d", argPos)
+		args = append(args, *excludedCompanyID)
+		argPos++
+	}
+
 	if req.Search != "" {
 		baseQuery += fmt.Sprintf(" AND c.name ILIKE $%d", argPos)
 		args = append(args, "%"+req.Search+"%")
@@ -60,7 +67,7 @@ func (r *marketplaceRepository) ListSuppliers(ctx context.Context, req *marketpl
 	}
 
 	groupBy := `
-		GROUP BY c.id, c.name, MIN(u.email) AS email, c.logo_path, c.description
+		GROUP BY c.id, c.name, c.logo_path, c.description
 	`
 
 	countQuery := "SELECT COUNT(*) FROM (" + selectQuery + baseQuery + groupBy + ") AS suppliers"

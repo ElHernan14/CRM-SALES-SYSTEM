@@ -112,11 +112,7 @@ func (s *invoicePaymentService) GetByInvoice(
 
 	res := &invoicepaymentdto.GetInvoicePaymentsResponse{
 		Items: items,
-		Meta: metadto.Meta{
-			Page:  req.Page,
-			Limit: req.Limit,
-			Total: total,
-		},
+		Meta:  metadto.NewMeta(req.Page, req.Limit, total),
 	}
 
 	return res, nil

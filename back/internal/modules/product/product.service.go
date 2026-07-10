@@ -99,7 +99,7 @@ func (s *productService) GetProducts(ctx context.Context, req *productdto.GetPro
 		})
 	}
 
-	return &productdto.GetProductsResponse{Data: data, Meta: meta.Meta{Page: req.Page, Limit: req.Limit, Total: total}}, nil
+	return &productdto.GetProductsResponse{Data: data, Meta: meta.NewMeta(req.Page, req.Limit, total)}, nil
 }
 
 func (s *productService) GetByID(ctx context.Context, id int) (*productdto.ProductDetailResponse, error) {
@@ -203,7 +203,7 @@ func (s *productService) GetCompanyProducts(ctx context.Context, req *productdto
 		})
 	}
 
-	return &productdto.GetCompanyProductsResponse{Items: items, Meta: dto.Meta{Page: req.Page, Limit: req.Limit, Total: total}}, nil
+	return &productdto.GetCompanyProductsResponse{Items: items, Meta: dto.NewMeta(req.Page, req.Limit, total)}, nil
 }
 
 func (s *productService) getOwnedProduct(ctx context.Context, id int) (*models.Product, error) {

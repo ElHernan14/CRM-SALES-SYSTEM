@@ -89,7 +89,7 @@ func (s *clientService) Create(ctx context.Context, req *clientdto.CreateClientR
 
 	var clientResp *clientdto.ClientResponse
 
-	//  transacción centralizada
+	//  transacciÃ³n centralizada
 	err = transaction.RunInTransaction(ctx, s.db, func(tx *sql.Tx) error {
 		// crear user
 		hash, _ := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
@@ -191,11 +191,7 @@ func (s *clientService) GetClients(ctx context.Context, req *clientdto.GetClient
 
 	resp := &clientdto.GetClientsResponse{
 		Clients: []clientdto.ClientResponse{},
-		Meta: metadto.Meta{
-			Page:  req.Page,
-			Limit: req.Limit,
-			Total: total,
-		},
+		Meta:    metadto.NewMeta(req.Page, req.Limit, total),
 	}
 
 	// calcular total pages
@@ -446,11 +442,7 @@ func (s *clientService) GetCompanyCustomers(
 	}
 
 	// Meta info
-	meta := dto.Meta{
-		Page:  req.Page,
-		Limit: req.Limit,
-		Total: total,
-	}
+	meta := dto.NewMeta(req.Page, req.Limit, total)
 
 	return &clientdto.GetCompanyCustomersResponse{
 		Items: items,

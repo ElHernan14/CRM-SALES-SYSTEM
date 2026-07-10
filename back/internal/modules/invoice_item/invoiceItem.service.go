@@ -108,7 +108,7 @@ func (s *invoiceItemService) Create(
 	if product.CompanyID != invoice.SellerCompanyID {
 		return nil, errorHandler.NewAppError(
 			http.StatusBadRequest,
-			"Producto inválido para esta invoice",
+			"Producto invÃ¡lido para esta invoice",
 		)
 	}
 
@@ -283,7 +283,7 @@ func (s *invoiceItemService) Update(
 	if item.InvoiceID != invoiceID {
 		return nil, errorHandler.NewAppError(
 			http.StatusBadRequest,
-			"invoice item inválido",
+			"invoice item invÃ¡lido",
 		)
 	}
 
@@ -430,7 +430,7 @@ func (s *invoiceItemService) Delete(
 	if item.InvoiceID != invoiceID {
 		return errorHandler.NewAppError(
 			http.StatusBadRequest,
-			"invoice item inválido",
+			"invoice item invÃ¡lido",
 		)
 	}
 
@@ -556,11 +556,7 @@ func (s *invoiceItemService) GetInvoiceItems(
 
 	resp := &invoiceItemDTO.GetInvoiceItemsResponse{
 		Items: []invoiceItemDTO.InvoiceItemResponse{},
-		Meta: metadto.Meta{
-			Page:  req.Page,
-			Limit: req.Limit,
-			Total: total,
-		},
+		Meta:  metadto.NewMeta(req.Page, req.Limit, total),
 	}
 
 	// calcular total pages

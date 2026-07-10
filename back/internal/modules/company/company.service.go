@@ -142,7 +142,7 @@ func (s *companyService) GetCompanies(ctx context.Context, req *companydto.GetCo
 		data = append(data, companydto.CompanyListItem{ID: c.ID, Name: c.Name, Logo: c.LogoPath})
 	}
 
-	return &companydto.GetCompaniesResponse{Data: data, Meta: metadto.Meta{Page: req.Page, Limit: req.Limit, Total: total}}, nil
+	return &companydto.GetCompaniesResponse{Data: data, Meta: metadto.NewMeta(req.Page, req.Limit, total)}, nil
 }
 
 func (s *companyService) GetByID(ctx context.Context, id int) (*companydto.CompanyResponse, error) {

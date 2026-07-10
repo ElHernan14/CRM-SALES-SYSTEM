@@ -3,6 +3,7 @@ package marketplace
 import (
 	"context"
 	coreDto "crm-system-sales/internal/core/dto"
+	tenantHelper "crm-system-sales/internal/core/tenant"
 	marketplacedto "crm-system-sales/internal/modules/marketplace/dto"
 )
 
@@ -19,17 +20,19 @@ func NewMarketplaceService(repo MarketplaceRepository) MarketplaceService {
 }
 
 func (s *marketplaceService) GetSuppliers(ctx context.Context, req *marketplacedto.GetSuppliersRequest) (*marketplacedto.GetSuppliersResponse, error) {
-	items, total, err := s.repo.ListSuppliers(ctx, req)
+	tenant := tenantHelper.GetTenant(ctx)
+	var excludedCompanyID *int
+	if tenant != nil {
+		excludedCompanyID = tenant.CompanyID
+	}
+
+	items, total, err := s.repo.ListSuppliers(ctx, req, excludedCompanyID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &marketplacedto.GetSuppliersResponse{
 		Items: items,
-		Meta: coreDto.Meta{
-			Page:  req.Page,
-			Limit: req.Limit,
-			Total: total,
-		},
+		Meta:  coreDto.NewMeta(req.Page, req.Limit, total),
 	}, nil
 }

@@ -137,7 +137,7 @@ func (s *invoiceService) CreateDraft(
 
 		return nil, errorHandler.NewAppError(
 			http.StatusBadRequest,
-			"una empresa no puede facturarse a sÃ­ misma",
+			"una empresa no puede facturarse a sÃƒÂ­ misma",
 		)
 	}
 
@@ -467,11 +467,7 @@ func (s *invoiceService) GetCompanyInvoices(
 	}
 
 	// Meta info
-	meta := dto.Meta{
-		Page:  req.Page,
-		Limit: req.Limit,
-		Total: total,
-	}
+	meta := dto.NewMeta(req.Page, req.Limit, total)
 
 	return &invoicedto.GetCompanyInvoicesResponse{
 		Items: items,
@@ -510,6 +506,6 @@ func (s *invoiceService) GetCompanyPurchases(
 		})
 	}
 
-	meta := dto.Meta{Page: req.Page, Limit: req.Limit, Total: total}
+	meta := dto.NewMeta(req.Page, req.Limit, total)
 	return &invoicedto.GetCompanyInvoicesResponse{Items: items, Meta: meta}, nil
 }

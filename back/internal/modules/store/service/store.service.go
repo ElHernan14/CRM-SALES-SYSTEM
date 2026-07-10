@@ -53,7 +53,7 @@ func (s *storeService) GetProducts(ctx context.Context, req *storedto.GetStorePr
 		})
 	}
 
-	meta := metadto.Meta{Page: req.Page, Limit: req.Limit, Total: total}
+	meta := metadto.NewMeta(req.Page, req.Limit, total)
 	return &storedto.GetStoreProductsResponse{Items: items, Meta: meta}, nil
 }
 
