@@ -1,5 +1,16 @@
 <script setup lang="ts">
-import { LayoutDashboard, Package, FileText, CreditCard, Settings } from 'lucide-vue-next';
+import {
+  LayoutDashboard,
+  Package,
+  FileText,
+  CreditCard,
+  Settings,
+  Store,
+  ShoppingBag,
+  Boxes,
+  Users,
+  BarChart3,
+} from 'lucide-vue-next';
 
 const navItems = [
   {
@@ -13,9 +24,34 @@ const navItems = [
     icon: Package,
   },
   {
-    label: 'Invoices',
+    label: 'Sales',
     to: '/erp/invoices',
     icon: FileText,
+  },
+  {
+    label: 'Marketplace',
+    to: '/erp/marketplace',
+    icon: Store,
+  },
+  {
+    label: 'Purchases',
+    to: '/erp/purchases',
+    icon: ShoppingBag,
+  },
+  {
+    label: 'Inventory',
+    to: '/erp/inventory',
+    icon: Boxes,
+  },
+  {
+    label: 'Customers',
+    to: '/erp/customers',
+    icon: Users,
+  },
+  {
+    label: 'Analytics',
+    to: '/erp/analytics',
+    icon: BarChart3,
   },
   {
     label: 'Payments',
