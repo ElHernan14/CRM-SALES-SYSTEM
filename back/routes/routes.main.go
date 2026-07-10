@@ -7,6 +7,9 @@ import (
 	"crm-system-sales/internal/core/files"
 	"crm-system-sales/internal/middleware"
 	"crm-system-sales/internal/modules/auth"
+	"crm-system-sales/internal/modules/categories"
+	categorycompany "crm-system-sales/internal/modules/category_company"
+	categoryproduct "crm-system-sales/internal/modules/category_product"
 	"crm-system-sales/internal/modules/client"
 	"crm-system-sales/internal/modules/company"
 	"crm-system-sales/internal/modules/inventory"
@@ -41,6 +44,7 @@ type AppContainer struct {
 	InvoicePaymentController *invoicepayment.InvoicePaymentController
 	StoreController          *storecontroller.StoreController
 	MarketplaceController    *marketplace.MarketplaceController
+	CategoriesController     *categories.CategoriesController
 }
 
 func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
@@ -54,6 +58,8 @@ func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 	clientRepo := client.NewClientRepository(db)
 	authRepo := auth.NewAuthRepository(db)
 	companyRepo := company.NewCompanyRepository(db)
+	categoryCompanyRepo := categorycompany.NewCategoryCompanyRepository(db)
+	categoryProductRepo := categoryproduct.NewCategoryProductRepository(db)
 	productRepo := product.NewProductRepository(db)
 	invoiceRepo := invoiceRepository.NewInvoiceRepository(db)
 	invoiceItemRepo := invoiceitem.NewInvoiceItemRepository(db)
@@ -67,8 +73,8 @@ func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 	authService := auth.NewAuthService(userRepository)
 	userService := users.NewUserService(userRepository)
 	clientService := client.NewClientService(db, clientRepo, userRepository, authRepo)
-	companyService := company.NewCompanyService(db, companyRepo, clientRepo, authRepo, userRepository, imageStorage)
-	productService := product.NewProductService(db, productRepo, imageStorage)
+	companyService := company.NewCompanyService(db, companyRepo, clientRepo, authRepo, userRepository, categoryCompanyRepo, imageStorage)
+	productService := product.NewProductService(db, productRepo, categoryProductRepo, imageStorage)
 	inventoryService := inventory.NewInventoryService(productRepo)
 	invoiceItemService := invoiceitem.NewInvoiceItemService(db, invoiceItemRepo, invoiceRepo, clientRepo, productRepo, inventoryService)
 	submitWorkflow := submitInvoiceWorkflow.NewSubmitInvoiceWorkflow(invoiceRepo, invoiceItemRepo, clientRepo, inventoryService, db)
@@ -77,6 +83,7 @@ func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 	invoicePaymentService := invoicepayment.NewInvoicePaymentService(db, invoiceRepo, clientRepo, invoicePaymentRepo)
 	storeService := storeservice.NewStoreService(db, productRepo, submitWorkflow)
 	marketplaceService := marketplace.NewMarketplaceService(marketplaceRepo)
+	categoriesService := categories.NewCategoriesService(categoryProductRepo, categoryCompanyRepo)
 
 	// Controllers
 	authController := auth.NewAuthController(authService)
@@ -89,6 +96,7 @@ func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 	invoicePaymentController := invoicepayment.NewInvoicePaymentController(invoicePaymentService)
 	storeController := storecontroller.NewStoreController(storeService)
 	marketplaceController := marketplace.NewMarketplaceController(marketplaceService)
+	categoriesController := categories.NewCategoriesController(categoriesService)
 
 	container := &AppContainer{
 		UserController:           userController,
@@ -101,6 +109,7 @@ func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 		InvoicePaymentController: invoicePaymentController,
 		StoreController:          storeController,
 		MarketplaceController:    marketplaceController,
+		CategoriesController:     categoriesController,
 	}
 
 	auth.RegisterAuthRoutes(authRouter, container.AuthController)
@@ -113,4 +122,5 @@ func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 	invoicepayment.RegisterInvoicePaymentRoutes(protected, container.InvoicePaymentController)
 	storeroutes.RegisterInvoiceItemRoutes(protected, container.StoreController)
 	marketplace.RegisterMarketplaceRoutes(protected, container.MarketplaceController)
+	categories.RegisterCategoriesRoutes(protected, container.CategoriesController)
 }

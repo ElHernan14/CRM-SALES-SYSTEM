@@ -9,6 +9,8 @@ type Product struct {
 	Name          string     `db:"name"`
 	Description   string     `db:"description"`
 	Type          string     `db:"type"`
+	CategoryID    int        `db:"category_id"`
+	Category      string     `db:"category"`
 	Price         float64    `db:"price"`
 	Stock         int        `db:"stock"`
 	ReservedStock int        `db:"reserved_stock"`

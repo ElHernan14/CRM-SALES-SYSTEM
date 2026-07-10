@@ -13,6 +13,10 @@ type StoreProductResponse struct {
 
 	Type string `json:"type" example:"physical"`
 
+	CategoryID int `json:"category_id" example:"1"`
+
+	Category string `json:"category" example:"electronics"`
+
 	Description string `json:"description" example:"Business notebook"`
 
 	Price float64 `json:"price" example:"1200"`

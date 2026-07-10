@@ -27,7 +27,7 @@ func (c *ProductController) CreateProduct(w http.ResponseWriter, r *http.Request
 	var req productdto.CreateProductRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		log.Println("Error decoding request body:", err)
-		return errorHandler.NewAppError(http.StatusBadRequest, "body invÃ¡lido")
+		return errorHandler.NewAppError(http.StatusBadRequest, "body inválido")
 	}
 
 	msg, invalid := validatorx.ValidateStruct(req)
@@ -45,19 +45,26 @@ func (c *ProductController) CreateProduct(w http.ResponseWriter, r *http.Request
 
 func (c *ProductController) GetProducts(w http.ResponseWriter, r *http.Request) error {
 	q := r.URL.Query()
-	req := productdto.GetProductsRequest{Search: q.Get("search"), Type: q.Get("type"), Page: 1, Limit: 10}
+	req := productdto.GetProductsRequest{Search: q.Get("search"), Type: q.Get("type"), Category: q.Get("category"), Page: 1, Limit: 10}
 
+	if v := q.Get("category_id"); v != "" {
+		categoryID, err := strconv.Atoi(v)
+		if err != nil {
+			return errorHandler.NewAppError(http.StatusBadRequest, "category_id debe ser un nÃƒÆ’Ã‚Âºmero entero")
+		}
+		req.CategoryID = &categoryID
+	}
 	if v := q.Get("min_price"); v != "" {
 		min, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			return errorHandler.NewAppError(http.StatusBadRequest, "min_price debe ser un nÃºmero vÃ¡lido")
+			return errorHandler.NewAppError(http.StatusBadRequest, "min_price debe ser un nÃƒÂºmero vÃƒÂ¡lido")
 		}
 		req.MinPrice = min
 	}
 	if v := q.Get("max_price"); v != "" {
 		max, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			return errorHandler.NewAppError(http.StatusBadRequest, "max_price debe ser un nÃºmero vÃ¡lido")
+			return errorHandler.NewAppError(http.StatusBadRequest, "max_price debe ser un nÃƒÂºmero vÃƒÂ¡lido")
 		}
 		req.MaxPrice = max
 	}
@@ -67,7 +74,7 @@ func (c *ProductController) GetProducts(w http.ResponseWriter, r *http.Request) 
 	if v := q.Get("page"); v != "" {
 		p, err := strconv.Atoi(v)
 		if err != nil {
-			return errorHandler.NewAppError(http.StatusBadRequest, "page debe ser un nÃºmero entero")
+			return errorHandler.NewAppError(http.StatusBadRequest, "page debe ser un nÃƒÂºmero entero")
 		}
 		if p > 0 {
 			req.Page = p
@@ -76,7 +83,7 @@ func (c *ProductController) GetProducts(w http.ResponseWriter, r *http.Request) 
 	if v := q.Get("limit"); v != "" {
 		l, err := strconv.Atoi(v)
 		if err != nil {
-			return errorHandler.NewAppError(http.StatusBadRequest, "limit debe ser un nÃºmero entero")
+			return errorHandler.NewAppError(http.StatusBadRequest, "limit debe ser un nÃƒÂºmero entero")
 		}
 		if l > 0 {
 			req.Limit = l
@@ -99,7 +106,7 @@ func (c *ProductController) GetProducts(w http.ResponseWriter, r *http.Request) 
 func (c *ProductController) GetProductByID(w http.ResponseWriter, r *http.Request) error {
 	id, err := strconv.Atoi(mux.Vars(r)["id"])
 	if err != nil || id <= 0 {
-		return errorHandler.NewAppError(http.StatusBadRequest, "id invÃ¡lido")
+		return errorHandler.NewAppError(http.StatusBadRequest, "id inválido")
 	}
 
 	res, err := c.service.GetByID(r.Context(), id)
@@ -113,12 +120,12 @@ func (c *ProductController) GetProductByID(w http.ResponseWriter, r *http.Reques
 func (c *ProductController) UpdateProduct(w http.ResponseWriter, r *http.Request) error {
 	id, err := strconv.Atoi(mux.Vars(r)["id"])
 	if err != nil || id <= 0 {
-		return errorHandler.NewAppError(http.StatusBadRequest, "id invÃ¡lido")
+		return errorHandler.NewAppError(http.StatusBadRequest, "id inválido")
 	}
 
 	var req productdto.UpdateProductRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return errorHandler.NewAppError(http.StatusBadRequest, "body json invÃ¡lido")
+		return errorHandler.NewAppError(http.StatusBadRequest, "body json inválido")
 	}
 
 	msg, invalid := validatorx.ValidateStruct(req)
@@ -137,11 +144,11 @@ func (c *ProductController) UpdateProduct(w http.ResponseWriter, r *http.Request
 func (c *ProductController) UploadProductImage(w http.ResponseWriter, r *http.Request) error {
 	id, err := strconv.Atoi(mux.Vars(r)["id"])
 	if err != nil || id <= 0 {
-		return errorHandler.NewAppError(http.StatusBadRequest, "id invÃ¡lido")
+		return errorHandler.NewAppError(http.StatusBadRequest, "id inválido")
 	}
 
 	if err := r.ParseMultipartForm(5 << 20); err != nil {
-		return errorHandler.NewAppError(http.StatusBadRequest, "imagen invÃ¡lida")
+		return errorHandler.NewAppError(http.StatusBadRequest, "imagen invalida")
 	}
 
 	file, header, err := r.FormFile("image")
@@ -161,7 +168,7 @@ func (c *ProductController) UploadProductImage(w http.ResponseWriter, r *http.Re
 func (c *ProductController) DeleteProduct(w http.ResponseWriter, r *http.Request) error {
 	id, err := strconv.Atoi(mux.Vars(r)["id"])
 	if err != nil || id <= 0 {
-		return errorHandler.NewAppError(http.StatusBadRequest, "id invÃ¡lido")
+		return errorHandler.NewAppError(http.StatusBadRequest, "id inválido")
 	}
 
 	if err := c.service.Delete(r.Context(), id); err != nil {

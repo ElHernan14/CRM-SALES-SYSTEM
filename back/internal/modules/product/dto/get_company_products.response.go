@@ -11,6 +11,10 @@ type CompanyProductResponse struct {
 
 	Type string `json:"type"`
 
+	CategoryID int `json:"category_id"`
+
+	Category string `json:"category"`
+
 	Price float64 `json:"price"`
 
 	Stock int `json:"stock"`

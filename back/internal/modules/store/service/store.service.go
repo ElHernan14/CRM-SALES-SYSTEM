@@ -46,6 +46,8 @@ func (s *storeService) GetProducts(ctx context.Context, req *storedto.GetStorePr
 			CompanyName:    p.CompanyName,
 			Name:           p.Name,
 			Type:           p.Type,
+			CategoryID:     p.CategoryID,
+			Category:       p.Category,
 			Description:    p.Description,
 			Price:          p.Price,
 			AvailableStock: available,

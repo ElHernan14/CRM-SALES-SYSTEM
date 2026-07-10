@@ -13,6 +13,7 @@ import (
 	"crm-system-sales/internal/core/files"
 	tenant "crm-system-sales/internal/core/tenant"
 	models "crm-system-sales/internal/models/product"
+	categoryproduct "crm-system-sales/internal/modules/category_product"
 	productdto "crm-system-sales/internal/modules/product/dto"
 )
 
@@ -29,11 +30,12 @@ type ProductService interface {
 type productService struct {
 	db           *sql.DB
 	repo         ProductRepository
+	categoryRepo categoryproduct.CategoryProductRepository
 	imageStorage files.ImageStorage
 }
 
-func NewProductService(db *sql.DB, repo ProductRepository, imageStorage files.ImageStorage) ProductService {
-	return &productService{db: db, repo: repo, imageStorage: imageStorage}
+func NewProductService(db *sql.DB, repo ProductRepository, categoryRepo categoryproduct.CategoryProductRepository, imageStorage files.ImageStorage) ProductService {
+	return &productService{db: db, repo: repo, categoryRepo: categoryRepo, imageStorage: imageStorage}
 }
 
 func (s *productService) Create(ctx context.Context, req *productdto.CreateProductRequest) (*productdto.ProductResponse, error) {
@@ -47,11 +49,21 @@ func (s *productService) Create(ctx context.Context, req *productdto.CreateProdu
 		return nil, err
 	}
 
+	category, err := s.categoryRepo.GetByID(ctx, req.CategoryID)
+	if err != nil {
+		return nil, err
+	}
+	if category == nil {
+		return nil, errorHandler.NewAppError(http.StatusBadRequest, "Categoria de producto no encontrada")
+	}
+
 	product := &models.Product{
 		CompanyID:   *companyID,
 		Name:        req.Name,
 		Description: req.Description,
 		Type:        req.Type,
+		CategoryID:  req.CategoryID,
+		Category:    category.Name,
 		Price:       req.Price,
 		Stock:       req.Stock,
 		ImagePath:   req.ImagePath,
@@ -77,7 +89,7 @@ func (s *productService) GetProducts(ctx context.Context, req *productdto.GetPro
 		return nil, err
 	}
 
-	products, total, err := s.repo.GetAll(ctx, req.Search, req.Type, req.MinPrice, req.MaxPrice, companyID, req.Limit, offset)
+	products, total, err := s.repo.GetAll(ctx, req.Search, req.Type, req.CategoryID, req.Category, req.MinPrice, req.MaxPrice, companyID, req.Limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -90,6 +102,8 @@ func (s *productService) GetProducts(ctx context.Context, req *productdto.GetPro
 			Name:           p.Name,
 			Description:    p.Description,
 			Type:           p.Type,
+			CategoryID:     p.CategoryID,
+			Category:       p.Category,
 			Price:          p.Price,
 			Stock:          p.Stock,
 			Status:         p.Status,
@@ -125,6 +139,17 @@ func (s *productService) Update(ctx context.Context, id int, req *productdto.Upd
 	}
 	if req.Type != nil {
 		product.Type = *req.Type
+	}
+	if req.CategoryID != nil {
+		category, err := s.categoryRepo.GetByID(ctx, *req.CategoryID)
+		if err != nil {
+			return nil, err
+		}
+		if category == nil {
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "Categoria de producto no encontrada")
+		}
+		product.CategoryID = *req.CategoryID
+		product.Category = category.Name
 	}
 	if req.Price != nil {
 		product.Price = *req.Price
@@ -195,6 +220,8 @@ func (s *productService) GetCompanyProducts(ctx context.Context, req *productdto
 			Name:          p.Name,
 			Description:   p.Description,
 			Type:          p.Type,
+			CategoryID:    p.CategoryID,
+			Category:      p.Category,
 			Price:         p.Price,
 			Stock:         p.Stock,
 			ReservedStock: p.ReservedStock,
@@ -234,6 +261,8 @@ func mapProductResponse(product *models.Product) *productdto.ProductResponse {
 		Name:           product.Name,
 		Description:    product.Description,
 		Type:           product.Type,
+		CategoryID:     product.CategoryID,
+		Category:       product.Category,
 		Price:          product.Price,
 		Stock:          product.Stock,
 		ReservedStock:  product.ReservedStock,
@@ -248,6 +277,8 @@ func mapProductDetailResponse(product *models.Product) *productdto.ProductDetail
 		Name:        product.Name,
 		Description: product.Description,
 		Type:        product.Type,
+		CategoryID:  product.CategoryID,
+		Category:    product.Category,
 		Price:       product.Price,
 		Stock:       product.Stock,
 		Status:      product.Status,

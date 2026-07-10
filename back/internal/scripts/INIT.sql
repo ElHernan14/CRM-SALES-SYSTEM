@@ -1,4 +1,4 @@
-﻿/*--------------------------------------------TABLAS AUTENTICACIÃ“N--------------------------------------------*/
+/*--------------------------------------------TABLAS AUTENTICACIÓN--------------------------------------------*/
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -69,27 +69,46 @@ CREATE TABLE client (
         ON DELETE SET NULL
 );
 
+CREATE TABLE category_company (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(80) NOT NULL UNIQUE,
+    description TEXT
+);
+
 CREATE TABLE company (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
+    category_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
     status INT DEFAULT 1, -- 1 activo, 0 inactivo
     description TEXT,
-    logo_path TEXT
-);
+    logo_path TEXT,
+    cover_image_path TEXT,
 
+    CONSTRAINT fk_company_category
+        FOREIGN KEY (category_id)
+        REFERENCES category_company(id)
+        ON DELETE RESTRICT
+);
 ALTER TABLE client
 ADD CONSTRAINT fk_company
 FOREIGN KEY (company_id)
 REFERENCES company(id)
 ON DELETE SET NULL;
 
+CREATE TABLE category_product (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(80) NOT NULL UNIQUE,
+    description TEXT
+);
+
 CREATE TABLE product (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     type VARCHAR(20), -- product | service
+    category_id INT NOT NULL,
     price NUMERIC(10,2) NOT NULL,
     stock INT DEFAULT 0,
     company_id INT NOT NULL,
@@ -100,8 +119,16 @@ CREATE TABLE product (
     CONSTRAINT fk_product_company
         FOREIGN KEY (company_id)
         REFERENCES company(id)
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_product_category
+        FOREIGN KEY (category_id)
+        REFERENCES category_product(id)
+        ON DELETE RESTRICT
 );
+
+CREATE INDEX IF NOT EXISTS idx_company_category_id ON company(category_id);
+CREATE INDEX IF NOT EXISTS idx_product_category_id ON product(category_id);
 
 CREATE TABLE invoice (
     id SERIAL PRIMARY KEY,
@@ -198,4 +225,7 @@ ADD COLUMN status SMALLINT DEFAULT 1,
 ADD COLUMN deleted_at TIMESTAMP NULL,
 ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ADD COLUMN updated_at TIMESTAMP NULL;
+
+
+
 

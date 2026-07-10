@@ -2,17 +2,18 @@ package product
 
 import (
 	"context"
-	models "crm-system-sales/internal/models/product"
-	productdto "crm-system-sales/internal/modules/product/dto"
-	storedto "crm-system-sales/internal/modules/store/dto"
 	"database/sql"
 	"fmt"
 	"strings"
+
+	models "crm-system-sales/internal/models/product"
+	productdto "crm-system-sales/internal/modules/product/dto"
+	storedto "crm-system-sales/internal/modules/store/dto"
 )
 
 type ProductRepository interface {
 	Create(ctx context.Context, p *models.Product) error
-	GetAll(ctx context.Context, search string, productType string, minPrice float64, maxPrice float64, companyID *int, limit int, offset int) ([]models.Product, int, error)
+	GetAll(ctx context.Context, search string, productType string, categoryID *int, category string, minPrice float64, maxPrice float64, companyID *int, limit int, offset int) ([]models.Product, int, error)
 	GetByID(ctx context.Context, id int) (*models.Product, error)
 	Update(ctx context.Context, p *models.Product) error
 	UpdateImage(ctx context.Context, productID int, imagePath string) error
@@ -32,17 +33,18 @@ func NewProductRepository(db *sql.DB) ProductRepository {
 
 func (r *productRepository) Create(ctx context.Context, p *models.Product) error {
 	query := `
-		INSERT INTO product (company_id, name, description, type, price, stock, image_path, status)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, 1)
+		INSERT INTO product (company_id, name, description, type, category_id, price, stock, image_path, status)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 1)
 		RETURNING id
 	`
 
-	return r.db.QueryRowContext(ctx, query, p.CompanyID, p.Name, p.Description, p.Type, p.Price, p.Stock, p.ImagePath).Scan(&p.ID)
+	return r.db.QueryRowContext(ctx, query, p.CompanyID, p.Name, p.Description, p.Type, p.CategoryID, p.Price, p.Stock, p.ImagePath).Scan(&p.ID)
 }
 
-func (r *productRepository) GetAll(ctx context.Context, search string, productType string, minPrice float64, maxPrice float64, companyID *int, limit int, offset int) ([]models.Product, int, error) {
+func (r *productRepository) GetAll(ctx context.Context, search string, productType string, categoryID *int, category string, minPrice float64, maxPrice float64, companyID *int, limit int, offset int) ([]models.Product, int, error) {
 	baseQuery := `
-		FROM product
+		FROM product p
+		INNER JOIN category_product cat ON cat.id = p.category_id
 		WHERE true = true
 	`
 
@@ -50,31 +52,41 @@ func (r *productRepository) GetAll(ctx context.Context, search string, productTy
 	i := 1
 
 	if companyID != nil {
-		baseQuery += fmt.Sprintf(" AND company_id = $%d", i)
+		baseQuery += fmt.Sprintf(" AND p.company_id = $%d", i)
 		args = append(args, *companyID)
 		i++
 	}
 
 	if search != "" {
-		baseQuery += fmt.Sprintf(` AND LOWER(name) LIKE LOWER($%d)`, i)
+		baseQuery += fmt.Sprintf(` AND LOWER(p.name) LIKE LOWER($%d)`, i)
 		args = append(args, "%"+search+"%")
 		i++
 	}
 
 	if productType != "" {
-		baseQuery += fmt.Sprintf(" AND type = $%d", i)
+		baseQuery += fmt.Sprintf(" AND p.type = $%d", i)
 		args = append(args, productType)
 		i++
 	}
 
+	if categoryID != nil {
+		baseQuery += fmt.Sprintf(" AND p.category_id = $%d", i)
+		args = append(args, *categoryID)
+		i++
+	} else if category != "" {
+		baseQuery += fmt.Sprintf(" AND LOWER(cat.name) = LOWER($%d)", i)
+		args = append(args, category)
+		i++
+	}
+
 	if minPrice > 0 {
-		baseQuery += fmt.Sprintf(" AND price >= $%d", i)
+		baseQuery += fmt.Sprintf(" AND p.price >= $%d", i)
 		args = append(args, minPrice)
 		i++
 	}
 
 	if maxPrice > 0 {
-		baseQuery += fmt.Sprintf(" AND price <= $%d", i)
+		baseQuery += fmt.Sprintf(" AND p.price <= $%d", i)
 		args = append(args, maxPrice)
 		i++
 	}
@@ -85,8 +97,10 @@ func (r *productRepository) GetAll(ctx context.Context, search string, productTy
 		return nil, 0, err
 	}
 
-	dataQuery := `SELECT id, name, description, type, price, stock, status, company_id, reserved_stock, image_path ` + baseQuery + fmt.Sprintf(`
-		ORDER BY id DESC
+	dataQuery := `
+		SELECT p.id, p.name, p.description, p.type, p.category_id, cat.name, p.price, p.stock, p.status, p.company_id, p.reserved_stock, p.image_path
+	` + baseQuery + fmt.Sprintf(`
+		ORDER BY p.id DESC
 		LIMIT $%d OFFSET $%d
 	`, i, i+1)
 
@@ -101,7 +115,7 @@ func (r *productRepository) GetAll(ctx context.Context, search string, productTy
 	var products []models.Product
 	for rows.Next() {
 		var p models.Product
-		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Type, &p.Price, &p.Stock, &p.Status, &p.CompanyID, &p.ReservedStock, &p.ImagePath); err != nil {
+		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Type, &p.CategoryID, &p.Category, &p.Price, &p.Stock, &p.Status, &p.CompanyID, &p.ReservedStock, &p.ImagePath); err != nil {
 			return nil, 0, err
 		}
 		products = append(products, p)
@@ -112,13 +126,14 @@ func (r *productRepository) GetAll(ctx context.Context, search string, productTy
 
 func (r *productRepository) GetByID(ctx context.Context, id int) (*models.Product, error) {
 	query := `
-		SELECT id, name, description, type, price, stock, status, company_id, image_path
-		FROM product
-		WHERE id = $1
+		SELECT p.id, p.name, p.description, p.type, p.category_id, cat.name, p.price, p.stock, p.status, p.company_id, p.image_path
+		FROM product p
+		INNER JOIN category_product cat ON cat.id = p.category_id
+		WHERE p.id = $1
 	`
 
 	var p models.Product
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&p.ID, &p.Name, &p.Description, &p.Type, &p.Price, &p.Stock, &p.Status, &p.CompanyID, &p.ImagePath)
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&p.ID, &p.Name, &p.Description, &p.Type, &p.CategoryID, &p.Category, &p.Price, &p.Stock, &p.Status, &p.CompanyID, &p.ImagePath)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -135,13 +150,14 @@ func (r *productRepository) Update(ctx context.Context, p *models.Product) error
 			name = $1,
 			description = $2,
 			type = $3,
-			price = $4,
-			stock = $5,
-			status = $6
-		WHERE id = $7
+			category_id = $4,
+			price = $5,
+			stock = $6,
+			status = $7
+		WHERE id = $8
 	`
 
-	_, err := r.db.ExecContext(ctx, query, p.Name, p.Description, p.Type, p.Price, p.Stock, p.Status, p.ID)
+	_, err := r.db.ExecContext(ctx, query, p.Name, p.Description, p.Type, p.CategoryID, p.Price, p.Stock, p.Status, p.ID)
 	return err
 }
 
@@ -197,26 +213,39 @@ func (r *productRepository) GetByIDForUpdate(ctx context.Context, tx *sql.Tx, id
 }
 
 func (r *productRepository) ListByCompanyID(ctx context.Context, companyID int, req *productdto.GetCompanyProductsRequest) ([]*models.Product, int, error) {
-	allowedSortColumns := map[string]string{"name": "name", "description": "description", "type": "type", "price": "price", "stock": "stock"}
+	allowedSortColumns := map[string]string{"name": "p.name", "description": "p.description", "type": "p.type", "category": "cat.name", "price": "p.price", "stock": "p.stock"}
 	allowedOrders := map[string]string{"asc": "ASC", "desc": "DESC"}
 
-	selectQuery := `SELECT id, name, description, type, price, stock, reserved_stock, status, image_path `
-	baseQuery := `FROM product WHERE company_id = $1`
+	selectQuery := `SELECT p.id, p.name, p.description, p.type, p.category_id, cat.name, p.price, p.stock, p.reserved_stock, p.status, p.image_path `
+	baseQuery := `
+		FROM product p
+		INNER JOIN category_product cat ON cat.id = p.category_id
+		WHERE p.company_id = $1
+	`
 	args := []interface{}{companyID}
 	argPos := 2
 
 	if req.Name != "" {
-		baseQuery += fmt.Sprintf(" AND name ILIKE $%d", argPos)
+		baseQuery += fmt.Sprintf(" AND p.name ILIKE $%d", argPos)
 		args = append(args, "%"+req.Name+"%")
 		argPos++
 	}
 	if req.Type != "" {
-		baseQuery += fmt.Sprintf(" AND type = $%d", argPos)
+		baseQuery += fmt.Sprintf(" AND p.type = $%d", argPos)
 		args = append(args, req.Type)
 		argPos++
 	}
+	if req.CategoryID != nil {
+		baseQuery += fmt.Sprintf(" AND p.category_id = $%d", argPos)
+		args = append(args, *req.CategoryID)
+		argPos++
+	} else if req.Category != "" {
+		baseQuery += fmt.Sprintf(" AND LOWER(cat.name) = LOWER($%d)", argPos)
+		args = append(args, req.Category)
+		argPos++
+	}
 	if req.Status != 0 {
-		baseQuery += fmt.Sprintf(" AND status = $%d", argPos)
+		baseQuery += fmt.Sprintf(" AND p.status = $%d", argPos)
 		args = append(args, req.Status)
 		argPos++
 	}
@@ -227,7 +256,7 @@ func (r *productRepository) ListByCompanyID(ctx context.Context, companyID int, 
 		return nil, 0, err
 	}
 
-	sortColumn := "created_at"
+	sortColumn := "p.created_at"
 	order := "DESC"
 	if v, ok := allowedSortColumns[req.SortColumn]; ok {
 		sortColumn = v
@@ -250,7 +279,7 @@ func (r *productRepository) ListByCompanyID(ctx context.Context, companyID int, 
 	products := make([]*models.Product, 0)
 	for rows.Next() {
 		var p models.Product
-		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Type, &p.Price, &p.Stock, &p.ReservedStock, &p.Status, &p.ImagePath); err != nil {
+		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Type, &p.CategoryID, &p.Category, &p.Price, &p.Stock, &p.ReservedStock, &p.Status, &p.ImagePath); err != nil {
 			return nil, 0, err
 		}
 		products = append(products, &p)
@@ -260,7 +289,7 @@ func (r *productRepository) ListByCompanyID(ctx context.Context, companyID int, 
 }
 
 func (r *productRepository) ListAvailableProducts(ctx context.Context, req *storedto.GetStoreProductsRequest) ([]*models.Product, int, error) {
-	allowedSortColumns := map[string]string{"name": "p.name", "created_at": "p.created_at", "type": "p.type", "price": "p.price", "stock": "p.stock"}
+	allowedSortColumns := map[string]string{"name": "p.name", "created_at": "p.created_at", "type": "p.type", "category": "cat.name", "price": "p.price", "stock": "p.stock"}
 	allowedOrders := map[string]string{"asc": "ASC", "desc": "DESC"}
 
 	selectQuery := `
@@ -271,6 +300,8 @@ func (r *productRepository) ListAvailableProducts(ctx context.Context, req *stor
 			p.name,
 			p.description,
 			p.type,
+			p.category_id,
+			cat.name,
 			p.price,
 			p.stock,
 			p.reserved_stock,
@@ -280,6 +311,7 @@ func (r *productRepository) ListAvailableProducts(ctx context.Context, req *stor
 	baseQuery := `
 		FROM product p
 		INNER JOIN company c ON c.id = p.company_id
+		INNER JOIN category_product cat ON cat.id = p.category_id
 		WHERE p.status = 1
 		  AND p.deleted_at IS NULL
 		  AND c.status = 1
@@ -309,6 +341,15 @@ func (r *productRepository) ListAvailableProducts(ctx context.Context, req *stor
 	if req.Type != "" {
 		baseQuery += fmt.Sprintf(" AND p.type = $%d", argPos)
 		args = append(args, req.Type)
+		argPos++
+	}
+	if req.CategoryID != nil {
+		baseQuery += fmt.Sprintf(" AND p.category_id = $%d", argPos)
+		args = append(args, *req.CategoryID)
+		argPos++
+	} else if req.Category != "" {
+		baseQuery += fmt.Sprintf(" AND LOWER(cat.name) = LOWER($%d)", argPos)
+		args = append(args, req.Category)
 		argPos++
 	}
 	if req.MinPrice > 0 {
@@ -351,7 +392,7 @@ func (r *productRepository) ListAvailableProducts(ctx context.Context, req *stor
 	products := make([]*models.Product, 0)
 	for rows.Next() {
 		var p models.Product
-		if err := rows.Scan(&p.ID, &p.CompanyID, &p.CompanyName, &p.Name, &p.Description, &p.Type, &p.Price, &p.Stock, &p.ReservedStock, &p.ImagePath); err != nil {
+		if err := rows.Scan(&p.ID, &p.CompanyID, &p.CompanyName, &p.Name, &p.Description, &p.Type, &p.CategoryID, &p.Category, &p.Price, &p.Stock, &p.ReservedStock, &p.ImagePath); err != nil {
 			return nil, 0, err
 		}
 		products = append(products, &p)

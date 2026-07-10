@@ -24,6 +24,7 @@ func NewMarketplaceRepository(db *sql.DB) MarketplaceRepository {
 func (r *marketplaceRepository) ListSuppliers(ctx context.Context, req *marketplacedto.GetSuppliersRequest, excludedCompanyID *int) ([]marketplacedto.SupplierResponse, int, error) {
 	allowedSortColumns := map[string]string{
 		"name":           "c.name",
+		"category":       "cc.name",
 		"total_products": "total_products",
 		"created_at":     "c.created_at",
 	}
@@ -37,14 +38,18 @@ func (r *marketplaceRepository) ListSuppliers(ctx context.Context, req *marketpl
 		SELECT
 			c.id,
 			c.name,
+			c.category_id,
+			cc.name,
 			MIN(cl.email) AS email,
 			c.logo_path,
+			c.cover_image_path,
 			c.description,
 			COUNT(p.id) AS total_products
 	`
 
 	baseQuery := `
 		FROM company c
+		INNER JOIN category_company cc ON cc.id = c.category_id
 		LEFT JOIN client cl ON cl.company_id = c.id AND cl.status = 1 AND cl.deleted_at IS NULL
 		LEFT JOIN product p ON p.company_id = c.id AND p.status = 1 AND p.deleted_at IS NULL AND p.stock > p.reserved_stock
 		WHERE c.status = 1
@@ -66,8 +71,18 @@ func (r *marketplaceRepository) ListSuppliers(ctx context.Context, req *marketpl
 		argPos++
 	}
 
+	if req.CategoryID != nil {
+		baseQuery += fmt.Sprintf(" AND c.category_id = $%d", argPos)
+		args = append(args, *req.CategoryID)
+		argPos++
+	} else if req.Category != "" {
+		baseQuery += fmt.Sprintf(" AND LOWER(cc.name) = LOWER($%d)", argPos)
+		args = append(args, req.Category)
+		argPos++
+	}
+
 	groupBy := `
-		GROUP BY c.id, c.name, c.logo_path, c.description
+		GROUP BY c.id, c.name, c.category_id, cc.name, c.logo_path, c.cover_image_path, c.description
 	`
 
 	countQuery := "SELECT COUNT(*) FROM (" + selectQuery + baseQuery + groupBy + ") AS suppliers"
@@ -102,13 +117,16 @@ func (r *marketplaceRepository) ListSuppliers(ctx context.Context, req *marketpl
 	items := make([]marketplacedto.SupplierResponse, 0)
 	for rows.Next() {
 		var item marketplacedto.SupplierResponse
-		var email, logo, description sql.NullString
+		var email, logo, coverImage, description sql.NullString
 
 		if err := rows.Scan(
 			&item.ID,
 			&item.Name,
+			&item.CategoryID,
+			&item.Category,
 			&email,
 			&logo,
+			&coverImage,
 			&description,
 			&item.TotalProducts,
 		); err != nil {
@@ -120,6 +138,9 @@ func (r *marketplaceRepository) ListSuppliers(ctx context.Context, req *marketpl
 		}
 		if logo.Valid {
 			item.Logo = &logo.String
+		}
+		if coverImage.Valid {
+			item.CoverImage = &coverImage.String
 		}
 		if description.Valid {
 			item.Description = &description.String

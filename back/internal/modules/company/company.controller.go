@@ -50,7 +50,7 @@ func (c *CompanyController) GetMyCompany(w http.ResponseWriter, r *http.Request)
 
 func (c *CompanyController) GetCompanies(w http.ResponseWriter, r *http.Request) error {
 	q := r.URL.Query()
-	req := companydto.GetCompaniesRequest{Search: q.Get("search"), Page: 1, Limit: 10}
+	req := companydto.GetCompaniesRequest{Search: q.Get("search"), Category: q.Get("category"), Page: 1, Limit: 10}
 
 	if v := q.Get("page"); v != "" {
 		p, err := strconv.Atoi(v)
@@ -102,7 +102,7 @@ func (c *CompanyController) GetCompanyByID(w http.ResponseWriter, r *http.Reques
 
 func (c *CompanyController) UploadLogo(w http.ResponseWriter, r *http.Request) error {
 	if err := r.ParseMultipartForm(5 << 20); err != nil {
-		return errorHandler.NewAppError(http.StatusBadRequest, "imagen inválida")
+		return errorHandler.NewAppError(http.StatusBadRequest, "imagen invalida")
 	}
 
 	file, header, err := r.FormFile("logo")
@@ -112,6 +112,24 @@ func (c *CompanyController) UploadLogo(w http.ResponseWriter, r *http.Request) e
 	defer file.Close()
 
 	res, err := c.service.UploadLogo(r.Context(), file, header)
+	if err != nil {
+		return err
+	}
+
+	return json.NewEncoder(w).Encode(response.Success(res))
+}
+func (c *CompanyController) UploadCoverImage(w http.ResponseWriter, r *http.Request) error {
+	if err := r.ParseMultipartForm(5 << 20); err != nil {
+		return errorHandler.NewAppError(http.StatusBadRequest, "imagen invalida")
+	}
+
+	file, header, err := r.FormFile("cover_image")
+	if err != nil {
+		return errorHandler.NewAppError(http.StatusBadRequest, "cover_image es requerido")
+	}
+	defer file.Close()
+
+	res, err := c.service.UploadCoverImage(r.Context(), file, header)
 	if err != nil {
 		return err
 	}

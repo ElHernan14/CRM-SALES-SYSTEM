@@ -2,16 +2,18 @@ package company
 
 import (
 	"context"
-	company "crm-system-sales/internal/models/company"
 	"database/sql"
 	"fmt"
+
+	company "crm-system-sales/internal/models/company"
 )
 
 type CompanyRepository interface {
 	Create(tx *sql.Tx, c *company.Company) (*company.Company, error)
 	GetByID(ctx context.Context, id int) (*company.Company, error)
-	GetAll(ctx context.Context, search string, limit int, offset int) ([]company.Company, int, error)
+	GetAll(ctx context.Context, search string, categoryID *int, category string, limit int, offset int) ([]company.Company, int, error)
 	UpdateLogo(ctx context.Context, companyID int, logoPath string) error
+	UpdateCoverImage(ctx context.Context, companyID int, coverImagePath string) error
 }
 
 type companyRepository struct {
@@ -24,12 +26,12 @@ func NewCompanyRepository(db *sql.DB) CompanyRepository {
 
 func (r *companyRepository) Create(tx *sql.Tx, c *company.Company) (*company.Company, error) {
 	query := `
-		INSERT INTO company (name, description, status)
-		VALUES ($1, $2, $3)
+		INSERT INTO company (name, category_id, description, status)
+		VALUES ($1, $2, $3, $4)
 		RETURNING id, created_at
 	`
 
-	err := tx.QueryRow(query, c.Name, c.Description, c.Status).Scan(&c.ID, &c.CreatedAt)
+	err := tx.QueryRow(query, c.Name, c.CategoryID, c.Description, c.Status).Scan(&c.ID, &c.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -39,15 +41,16 @@ func (r *companyRepository) Create(tx *sql.Tx, c *company.Company) (*company.Com
 
 func (r *companyRepository) GetByID(ctx context.Context, id int) (*company.Company, error) {
 	query := `
-		SELECT id, name, description, logo_path, created_at, deleted_at, status
-		FROM company
-		WHERE id = $1
-		  AND deleted_at IS NULL
-		  AND status = 1
+		SELECT c.id, c.name, c.category_id, cc.name, c.description, c.logo_path, c.cover_image_path, c.created_at, c.deleted_at, c.status
+		FROM company c
+		INNER JOIN category_company cc ON cc.id = c.category_id
+		WHERE c.id = $1
+		  AND c.deleted_at IS NULL
+		  AND c.status = 1
 	`
 
 	var c company.Company
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&c.ID, &c.Name, &c.Description, &c.LogoPath, &c.CreatedAt, &c.DeletedAt, &c.Status)
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&c.ID, &c.Name, &c.CategoryID, &c.Category, &c.Description, &c.LogoPath, &c.CoverImagePath, &c.CreatedAt, &c.DeletedAt, &c.Status)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -58,19 +61,30 @@ func (r *companyRepository) GetByID(ctx context.Context, id int) (*company.Compa
 	return &c, nil
 }
 
-func (r *companyRepository) GetAll(ctx context.Context, search string, limit int, offset int) ([]company.Company, int, error) {
+func (r *companyRepository) GetAll(ctx context.Context, search string, categoryID *int, category string, limit int, offset int) ([]company.Company, int, error) {
 	baseQuery := `
-		FROM company
-		WHERE deleted_at IS NULL
-		  AND status = 1
+		FROM company c
+		INNER JOIN category_company cc ON cc.id = c.category_id
+		WHERE c.deleted_at IS NULL
+		  AND c.status = 1
 	`
 
 	var args []interface{}
 	i := 1
 
 	if search != "" {
-		baseQuery += fmt.Sprintf(` AND LOWER(name) LIKE LOWER($%d)`, i)
+		baseQuery += fmt.Sprintf(` AND LOWER(c.name) LIKE LOWER($%d)`, i)
 		args = append(args, "%"+search+"%")
+		i++
+	}
+
+	if categoryID != nil {
+		baseQuery += fmt.Sprintf(` AND c.category_id = $%d`, i)
+		args = append(args, *categoryID)
+		i++
+	} else if category != "" {
+		baseQuery += fmt.Sprintf(` AND LOWER(cc.name) = LOWER($%d)`, i)
+		args = append(args, category)
 		i++
 	}
 
@@ -80,8 +94,8 @@ func (r *companyRepository) GetAll(ctx context.Context, search string, limit int
 		return nil, 0, err
 	}
 
-	dataQuery := `SELECT id, name, logo_path ` + baseQuery + fmt.Sprintf(`
-		ORDER BY id DESC
+	dataQuery := `SELECT c.id, c.name, c.category_id, cc.name, c.logo_path, c.cover_image_path ` + baseQuery + fmt.Sprintf(`
+		ORDER BY c.id DESC
 		LIMIT $%d OFFSET $%d
 	`, i, i+1)
 
@@ -96,7 +110,7 @@ func (r *companyRepository) GetAll(ctx context.Context, search string, limit int
 	var companies []company.Company
 	for rows.Next() {
 		var c company.Company
-		if err := rows.Scan(&c.ID, &c.Name, &c.LogoPath); err != nil {
+		if err := rows.Scan(&c.ID, &c.Name, &c.CategoryID, &c.Category, &c.LogoPath, &c.CoverImagePath); err != nil {
 			return nil, 0, err
 		}
 		companies = append(companies, c)
@@ -114,7 +128,23 @@ func (r *companyRepository) UpdateLogo(ctx context.Context, companyID int, logoP
 		  AND status = 1
 	`
 
-	result, err := r.db.ExecContext(ctx, query, logoPath, companyID)
+	return r.updateImageField(ctx, query, logoPath, companyID)
+}
+
+func (r *companyRepository) UpdateCoverImage(ctx context.Context, companyID int, coverImagePath string) error {
+	query := `
+		UPDATE company
+		SET cover_image_path = $1
+		WHERE id = $2
+		  AND deleted_at IS NULL
+		  AND status = 1
+	`
+
+	return r.updateImageField(ctx, query, coverImagePath, companyID)
+}
+
+func (r *companyRepository) updateImageField(ctx context.Context, query string, path string, companyID int) error {
+	result, err := r.db.ExecContext(ctx, query, path, companyID)
 	if err != nil {
 		return err
 	}
