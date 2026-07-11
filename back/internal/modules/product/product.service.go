@@ -12,9 +12,12 @@ import (
 	errorHandler "crm-system-sales/internal/core/error"
 	"crm-system-sales/internal/core/files"
 	tenant "crm-system-sales/internal/core/tenant"
+	categoryproductmodel "crm-system-sales/internal/models/category_product"
 	models "crm-system-sales/internal/models/product"
+	producttypemodel "crm-system-sales/internal/models/product_type"
 	categoryproduct "crm-system-sales/internal/modules/category_product"
 	productdto "crm-system-sales/internal/modules/product/dto"
+	producttype "crm-system-sales/internal/modules/product_type"
 )
 
 type ProductService interface {
@@ -28,14 +31,15 @@ type ProductService interface {
 }
 
 type productService struct {
-	db           *sql.DB
-	repo         ProductRepository
-	categoryRepo categoryproduct.CategoryProductRepository
-	imageStorage files.ImageStorage
+	db              *sql.DB
+	repo            ProductRepository
+	categoryRepo    categoryproduct.CategoryProductRepository
+	productTypeRepo producttype.ProductTypeRepository
+	imageStorage    files.ImageStorage
 }
 
-func NewProductService(db *sql.DB, repo ProductRepository, categoryRepo categoryproduct.CategoryProductRepository, imageStorage files.ImageStorage) ProductService {
-	return &productService{db: db, repo: repo, categoryRepo: categoryRepo, imageStorage: imageStorage}
+func NewProductService(db *sql.DB, repo ProductRepository, categoryRepo categoryproduct.CategoryProductRepository, productTypeRepo producttype.ProductTypeRepository, imageStorage files.ImageStorage) ProductService {
+	return &productService{db: db, repo: repo, categoryRepo: categoryRepo, productTypeRepo: productTypeRepo, imageStorage: imageStorage}
 }
 
 func (s *productService) Create(ctx context.Context, req *productdto.CreateProductRequest) (*productdto.ProductResponse, error) {
@@ -49,21 +53,20 @@ func (s *productService) Create(ctx context.Context, req *productdto.CreateProdu
 		return nil, err
 	}
 
-	category, err := s.categoryRepo.GetByID(ctx, req.CategoryID)
+	category, productType, err := s.validateCategoryAndType(ctx, req.CategoryID, req.TypeID)
 	if err != nil {
 		return nil, err
-	}
-	if category == nil {
-		return nil, errorHandler.NewAppError(http.StatusBadRequest, "Categoria de producto no encontrada")
 	}
 
 	product := &models.Product{
 		CompanyID:   *companyID,
 		Name:        req.Name,
 		Description: req.Description,
-		Type:        req.Type,
+		Kind:        req.Kind,
 		CategoryID:  req.CategoryID,
 		Category:    category.Name,
+		TypeID:      req.TypeID,
+		Type:        productType.Name,
 		Price:       req.Price,
 		Stock:       req.Stock,
 		ImagePath:   req.ImagePath,
@@ -89,7 +92,7 @@ func (s *productService) GetProducts(ctx context.Context, req *productdto.GetPro
 		return nil, err
 	}
 
-	products, total, err := s.repo.GetAll(ctx, req.Search, req.Type, req.CategoryID, req.Category, req.MinPrice, req.MaxPrice, companyID, req.Limit, offset)
+	products, total, err := s.repo.GetAll(ctx, req.Search, req.Kind, req.CategoryID, req.Category, req.TypeID, req.Type, req.MinPrice, req.MaxPrice, companyID, req.Limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -101,9 +104,11 @@ func (s *productService) GetProducts(ctx context.Context, req *productdto.GetPro
 			ID:             p.ID,
 			Name:           p.Name,
 			Description:    p.Description,
-			Type:           p.Type,
+			Kind:           p.Kind,
 			CategoryID:     p.CategoryID,
 			Category:       p.Category,
+			TypeID:         p.TypeID,
+			Type:           p.Type,
 			Price:          p.Price,
 			Stock:          p.Stock,
 			Status:         p.Status,
@@ -121,7 +126,6 @@ func (s *productService) GetByID(ctx context.Context, id int) (*productdto.Produ
 	if err != nil {
 		return nil, err
 	}
-
 	return mapProductDetailResponse(product), nil
 }
 
@@ -137,20 +141,29 @@ func (s *productService) Update(ctx context.Context, id int, req *productdto.Upd
 	if req.Description != nil {
 		product.Description = *req.Description
 	}
-	if req.Type != nil {
-		product.Type = *req.Type
+	if req.Kind != nil {
+		product.Kind = *req.Kind
 	}
+
+	categoryID := product.CategoryID
 	if req.CategoryID != nil {
-		category, err := s.categoryRepo.GetByID(ctx, *req.CategoryID)
+		categoryID = *req.CategoryID
+	}
+	typeID := product.TypeID
+	if req.TypeID != nil {
+		typeID = *req.TypeID
+	}
+	if req.CategoryID != nil || req.TypeID != nil {
+		category, productType, err := s.validateCategoryAndType(ctx, categoryID, typeID)
 		if err != nil {
 			return nil, err
 		}
-		if category == nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "Categoria de producto no encontrada")
-		}
-		product.CategoryID = *req.CategoryID
+		product.CategoryID = categoryID
 		product.Category = category.Name
+		product.TypeID = typeID
+		product.Type = productType.Name
 	}
+
 	if req.Price != nil {
 		product.Price = *req.Price
 	}
@@ -194,11 +207,9 @@ func (s *productService) Delete(ctx context.Context, id int) error {
 	if err != nil {
 		return err
 	}
-
 	if product.Status == 0 {
 		return errorHandler.NewAppError(http.StatusBadRequest, "Producto ya fue eliminado")
 	}
-
 	return s.repo.SoftDelete(ctx, id)
 }
 
@@ -219,9 +230,11 @@ func (s *productService) GetCompanyProducts(ctx context.Context, req *productdto
 			ID:            p.ID,
 			Name:          p.Name,
 			Description:   p.Description,
-			Type:          p.Type,
+			Kind:          p.Kind,
 			CategoryID:    p.CategoryID,
 			Category:      p.Category,
+			TypeID:        p.TypeID,
+			Type:          p.Type,
 			Price:         p.Price,
 			Stock:         p.Stock,
 			ReservedStock: p.ReservedStock,
@@ -233,12 +246,34 @@ func (s *productService) GetCompanyProducts(ctx context.Context, req *productdto
 	return &productdto.GetCompanyProductsResponse{Items: items, Meta: dto.NewMeta(req.Page, req.Limit, total)}, nil
 }
 
+func (s *productService) validateCategoryAndType(ctx context.Context, categoryID int, typeID int) (*categoryproductmodel.CategoryProduct, *producttypemodel.ProductType, error) {
+	category, err := s.categoryRepo.GetByID(ctx, categoryID)
+	if err != nil {
+		return nil, nil, err
+	}
+	if category == nil {
+		return nil, nil, errorHandler.NewAppError(http.StatusBadRequest, "Categoria de producto no encontrada")
+	}
+
+	productType, err := s.productTypeRepo.GetByID(ctx, typeID)
+	if err != nil {
+		return nil, nil, err
+	}
+	if productType == nil {
+		return nil, nil, errorHandler.NewAppError(http.StatusBadRequest, "Tipo de producto no encontrado")
+	}
+	if productType.CategoryID != category.ID {
+		return nil, nil, errorHandler.NewAppError(http.StatusBadRequest, "El tipo no pertenece a la categoria seleccionada")
+	}
+
+	return category, productType, nil
+}
+
 func (s *productService) getOwnedProduct(ctx context.Context, id int) (*models.Product, error) {
 	tenant := tenant.GetTenant(ctx)
 	if tenant == nil {
 		return nil, errorHandler.NewAppError(http.StatusUnauthorized, "Usuario no autorizado")
 	}
-
 	product, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -246,43 +281,17 @@ func (s *productService) getOwnedProduct(ctx context.Context, id int) (*models.P
 	if product == nil {
 		return nil, errorHandler.NewAppError(http.StatusNotFound, "Producto no encontrado")
 	}
-
 	if _, err := access.ResolveGetProductsCompanyID(tenant, &product.CompanyID); err != nil {
 		return nil, err
 	}
-
 	return product, nil
 }
 
 func mapProductResponse(product *models.Product) *productdto.ProductResponse {
 	available := product.Stock - product.ReservedStock
-	return &productdto.ProductResponse{
-		ID:             product.ID,
-		Name:           product.Name,
-		Description:    product.Description,
-		Type:           product.Type,
-		CategoryID:     product.CategoryID,
-		Category:       product.Category,
-		Price:          product.Price,
-		Stock:          product.Stock,
-		ReservedStock:  product.ReservedStock,
-		AvailableStock: available,
-		ImagePath:      product.ImagePath,
-	}
+	return &productdto.ProductResponse{ID: product.ID, Name: product.Name, Description: product.Description, Kind: product.Kind, CategoryID: product.CategoryID, Category: product.Category, TypeID: product.TypeID, Type: product.Type, Price: product.Price, Stock: product.Stock, ReservedStock: product.ReservedStock, AvailableStock: available, ImagePath: product.ImagePath}
 }
 
 func mapProductDetailResponse(product *models.Product) *productdto.ProductDetailResponse {
-	return &productdto.ProductDetailResponse{
-		ID:          product.ID,
-		Name:        product.Name,
-		Description: product.Description,
-		Type:        product.Type,
-		CategoryID:  product.CategoryID,
-		Category:    product.Category,
-		Price:       product.Price,
-		Stock:       product.Stock,
-		Status:      product.Status,
-		CompanyID:   product.CompanyID,
-		ImagePath:   product.ImagePath,
-	}
+	return &productdto.ProductDetailResponse{ID: product.ID, Name: product.Name, Description: product.Description, Kind: product.Kind, CategoryID: product.CategoryID, Category: product.Category, TypeID: product.TypeID, Type: product.Type, Price: product.Price, Stock: product.Stock, Status: product.Status, CompanyID: product.CompanyID, ImagePath: product.ImagePath}
 }

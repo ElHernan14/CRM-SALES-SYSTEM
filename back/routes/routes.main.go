@@ -22,6 +22,7 @@ import (
 	invoicepaymentrepo "crm-system-sales/internal/modules/invoice_payment/repository"
 	"crm-system-sales/internal/modules/marketplace"
 	"crm-system-sales/internal/modules/product"
+	producttype "crm-system-sales/internal/modules/product_type"
 	storecontroller "crm-system-sales/internal/modules/store/controller"
 	storeroutes "crm-system-sales/internal/modules/store/routes"
 	storeservice "crm-system-sales/internal/modules/store/service"
@@ -60,6 +61,7 @@ func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 	companyRepo := company.NewCompanyRepository(db)
 	categoryCompanyRepo := categorycompany.NewCategoryCompanyRepository(db)
 	categoryProductRepo := categoryproduct.NewCategoryProductRepository(db)
+	productTypeRepo := producttype.NewProductTypeRepository(db)
 	productRepo := product.NewProductRepository(db)
 	invoiceRepo := invoiceRepository.NewInvoiceRepository(db)
 	invoiceItemRepo := invoiceitem.NewInvoiceItemRepository(db)
@@ -74,7 +76,7 @@ func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 	userService := users.NewUserService(userRepository)
 	clientService := client.NewClientService(db, clientRepo, userRepository, authRepo)
 	companyService := company.NewCompanyService(db, companyRepo, clientRepo, authRepo, userRepository, categoryCompanyRepo, imageStorage)
-	productService := product.NewProductService(db, productRepo, categoryProductRepo, imageStorage)
+	productService := product.NewProductService(db, productRepo, categoryProductRepo, productTypeRepo, imageStorage)
 	inventoryService := inventory.NewInventoryService(productRepo)
 	invoiceItemService := invoiceitem.NewInvoiceItemService(db, invoiceItemRepo, invoiceRepo, clientRepo, productRepo, inventoryService)
 	submitWorkflow := submitInvoiceWorkflow.NewSubmitInvoiceWorkflow(invoiceRepo, invoiceItemRepo, clientRepo, inventoryService, db)
@@ -83,7 +85,7 @@ func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 	invoicePaymentService := invoicepayment.NewInvoicePaymentService(db, invoiceRepo, clientRepo, invoicePaymentRepo)
 	storeService := storeservice.NewStoreService(db, productRepo, submitWorkflow)
 	marketplaceService := marketplace.NewMarketplaceService(marketplaceRepo)
-	categoriesService := categories.NewCategoriesService(categoryProductRepo, categoryCompanyRepo)
+	categoriesService := categories.NewCategoriesService(categoryProductRepo, categoryCompanyRepo, productTypeRepo)
 
 	// Controllers
 	authController := auth.NewAuthController(authService)

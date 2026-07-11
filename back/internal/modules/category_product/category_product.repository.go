@@ -22,7 +22,7 @@ func NewCategoryProductRepository(db *sql.DB) CategoryProductRepository {
 
 func (r *categoryProductRepository) GetByID(ctx context.Context, id int) (*model.CategoryProduct, error) {
 	query := `
-		SELECT id, name, description
+		SELECT id, name, COALESCE(description, '')
 		FROM category_product
 		WHERE id = $1
 	`
@@ -41,7 +41,7 @@ func (r *categoryProductRepository) GetByID(ctx context.Context, id int) (*model
 
 func (r *categoryProductRepository) GetAll(ctx context.Context) ([]model.CategoryProduct, error) {
 	query := `
-		SELECT id, name, description
+		SELECT id, name, COALESCE(description, '')
 		FROM category_product
 		ORDER BY name ASC
 	`

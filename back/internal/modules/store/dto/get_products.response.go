@@ -11,11 +11,15 @@ type StoreProductResponse struct {
 
 	Name string `json:"name" example:"Notebook Lenovo ThinkPad"`
 
-	Type string `json:"type" example:"physical"`
+	Kind string `json:"kind" example:"product"`
 
 	CategoryID int `json:"category_id" example:"1"`
 
-	Category string `json:"category" example:"electronics"`
+	Category string `json:"category" example:"Technology"`
+
+	TypeID int `json:"type_id" example:"3"`
+
+	Type string `json:"type" example:"Notebook"`
 
 	Description string `json:"description" example:"Business notebook"`
 

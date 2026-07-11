@@ -8,6 +8,8 @@ type Product struct {
 	CompanyName   string     `db:"company_name"`
 	Name          string     `db:"name"`
 	Description   string     `db:"description"`
+	Kind          string     `db:"kind"`
+	TypeID        int        `db:"type_id"`
 	Type          string     `db:"type"`
 	CategoryID    int        `db:"category_id"`
 	Category      string     `db:"category"`

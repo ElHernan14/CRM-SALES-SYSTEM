@@ -69,7 +69,11 @@ func ParseGetCompanyInvoicesRequest(r *http.Request) (*invoicedto.GetCompanyInvo
 
 func ParseGetCompanyProductsRequest(r *http.Request) (*productdto.GetCompanyProductsRequest, error) {
 	q := r.URL.Query()
-	req := &productdto.GetCompanyProductsRequest{Name: q.Get("name"), Type: q.Get("type"), Category: q.Get("category"), SortColumn: q.Get("sort_column"), Order: q.Get("order")}
+	req := &productdto.GetCompanyProductsRequest{Name: q.Get("name"), Kind: q.Get("kind"), Type: q.Get("type"), Category: q.Get("category"), SortColumn: q.Get("sort_column"), Order: q.Get("order")}
+	if req.Kind == "" && (req.Type == "product" || req.Type == "service") {
+		req.Kind = req.Type
+		req.Type = ""
+	}
 
 	if v := q.Get("category_id"); v != "" {
 		categoryID, err := strconv.Atoi(v)
@@ -77,6 +81,13 @@ func ParseGetCompanyProductsRequest(r *http.Request) (*productdto.GetCompanyProd
 			return nil, errorHandler.NewAppError(http.StatusBadRequest, "category_id invÃ¡lido")
 		}
 		req.CategoryID = &categoryID
+	}
+	if v := q.Get("type_id"); v != "" {
+		typeID, err := strconv.Atoi(v)
+		if err != nil {
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "type_id invalido")
+		}
+		req.TypeID = &typeID
 	}
 	if v := q.Get("status"); v != "" {
 		status, err := strconv.Atoi(v)
@@ -105,10 +116,15 @@ func ParseGetStoreProductsRequest(r *http.Request) (*storedto.GetStoreProductsRe
 	req := &storedto.GetStoreProductsRequest{
 		Search:     q.Get("search"),
 		Name:       q.Get("name"),
+		Kind:       q.Get("kind"),
 		Type:       q.Get("type"),
 		Category:   q.Get("category"),
 		SortColumn: q.Get("sort_column"),
 		Order:      q.Get("order"),
+	}
+	if req.Kind == "" && (req.Type == "product" || req.Type == "service") {
+		req.Kind = req.Type
+		req.Type = ""
 	}
 
 	if v := q.Get("company_id"); v != "" {
@@ -124,6 +140,13 @@ func ParseGetStoreProductsRequest(r *http.Request) (*storedto.GetStoreProductsRe
 			return nil, errorHandler.NewAppError(http.StatusBadRequest, "category_id invÃ¡lido")
 		}
 		req.CategoryID = &categoryID
+	}
+	if v := q.Get("type_id"); v != "" {
+		typeID, err := strconv.Atoi(v)
+		if err != nil {
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "type_id invalido")
+		}
+		req.TypeID = &typeID
 	}
 	if v := q.Get("min_price"); v != "" {
 		minPrice, err := strconv.ParseFloat(v, 64)
@@ -148,6 +171,13 @@ func ParseGetStoreProductsRequest(r *http.Request) (*storedto.GetStoreProductsRe
 func ParseGetSuppliersRequest(r *http.Request) (*marketplacedto.GetSuppliersRequest, error) {
 	q := r.URL.Query()
 	req := &marketplacedto.GetSuppliersRequest{Search: q.Get("search"), Category: q.Get("category"), SortColumn: q.Get("sort_column"), Order: q.Get("order")}
+	if v := q.Get("category_id"); v != "" {
+		categoryID, err := strconv.Atoi(v)
+		if err != nil {
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "category_id invalido")
+		}
+		req.CategoryID = &categoryID
+	}
 	if err := parsePagination(q.Get("page"), q.Get("limit"), &req.Page, &req.Limit); err != nil {
 		return nil, err
 	}

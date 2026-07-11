@@ -103,12 +103,27 @@ CREATE TABLE category_product (
     description TEXT
 );
 
+CREATE TABLE product_type (
+    id SERIAL PRIMARY KEY,
+    category_id INT NOT NULL,
+    name VARCHAR(80) NOT NULL,
+    description TEXT,
+
+    CONSTRAINT fk_product_type_category
+        FOREIGN KEY (category_id)
+        REFERENCES category_product(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT uq_product_type_category_name UNIQUE (category_id, name)
+);
+
 CREATE TABLE product (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    type VARCHAR(20), -- product | service
+    kind VARCHAR(20) NOT NULL, -- product | service
     category_id INT NOT NULL,
+    type_id INT NOT NULL,
     price NUMERIC(10,2) NOT NULL,
     stock INT DEFAULT 0,
     company_id INT NOT NULL,
@@ -124,11 +139,17 @@ CREATE TABLE product (
     CONSTRAINT fk_product_category
         FOREIGN KEY (category_id)
         REFERENCES category_product(id)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_product_type
+        FOREIGN KEY (type_id)
+        REFERENCES product_type(id)
         ON DELETE RESTRICT
 );
-
 CREATE INDEX IF NOT EXISTS idx_company_category_id ON company(category_id);
 CREATE INDEX IF NOT EXISTS idx_product_category_id ON product(category_id);
+CREATE INDEX IF NOT EXISTS idx_product_type_id ON product(type_id);
+CREATE INDEX IF NOT EXISTS idx_product_kind ON product(kind);
 
 CREATE TABLE invoice (
     id SERIAL PRIMARY KEY,
@@ -225,6 +246,8 @@ ADD COLUMN status SMALLINT DEFAULT 1,
 ADD COLUMN deleted_at TIMESTAMP NULL,
 ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ADD COLUMN updated_at TIMESTAMP NULL;
+
+
 
 
 

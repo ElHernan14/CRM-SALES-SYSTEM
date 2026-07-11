@@ -45,7 +45,11 @@ func (c *ProductController) CreateProduct(w http.ResponseWriter, r *http.Request
 
 func (c *ProductController) GetProducts(w http.ResponseWriter, r *http.Request) error {
 	q := r.URL.Query()
-	req := productdto.GetProductsRequest{Search: q.Get("search"), Type: q.Get("type"), Category: q.Get("category"), Page: 1, Limit: 10}
+	req := productdto.GetProductsRequest{Search: q.Get("search"), Kind: q.Get("kind"), Type: q.Get("type"), Category: q.Get("category"), Page: 1, Limit: 10}
+	if req.Kind == "" && (req.Type == "product" || req.Type == "service") {
+		req.Kind = req.Type
+		req.Type = ""
+	}
 
 	if v := q.Get("category_id"); v != "" {
 		categoryID, err := strconv.Atoi(v)
@@ -53,6 +57,13 @@ func (c *ProductController) GetProducts(w http.ResponseWriter, r *http.Request) 
 			return errorHandler.NewAppError(http.StatusBadRequest, "category_id debe ser un nÃƒÆ’Ã‚Âºmero entero")
 		}
 		req.CategoryID = &categoryID
+	}
+	if v := q.Get("type_id"); v != "" {
+		typeID, err := strconv.Atoi(v)
+		if err != nil {
+			return errorHandler.NewAppError(http.StatusBadRequest, "type_id debe ser un numero entero")
+		}
+		req.TypeID = &typeID
 	}
 	if v := q.Get("min_price"); v != "" {
 		min, err := strconv.ParseFloat(v, 64)

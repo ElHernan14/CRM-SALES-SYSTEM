@@ -22,7 +22,7 @@ func NewCategoryCompanyRepository(db *sql.DB) CategoryCompanyRepository {
 
 func (r *categoryCompanyRepository) GetByID(ctx context.Context, id int) (*model.CategoryCompany, error) {
 	query := `
-		SELECT id, name, description
+		SELECT id, name, COALESCE(description, '')
 		FROM category_company
 		WHERE id = $1
 	`
@@ -41,7 +41,7 @@ func (r *categoryCompanyRepository) GetByID(ctx context.Context, id int) (*model
 
 func (r *categoryCompanyRepository) GetAll(ctx context.Context) ([]model.CategoryCompany, error) {
 	query := `
-		SELECT id, name, description
+		SELECT id, name, COALESCE(description, '')
 		FROM category_company
 		ORDER BY name ASC
 	`

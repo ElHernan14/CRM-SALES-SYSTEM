@@ -13,7 +13,7 @@ import (
 
 type ProductRepository interface {
 	Create(ctx context.Context, p *models.Product) error
-	GetAll(ctx context.Context, search string, productType string, categoryID *int, category string, minPrice float64, maxPrice float64, companyID *int, limit int, offset int) ([]models.Product, int, error)
+	GetAll(ctx context.Context, search string, kind string, categoryID *int, category string, typeID *int, productType string, minPrice float64, maxPrice float64, companyID *int, limit int, offset int) ([]models.Product, int, error)
 	GetByID(ctx context.Context, id int) (*models.Product, error)
 	Update(ctx context.Context, p *models.Product) error
 	UpdateImage(ctx context.Context, productID int, imagePath string) error
@@ -33,22 +33,23 @@ func NewProductRepository(db *sql.DB) ProductRepository {
 
 func (r *productRepository) Create(ctx context.Context, p *models.Product) error {
 	query := `
-		INSERT INTO product (company_id, name, description, type, category_id, price, stock, image_path, status)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 1)
+		INSERT INTO product (company_id, name, description, kind, category_id, type_id, price, stock, image_path, status)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 1)
 		RETURNING id
 	`
 
-	return r.db.QueryRowContext(ctx, query, p.CompanyID, p.Name, p.Description, p.Type, p.CategoryID, p.Price, p.Stock, p.ImagePath).Scan(&p.ID)
+	return r.db.QueryRowContext(ctx, query, p.CompanyID, p.Name, p.Description, p.Kind, p.CategoryID, p.TypeID, p.Price, p.Stock, p.ImagePath).Scan(&p.ID)
 }
 
-func (r *productRepository) GetAll(ctx context.Context, search string, productType string, categoryID *int, category string, minPrice float64, maxPrice float64, companyID *int, limit int, offset int) ([]models.Product, int, error) {
+func (r *productRepository) GetAll(ctx context.Context, search string, kind string, categoryID *int, category string, typeID *int, productType string, minPrice float64, maxPrice float64, companyID *int, limit int, offset int) ([]models.Product, int, error) {
 	baseQuery := `
 		FROM product p
 		INNER JOIN category_product cat ON cat.id = p.category_id
+		INNER JOIN product_type pt ON pt.id = p.type_id
 		WHERE true = true
 	`
 
-	var args []interface{}
+	args := []interface{}{}
 	i := 1
 
 	if companyID != nil {
@@ -56,19 +57,16 @@ func (r *productRepository) GetAll(ctx context.Context, search string, productTy
 		args = append(args, *companyID)
 		i++
 	}
-
 	if search != "" {
 		baseQuery += fmt.Sprintf(` AND LOWER(p.name) LIKE LOWER($%d)`, i)
 		args = append(args, "%"+search+"%")
 		i++
 	}
-
-	if productType != "" {
-		baseQuery += fmt.Sprintf(" AND p.type = $%d", i)
-		args = append(args, productType)
+	if kind != "" {
+		baseQuery += fmt.Sprintf(" AND p.kind = $%d", i)
+		args = append(args, kind)
 		i++
 	}
-
 	if categoryID != nil {
 		baseQuery += fmt.Sprintf(" AND p.category_id = $%d", i)
 		args = append(args, *categoryID)
@@ -78,13 +76,20 @@ func (r *productRepository) GetAll(ctx context.Context, search string, productTy
 		args = append(args, category)
 		i++
 	}
-
+	if typeID != nil {
+		baseQuery += fmt.Sprintf(" AND p.type_id = $%d", i)
+		args = append(args, *typeID)
+		i++
+	} else if productType != "" {
+		baseQuery += fmt.Sprintf(" AND LOWER(pt.name) = LOWER($%d)", i)
+		args = append(args, productType)
+		i++
+	}
 	if minPrice > 0 {
 		baseQuery += fmt.Sprintf(" AND p.price >= $%d", i)
 		args = append(args, minPrice)
 		i++
 	}
-
 	if maxPrice > 0 {
 		baseQuery += fmt.Sprintf(" AND p.price <= $%d", i)
 		args = append(args, maxPrice)
@@ -98,24 +103,23 @@ func (r *productRepository) GetAll(ctx context.Context, search string, productTy
 	}
 
 	dataQuery := `
-		SELECT p.id, p.name, p.description, p.type, p.category_id, cat.name, p.price, p.stock, p.status, p.company_id, p.reserved_stock, p.image_path
+		SELECT p.id, p.name, p.description, p.kind, p.type_id, pt.name, p.category_id, cat.name, p.price, p.stock, p.status, p.company_id, p.reserved_stock, p.image_path
 	` + baseQuery + fmt.Sprintf(`
 		ORDER BY p.id DESC
 		LIMIT $%d OFFSET $%d
 	`, i, i+1)
 
 	args = append(args, limit, offset)
-
 	rows, err := r.db.QueryContext(ctx, dataQuery, args...)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer rows.Close()
 
-	var products []models.Product
+	products := make([]models.Product, 0)
 	for rows.Next() {
 		var p models.Product
-		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Type, &p.CategoryID, &p.Category, &p.Price, &p.Stock, &p.Status, &p.CompanyID, &p.ReservedStock, &p.ImagePath); err != nil {
+		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Kind, &p.TypeID, &p.Type, &p.CategoryID, &p.Category, &p.Price, &p.Stock, &p.Status, &p.CompanyID, &p.ReservedStock, &p.ImagePath); err != nil {
 			return nil, 0, err
 		}
 		products = append(products, p)
@@ -126,14 +130,15 @@ func (r *productRepository) GetAll(ctx context.Context, search string, productTy
 
 func (r *productRepository) GetByID(ctx context.Context, id int) (*models.Product, error) {
 	query := `
-		SELECT p.id, p.name, p.description, p.type, p.category_id, cat.name, p.price, p.stock, p.status, p.company_id, p.image_path
+		SELECT p.id, p.name, p.description, p.kind, p.type_id, pt.name, p.category_id, cat.name, p.price, p.stock, p.status, p.company_id, p.image_path
 		FROM product p
 		INNER JOIN category_product cat ON cat.id = p.category_id
+		INNER JOIN product_type pt ON pt.id = p.type_id
 		WHERE p.id = $1
 	`
 
 	var p models.Product
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&p.ID, &p.Name, &p.Description, &p.Type, &p.CategoryID, &p.Category, &p.Price, &p.Stock, &p.Status, &p.CompanyID, &p.ImagePath)
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&p.ID, &p.Name, &p.Description, &p.Kind, &p.TypeID, &p.Type, &p.CategoryID, &p.Category, &p.Price, &p.Stock, &p.Status, &p.CompanyID, &p.ImagePath)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -149,31 +154,25 @@ func (r *productRepository) Update(ctx context.Context, p *models.Product) error
 		UPDATE product SET
 			name = $1,
 			description = $2,
-			type = $3,
+			kind = $3,
 			category_id = $4,
-			price = $5,
-			stock = $6,
-			status = $7
-		WHERE id = $8
+			type_id = $5,
+			price = $6,
+			stock = $7,
+			status = $8
+		WHERE id = $9
 	`
 
-	_, err := r.db.ExecContext(ctx, query, p.Name, p.Description, p.Type, p.CategoryID, p.Price, p.Stock, p.Status, p.ID)
+	_, err := r.db.ExecContext(ctx, query, p.Name, p.Description, p.Kind, p.CategoryID, p.TypeID, p.Price, p.Stock, p.Status, p.ID)
 	return err
 }
 
 func (r *productRepository) UpdateImage(ctx context.Context, productID int, imagePath string) error {
-	query := `
-		UPDATE product
-		SET image_path = $1
-		WHERE id = $2
-		  AND deleted_at IS NULL
-	`
-
+	query := `UPDATE product SET image_path = $1 WHERE id = $2 AND deleted_at IS NULL`
 	result, err := r.db.ExecContext(ctx, query, imagePath, productID)
 	if err != nil {
 		return err
 	}
-
 	rows, err := result.RowsAffected()
 	if err != nil {
 		return err
@@ -181,45 +180,33 @@ func (r *productRepository) UpdateImage(ctx context.Context, productID int, imag
 	if rows == 0 {
 		return sql.ErrNoRows
 	}
-
 	return nil
 }
 
 func (r *productRepository) SoftDelete(ctx context.Context, id int) error {
-	query := `
-		UPDATE product
-		SET deleted_at = NOW(), status = 0
-		WHERE id = $1
-	`
-	_, err := r.db.ExecContext(ctx, query, id)
+	_, err := r.db.ExecContext(ctx, `UPDATE product SET deleted_at = NOW(), status = 0 WHERE id = $1`, id)
 	return err
 }
 
 func (r *productRepository) GetByIDForUpdate(ctx context.Context, tx *sql.Tx, id int) (*models.Product, error) {
-	query := `
-		SELECT id, name, price, stock, reserved_stock, company_id
-		FROM product
-		WHERE id = $1
-		FOR UPDATE
-	`
-
+	query := `SELECT id, name, price, stock, reserved_stock, company_id FROM product WHERE id = $1 FOR UPDATE`
 	product := &models.Product{}
 	err := tx.QueryRowContext(ctx, query, id).Scan(&product.ID, &product.Name, &product.Price, &product.Stock, &product.ReservedStock, &product.CompanyID)
 	if err != nil {
 		return nil, err
 	}
-
 	return product, nil
 }
 
 func (r *productRepository) ListByCompanyID(ctx context.Context, companyID int, req *productdto.GetCompanyProductsRequest) ([]*models.Product, int, error) {
-	allowedSortColumns := map[string]string{"name": "p.name", "description": "p.description", "type": "p.type", "category": "cat.name", "price": "p.price", "stock": "p.stock"}
+	allowedSortColumns := map[string]string{"name": "p.name", "description": "p.description", "kind": "p.kind", "type": "pt.name", "category": "cat.name", "price": "p.price", "stock": "p.stock"}
 	allowedOrders := map[string]string{"asc": "ASC", "desc": "DESC"}
 
-	selectQuery := `SELECT p.id, p.name, p.description, p.type, p.category_id, cat.name, p.price, p.stock, p.reserved_stock, p.status, p.image_path `
+	selectQuery := `SELECT p.id, p.name, p.description, p.kind, p.type_id, pt.name, p.category_id, cat.name, p.price, p.stock, p.reserved_stock, p.status, p.image_path `
 	baseQuery := `
 		FROM product p
 		INNER JOIN category_product cat ON cat.id = p.category_id
+		INNER JOIN product_type pt ON pt.id = p.type_id
 		WHERE p.company_id = $1
 	`
 	args := []interface{}{companyID}
@@ -230,9 +217,9 @@ func (r *productRepository) ListByCompanyID(ctx context.Context, companyID int, 
 		args = append(args, "%"+req.Name+"%")
 		argPos++
 	}
-	if req.Type != "" {
-		baseQuery += fmt.Sprintf(" AND p.type = $%d", argPos)
-		args = append(args, req.Type)
+	if req.Kind != "" {
+		baseQuery += fmt.Sprintf(" AND p.kind = $%d", argPos)
+		args = append(args, req.Kind)
 		argPos++
 	}
 	if req.CategoryID != nil {
@@ -242,6 +229,15 @@ func (r *productRepository) ListByCompanyID(ctx context.Context, companyID int, 
 	} else if req.Category != "" {
 		baseQuery += fmt.Sprintf(" AND LOWER(cat.name) = LOWER($%d)", argPos)
 		args = append(args, req.Category)
+		argPos++
+	}
+	if req.TypeID != nil {
+		baseQuery += fmt.Sprintf(" AND p.type_id = $%d", argPos)
+		args = append(args, *req.TypeID)
+		argPos++
+	} else if req.Type != "" {
+		baseQuery += fmt.Sprintf(" AND LOWER(pt.name) = LOWER($%d)", argPos)
+		args = append(args, req.Type)
 		argPos++
 	}
 	if req.Status != 0 {
@@ -279,39 +275,26 @@ func (r *productRepository) ListByCompanyID(ctx context.Context, companyID int, 
 	products := make([]*models.Product, 0)
 	for rows.Next() {
 		var p models.Product
-		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Type, &p.CategoryID, &p.Category, &p.Price, &p.Stock, &p.ReservedStock, &p.Status, &p.ImagePath); err != nil {
+		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Kind, &p.TypeID, &p.Type, &p.CategoryID, &p.Category, &p.Price, &p.Stock, &p.ReservedStock, &p.Status, &p.ImagePath); err != nil {
 			return nil, 0, err
 		}
 		products = append(products, &p)
 	}
-
 	return products, total, rows.Err()
 }
 
 func (r *productRepository) ListAvailableProducts(ctx context.Context, req *storedto.GetStoreProductsRequest) ([]*models.Product, int, error) {
-	allowedSortColumns := map[string]string{"name": "p.name", "created_at": "p.created_at", "type": "p.type", "category": "cat.name", "price": "p.price", "stock": "p.stock"}
+	allowedSortColumns := map[string]string{"name": "p.name", "created_at": "p.created_at", "kind": "p.kind", "type": "pt.name", "category": "cat.name", "price": "p.price", "stock": "p.stock"}
 	allowedOrders := map[string]string{"asc": "ASC", "desc": "DESC"}
 
 	selectQuery := `
-		SELECT
-			p.id,
-			p.company_id,
-			c.name AS company_name,
-			p.name,
-			p.description,
-			p.type,
-			p.category_id,
-			cat.name,
-			p.price,
-			p.stock,
-			p.reserved_stock,
-			p.image_path
+		SELECT p.id, p.company_id, c.name AS company_name, p.name, p.description, p.kind, p.type_id, pt.name, p.category_id, cat.name, p.price, p.stock, p.reserved_stock, p.image_path
 	`
-
 	baseQuery := `
 		FROM product p
 		INNER JOIN company c ON c.id = p.company_id
 		INNER JOIN category_product cat ON cat.id = p.category_id
+		INNER JOIN product_type pt ON pt.id = p.type_id
 		WHERE p.status = 1
 		  AND p.deleted_at IS NULL
 		  AND c.status = 1
@@ -321,13 +304,11 @@ func (r *productRepository) ListAvailableProducts(ctx context.Context, req *stor
 
 	args := []interface{}{}
 	argPos := 1
-
 	if req.CompanyID != nil {
 		baseQuery += fmt.Sprintf(" AND p.company_id = $%d", argPos)
 		args = append(args, *req.CompanyID)
 		argPos++
 	}
-
 	search := req.Search
 	if search == "" {
 		search = req.Name
@@ -337,10 +318,9 @@ func (r *productRepository) ListAvailableProducts(ctx context.Context, req *stor
 		args = append(args, "%"+search+"%")
 		argPos++
 	}
-
-	if req.Type != "" {
-		baseQuery += fmt.Sprintf(" AND p.type = $%d", argPos)
-		args = append(args, req.Type)
+	if req.Kind != "" {
+		baseQuery += fmt.Sprintf(" AND p.kind = $%d", argPos)
+		args = append(args, req.Kind)
 		argPos++
 	}
 	if req.CategoryID != nil {
@@ -350,6 +330,15 @@ func (r *productRepository) ListAvailableProducts(ctx context.Context, req *stor
 	} else if req.Category != "" {
 		baseQuery += fmt.Sprintf(" AND LOWER(cat.name) = LOWER($%d)", argPos)
 		args = append(args, req.Category)
+		argPos++
+	}
+	if req.TypeID != nil {
+		baseQuery += fmt.Sprintf(" AND p.type_id = $%d", argPos)
+		args = append(args, *req.TypeID)
+		argPos++
+	} else if req.Type != "" {
+		baseQuery += fmt.Sprintf(" AND LOWER(pt.name) = LOWER($%d)", argPos)
+		args = append(args, req.Type)
 		argPos++
 	}
 	if req.MinPrice > 0 {
@@ -377,7 +366,6 @@ func (r *productRepository) ListAvailableProducts(ctx context.Context, req *stor
 	if v, ok := allowedOrders[strings.ToLower(req.Order)]; ok {
 		order = v
 	}
-
 	offset := (req.Page - 1) * req.Limit
 	baseQuery += fmt.Sprintf(" ORDER BY %s %s", sortColumn, order)
 	baseQuery += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argPos, argPos+1)
@@ -392,11 +380,10 @@ func (r *productRepository) ListAvailableProducts(ctx context.Context, req *stor
 	products := make([]*models.Product, 0)
 	for rows.Next() {
 		var p models.Product
-		if err := rows.Scan(&p.ID, &p.CompanyID, &p.CompanyName, &p.Name, &p.Description, &p.Type, &p.CategoryID, &p.Category, &p.Price, &p.Stock, &p.ReservedStock, &p.ImagePath); err != nil {
+		if err := rows.Scan(&p.ID, &p.CompanyID, &p.CompanyName, &p.Name, &p.Description, &p.Kind, &p.TypeID, &p.Type, &p.CategoryID, &p.Category, &p.Price, &p.Stock, &p.ReservedStock, &p.ImagePath); err != nil {
 			return nil, 0, err
 		}
 		products = append(products, &p)
 	}
-
 	return products, total, rows.Err()
 }
