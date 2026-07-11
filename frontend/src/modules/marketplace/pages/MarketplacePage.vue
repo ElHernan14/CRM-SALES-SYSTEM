@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { Building2, Search, SlidersHorizontal } from 'lucide-vue-next';
+import { Building2, Search, SlidersHorizontal, ArrowRight } from 'lucide-vue-next';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,12 +14,14 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectItemText,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
 
-import { getAssetUrl } from '@/shared/utils/assets';
+import { getCompanyLogoUrl } from '@/shared/utils/assets';
 import { useSuppliers } from '../composables/useSuppliers';
+import { useCategories } from '@/modules/categories/composables/useCategories';
 
 import { storeToRefs } from 'pinia';
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
@@ -27,6 +29,7 @@ import { useAuthStore } from '@/modules/auth/stores/auth.store';
 const auth = useAuthStore();
 const { user } = storeToRefs(auth);
 
+const categoryId = ref('all');
 const search = ref('');
 const page = ref(1);
 const limit = ref(9);
@@ -34,14 +37,18 @@ const limit = ref(9);
 const sortColumn = ref<'name' | 'total_products' | 'created_at'>('total_products');
 const order = ref<'asc' | 'desc'>('desc');
 
-watch([search, sortColumn, order], () => {
+watch([search, categoryId, sortColumn, order], () => {
   page.value = 1;
 });
 
 const supplierParams = computed(() => ({
   search: search.value || undefined,
+
+  category_id: categoryId.value !== 'all' ? Number(categoryId.value) : undefined,
+
   page: page.value,
   limit: limit.value,
+
   sort_column: sortColumn.value,
   order: order.value,
 }));
@@ -53,9 +60,35 @@ const suppliers = computed(() => {
 });
 const totalPages = computed(() => data.value?.meta.total_pages ?? 1);
 
+const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
+
+const companyCategories = computed(() => {
+  return categoriesData.value?.company_categories ?? [];
+});
+
 function getSupplierLogo(path?: string | null) {
-  return getAssetUrl(path);
+  return getCompanyLogoUrl(path);
 }
+
+const selectedCompanyCategory = computed(() => {
+  if (categoryId.value === 'all') return null;
+
+  return (
+    companyCategories.value.find((category) => String(category.id) === categoryId.value) ?? null
+  );
+});
+
+const companyCategoryTriggerLabel = computed(() => {
+  if (categoriesLoading.value) {
+    return 'Loading categories...';
+  }
+
+  if (categoryId.value === 'all') {
+    return 'All categories';
+  }
+
+  return selectedCompanyCategory.value?.name ?? 'Company category';
+});
 </script>
 
 <template>
@@ -83,7 +116,7 @@ function getSupplierLogo(path?: string | null) {
         </div>
       </div>
 
-      <div class="mt-6 grid gap-3 lg:grid-cols-[1fr_220px_160px]">
+      <div class="mt-6 grid gap-3 lg:grid-cols-[1fr_220px_220px_160px]">
         <div class="relative">
           <Search
             class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -91,6 +124,37 @@ function getSupplierLogo(path?: string | null) {
 
           <Input v-model="search" class="pl-9" placeholder="Search suppliers..." />
         </div>
+
+        <Select v-model="categoryId">
+          <SelectTrigger>
+            <span
+              class="truncate"
+              :class="categoryId === 'all' ? 'text-muted-foreground' : 'text-foreground'"
+            >
+              {{ companyCategoryTriggerLabel }}
+            </span>
+          </SelectTrigger>
+
+          <SelectContent>
+            <SelectItem value="all"> All categories </SelectItem>
+
+            <SelectItem
+              v-for="category in companyCategories"
+              :key="category.id"
+              :value="String(category.id)"
+            >
+              <div class="flex flex-col py-0.5">
+                <span class="text-sm font-medium">
+                  {{ category.name }}
+                </span>
+
+                <span v-if="category.description" class="text-xs text-muted-foreground">
+                  {{ category.description }}
+                </span>
+              </div>
+            </SelectItem>
+          </SelectContent>
+        </Select>
 
         <Select v-model="sortColumn">
           <SelectTrigger>
@@ -146,66 +210,74 @@ function getSupplierLogo(path?: string | null) {
         <article
           v-for="supplier in suppliers"
           :key="supplier.id"
-          class="group overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          class="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
         >
-          <div class="relative h-32 border-b border-border bg-muted/40">
+          <div class="relative h-40 overflow-hidden border-b border-border bg-muted/40">
             <img
               v-if="getSupplierLogo(supplier.logo)"
               :src="getSupplierLogo(supplier.logo)!"
               :alt="supplier.name"
-              class="h-full w-full object-cover"
+              class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
             />
 
             <div v-else class="flex h-full w-full items-center justify-center">
               <Building2 class="h-10 w-10 text-muted-foreground" />
             </div>
 
-            <div class="absolute inset-0 bg-linear-to-t from-background/80 to-transparent" />
+            <div
+              class="absolute inset-0 bg-gradient-to-t from-background/75 via-transparent to-transparent"
+            />
 
             <span
-              class="absolute right-4 top-4 rounded-full bg-background/90 px-2 py-1 text-xs font-medium text-foreground shadow-sm"
+              class="absolute right-4 top-4 rounded-full border border-primary/20 bg-background/90 px-3 py-1 text-xs font-semibold text-primary shadow-sm"
             >
-              Supplier
+              {{ supplier.category }}
             </span>
           </div>
 
-          <div class="space-y-5 p-5">
-            <div>
-              <h3 class="truncate text-base font-semibold text-foreground">
-                {{ supplier.name }}
-              </h3>
+          <div class="flex flex-1 flex-col p-5">
+            <div class="flex-1">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <h3 class="truncate text-lg font-semibold tracking-tight text-foreground">
+                    {{ supplier.name }}
+                  </h3>
 
-              <p v-if="supplier.email" class="mt-1 truncate text-xs text-muted-foreground">
-                {{ supplier.email }}
+                  <p v-if="supplier.email" class="mt-1 truncate text-xs text-muted-foreground">
+                    {{ supplier.email }}
+                  </p>
+                </div>
+
+                <span
+                  class="rounded-full bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground"
+                >
+                  B2B
+                </span>
+              </div>
+
+              <p class="mt-4 line-clamp-3 min-h-15 text-sm leading-6 text-muted-foreground">
+                {{ supplier.description ?? 'No supplier description provided yet.' }}
               </p>
             </div>
 
-            <p class="line-clamp-2 min-h-10 text-sm text-muted-foreground">
-              {{ supplier.description ?? 'No supplier description provided yet.' }}
-            </p>
-
-            <div class="grid grid-cols-2 gap-3">
-              <div class="rounded-xl border border-border bg-muted/30 p-3">
-                <p class="text-xs text-muted-foreground">Products</p>
+            <div class="mt-5 flex items-center justify-between border-t border-border pt-4">
+              <div>
+                <p class="text-xs text-muted-foreground">Available products</p>
 
                 <p class="mt-1 text-lg font-semibold text-foreground">
                   {{ supplier.total_products }}
                 </p>
               </div>
 
-              <div class="rounded-xl border border-border bg-muted/30 p-3">
-                <p class="text-xs text-muted-foreground">Network</p>
-
-                <p class="mt-1 text-lg font-semibold text-foreground">B2B</p>
-              </div>
+              <Button
+                size="sm"
+                class="rounded-full px-4"
+                @click="$router.push(`/erp/marketplace/suppliers/${supplier.id}`)"
+              >
+                Browse catalog
+                <ArrowRight class="ml-2 h-4 w-4" />
+              </Button>
             </div>
-
-            <Button
-              class="w-full"
-              @click="$router.push(`/erp/marketplace/suppliers/${supplier.id}`)"
-            >
-              Browse catalog
-            </Button>
           </div>
         </article>
       </div>
