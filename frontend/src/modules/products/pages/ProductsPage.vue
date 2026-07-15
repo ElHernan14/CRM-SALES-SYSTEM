@@ -66,29 +66,45 @@ function openEditProduct(row: Record<string, unknown>) {
 const search = ref('');
 const page = ref(1);
 const limit = ref(10);
-const type = ref<'product' | 'service' | ''>('');
+const kind = ref('all');
+const categoryId = ref('all');
+const typeId = ref('all');
 const minPrice = ref('');
 const maxPrice = ref('');
 
 const productParams = computed(() => ({
   search: search.value || undefined,
-  type: type.value || undefined,
+
+  kind: kind.value !== 'all' ? (kind.value as 'product' | 'service') : undefined,
+
+  category_id: categoryId.value !== 'all' ? Number(categoryId.value) : undefined,
+
+  type_id: typeId.value !== 'all' ? Number(typeId.value) : undefined,
+
   min_price: minPrice.value ? Number(minPrice.value) : undefined,
+
   max_price: maxPrice.value ? Number(maxPrice.value) : undefined,
+
   company_id: user.value?.company_id,
+
   page: page.value,
   limit: limit.value,
 }));
 
-watch([search, type, minPrice, maxPrice], () => {
+watch([search, kind, categoryId, typeId, minPrice, maxPrice], () => {
   page.value = 1;
 });
 
 function clearFilters() {
   search.value = '';
-  type.value = '';
+
+  kind.value = 'all';
+  categoryId.value = 'all';
+  typeId.value = 'all';
+
   minPrice.value = '';
   maxPrice.value = '';
+
   page.value = 1;
 }
 
@@ -99,6 +115,8 @@ const { data, isLoading, isError, refetch } = useProducts(productParams);
 const columns = [
   { key: 'id', label: 'ID' },
   { key: 'name', label: 'Name' },
+  { key: 'kind', label: 'Kind' },
+  { key: 'category', label: 'Category' },
   { key: 'type', label: 'Type' },
   { key: 'price', label: 'Price' },
   { key: 'stock', label: 'Stock' },
@@ -111,10 +129,16 @@ const rows = computed(() => {
     data.value?.data.map((product) => ({
       id: product.id,
       name: product.name,
+
+      kind: product.kind,
+
+      category: product.category,
       type: product.type,
+
       price: product.price,
       stock: product.stock,
       status: product.status,
+
       actions: product.id,
     })) ?? []
   );
@@ -213,7 +237,9 @@ const deleteMutation = useDeleteProduct();
 
       <ProductsFilters
         v-model:search="search"
-        v-model:type="type"
+        v-model:kind="kind"
+        v-model:category-id="categoryId"
+        v-model:type-id="typeId"
         v-model:min-price="minPrice"
         v-model:max-price="maxPrice"
         :total="data?.meta.total ?? 0"
@@ -263,10 +289,22 @@ const deleteMutation = useDeleteProduct();
       >
         <template #cell-price="{ value }"> ${{ Number(value).toFixed(2) }} </template>
 
-        <template #cell-type="{ value }">
+        <template #cell-kind="{ value }">
           <span
-            class="rounded-full border border-border bg-muted px-2 py-1 text-xs font-medium text-muted-foreground"
+            class="rounded-full border border-border bg-muted px-2 py-1 text-xs font-medium capitalize text-muted-foreground"
           >
+            {{ value }}
+          </span>
+        </template>
+
+        <template #cell-category="{ value }">
+          <span class="rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+            {{ value }}
+          </span>
+        </template>
+
+        <template #cell-type="{ value }">
+          <span class="text-sm font-medium text-foreground">
             {{ value }}
           </span>
         </template>
