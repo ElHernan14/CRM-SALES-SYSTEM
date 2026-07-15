@@ -168,7 +168,7 @@ func (r *productRepository) Update(ctx context.Context, p *models.Product) error
 }
 
 func (r *productRepository) UpdateImage(ctx context.Context, productID int, imagePath string) error {
-	query := `UPDATE product SET image_path = $1 WHERE id = $2 AND deleted_at IS NULL`
+	query := `UPDATE product SET image_path = $1 WHERE id = $2 `
 	result, err := r.db.ExecContext(ctx, query, imagePath, productID)
 	if err != nil {
 		return err
