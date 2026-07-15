@@ -9,13 +9,7 @@ import { useProductTypes } from '@/modules/product-types/composables/useProductT
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 
 defineProps<{
   total: number;

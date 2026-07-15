@@ -9,6 +9,11 @@ import {
   GetProductsResponseSchema,
   type GetProductsRequest,
   type GetProductsResponse,
+  // CreateProductSchema
+  type CreateProductRequest,
+  // Image
+  UploadProductImageResponseSchema,
+  type UploadProductImageResponse,
 } from '../types/product.types';
 
 export async function getProducts(params: GetProductsRequest): Promise<GetProductsResponse> {
@@ -17,6 +22,12 @@ export async function getProducts(params: GetProductsRequest): Promise<GetProduc
   });
 
   return unwrapResponse(GetProductsResponseSchema, response.data);
+}
+
+export async function createProduct(payload: CreateProductRequest): Promise<ProductDetailResponse> {
+  const response = await http.post('/product', payload);
+
+  return unwrapResponse(ProductDetailResponseSchema, response.data);
 }
 
 export async function updateProduct(
@@ -30,4 +41,21 @@ export async function updateProduct(
 
 export async function deleteProduct(id: number): Promise<void> {
   await http.delete(`/product/${id}`);
+}
+
+export async function uploadProductImage(
+  productId: number,
+  image: File
+): Promise<UploadProductImageResponse> {
+  const formData = new FormData();
+
+  formData.append('image', image);
+
+  const response = await http.post(`/product/${productId}/image`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  return unwrapResponse(UploadProductImageResponseSchema, response.data);
 }

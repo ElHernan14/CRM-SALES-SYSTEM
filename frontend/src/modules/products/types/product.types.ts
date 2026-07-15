@@ -88,7 +88,7 @@ export type UpdateProductRequest = z.infer<typeof UpdateProductRequestSchema>;
 
 export const ProductDetailResponseSchema = z.object({
   id: z.number(),
-  company_id: z.number(),
+  company_id: z.number().optional(),
 
   name: z.string(),
   description: z.string(),
@@ -102,12 +102,12 @@ export const ProductDetailResponseSchema = z.object({
   type: z.string(),
 
   price: z.number(),
-  stock: z.number(),
+  stock: z.number().optional(),
   available_stock: z.number().optional(),
 
   image_path: z.string().nullable().optional(),
 
-  status: z.number(),
+  status: z.number().optional(),
 });
 
 export type ProductDetailResponse = z.infer<typeof ProductDetailResponseSchema>;
@@ -129,3 +129,9 @@ export const CreateProductRequestSchema = z.object({
 });
 
 export type CreateProductRequest = z.infer<typeof CreateProductRequestSchema>;
+
+export const UploadProductImageResponseSchema = z.object({
+  image_path: z.string(),
+});
+
+export type UploadProductImageResponse = z.infer<typeof UploadProductImageResponseSchema>;

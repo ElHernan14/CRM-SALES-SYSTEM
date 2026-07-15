@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { Package, RefreshCw, MoreHorizontal } from 'lucide-vue-next';
+import { Package, MoreHorizontal, Plus } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+import CreateProductDrawer from '../components/CreateProductDrawer.vue';
 import PageContainer from '@/shared/components/erp/PageContainer.vue';
 import PageHeader from '@/shared/components/erp/PageHeader.vue';
 import SectionCard from '@/shared/components/erp/SectionCard.vue';
@@ -18,6 +19,7 @@ import EmptyState from '@/shared/components/erp/EmptyState.vue';
 import DataTable from '@/shared/components/erp/DataTable.vue';
 import DataPagination from '@/shared/components/erp/DataPagination.vue';
 import BulkActionBar from '@/shared/components/erp/BulkActionBar.vue';
+import ProductImageDrawer from '../components/ProductImageDrawer.vue';
 
 import ProductsFilters from '../components/ProductsFilters.vue';
 import ProductDetailsDrawer from '../components/ProductDetailsDrawer.vue';
@@ -36,6 +38,10 @@ const auth = useAuthStore();
 const { user } = storeToRefs(auth);
 const ui = useUiStore();
 
+// State image
+const imageOpen = ref(false);
+const imageProductId = ref<number | null>(null);
+
 // State for product details drawer
 const selectedProduct = ref<ProductListItem | null>(null);
 const detailsOpen = ref(false);
@@ -47,6 +53,14 @@ function openProductDetails(row: Record<string, unknown>) {
 
   selectedProduct.value = product;
   detailsOpen.value = true;
+}
+
+// State Create Product
+const createOpen = ref(false);
+
+function handleProductCreated(productId: number) {
+  imageProductId.value = productId;
+  imageOpen.value = true;
 }
 
 // State for product edit drawer
@@ -218,6 +232,11 @@ function confirmDeleteProduct(row: Record<string, unknown>) {
 }
 
 const deleteMutation = useDeleteProduct();
+
+function openProductImage(row: Record<string, unknown>) {
+  imageProductId.value = Number(row.id);
+  imageOpen.value = true;
+}
 </script>
 
 <template>
@@ -229,10 +248,14 @@ const deleteMutation = useDeleteProduct();
       description="Search and review products available for this tenant."
     >
       <template #actions>
-        <Button variant="outline" size="sm" @click="refetch()">
-          <RefreshCw class="mr-2 h-4 w-4" />
-          Refresh
-        </Button>
+        <div class="flex items-center gap-2">
+          <Button variant="outline" size="sm" @click="refetch()"> Refresh </Button>
+
+          <Button size="sm" @click="createOpen = true">
+            <Plus class="mr-2 h-4 w-4" />
+            New product
+          </Button>
+        </div>
       </template>
 
       <ProductsFilters
@@ -332,6 +355,8 @@ const deleteMutation = useDeleteProduct();
               </DropdownMenuTrigger>
 
               <DropdownMenuContent align="end">
+                <DropdownMenuItem @click="openProductImage(row)"> Change image </DropdownMenuItem>
+
                 <DropdownMenuItem @click="openProductDetails(row)"> View details </DropdownMenuItem>
 
                 <DropdownMenuItem @click="openEditProduct(row)"> Edit product </DropdownMenuItem>
@@ -359,7 +384,12 @@ const deleteMutation = useDeleteProduct();
     <!-- Product Details Drawer -->
     <ProductDetailsDrawer v-model:open="detailsOpen" :product="selectedProduct" />
 
+    <!-- Product Create Drawer -->
+    <CreateProductDrawer v-model:open="createOpen" @created="handleProductCreated" />
+
     <!-- Product Edit Drawer -->
     <ProductEditDrawer v-model:open="editOpen" :product="editingProduct" />
+
+    <ProductImageDrawer v-model:open="imageOpen" :product-id="imageProductId" />
   </PageContainer>
 </template>

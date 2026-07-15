@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue';
-import { toast } from 'vue-sonner';
 
-import { useCategories } from '@/modules/categories/composables/useCategories';
-import { useProductTypes } from '@/modules/product-types/composables/useProductTypes';
-import { useUpdateProduct } from '../composables/useUpdateProduct';
+import { FilePlus2, Loader2, PackagePlus } from 'lucide-vue-next';
+
+import { toast } from 'vue-sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,15 +18,18 @@ import {
 
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 
-import type { ProductListItem } from '../types/product.types';
+import { useCategories } from '@/modules/categories/composables/useCategories';
+import { useProductTypes } from '@/modules/product-types/composables/useProductTypes';
+
+import { useCreateProduct } from '../composables/useCreateProduct';
 
 const props = defineProps<{
   open: boolean;
-  product: ProductListItem | null;
 }>();
 
 const emit = defineEmits<{
   'update:open': [value: boolean];
+  created: [productId: number];
 }>();
 
 const form = reactive({
@@ -41,7 +43,6 @@ const form = reactive({
 
   price: '',
   stock: '',
-  status: '1',
 });
 
 const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
@@ -69,14 +70,6 @@ const selectedCategory = computed(() => {
   );
 });
 
-const categoryTriggerLabel = computed(() => {
-  if (categoriesLoading.value) {
-    return 'Loading categories...';
-  }
-
-  return selectedCategory.value?.name ?? 'Select category';
-});
-
 const selectedProductType = computed(() => {
   if (form.type_id === 'all') return null;
 
@@ -84,6 +77,14 @@ const selectedProductType = computed(() => {
     availableProductTypes.value.find((productType) => String(productType.id) === form.type_id) ??
     null
   );
+});
+
+const categoryTriggerLabel = computed(() => {
+  if (categoriesLoading.value) {
+    return 'Loading categories...';
+  }
+
+  return selectedCategory.value?.name ?? 'Select category';
 });
 
 const productTypeTriggerLabel = computed(() => {
@@ -98,66 +99,47 @@ const productTypeTriggerLabel = computed(() => {
   return selectedProductType.value?.name ?? 'Select product type';
 });
 
-const updateMutation = useUpdateProduct();
+const createMutation = useCreateProduct();
 
-const isSubmitting = computed(() => updateMutation.isPending.value);
-
-watch(
-  () => props.product,
-  (product) => {
-    if (!product) return;
-
-    form.name = product.name;
-    form.description = product.description;
-
-    form.kind = product.kind;
-
-    form.category_id = String(product.category_id);
-    form.type_id = String(product.type_id);
-
-    form.price = String(product.price);
-    form.stock = String(product.stock);
-    form.status = String(product.status);
-  },
-  { immediate: true }
-);
-
-let hydratingProduct = false;
-
-watch(
-  () => props.product,
-  (product) => {
-    if (!product) return;
-
-    hydratingProduct = true;
-
-    form.name = product.name;
-    form.description = product.description;
-    form.kind = product.kind;
-    form.category_id = String(product.category_id);
-    form.type_id = String(product.type_id);
-    form.price = String(product.price);
-    form.stock = String(product.stock);
-    form.status = String(product.status);
-
-    queueMicrotask(() => {
-      hydratingProduct = false;
-    });
-  },
-  { immediate: true }
-);
+const isSubmitting = computed(() => createMutation.isPending.value);
 
 watch(
   () => form.category_id,
   () => {
-    if (hydratingProduct) return;
-
     form.type_id = 'all';
   }
 );
 
+watch(
+  () => props.open,
+  (open) => {
+    if (open) return;
+
+    resetForm();
+  }
+);
+
+function resetForm() {
+  form.name = '';
+  form.description = '';
+
+  form.kind = 'product';
+
+  form.category_id = 'all';
+  form.type_id = 'all';
+
+  form.price = '';
+  form.stock = '';
+}
+
 async function onSubmit() {
-  if (!props.product) return;
+  const name = form.name.trim();
+  const description = form.description.trim();
+
+  if (name.length < 2) {
+    toast.error('Enter a valid product name');
+    return;
+  }
 
   if (form.category_id === 'all') {
     toast.error('Select a product category');
@@ -183,29 +165,30 @@ async function onSubmit() {
   }
 
   try {
-    await updateMutation.mutateAsync({
-      id: props.product.id,
+    const product = await createMutation.mutateAsync({
+      name,
+      description: description || undefined,
 
-      payload: {
-        name: form.name,
-        description: form.description,
+      kind: form.kind,
 
-        kind: form.kind,
+      category_id: Number(form.category_id),
+      type_id: Number(form.type_id),
 
-        category_id: Number(form.category_id),
-        type_id: Number(form.type_id),
-
-        price,
-        stock,
-
-        status: Number(form.status) as 0 | 1,
-      },
+      price,
+      stock,
     });
 
-    toast.success('Product updated');
+    toast.success('Product created');
+
+    resetForm();
+
     emit('update:open', false);
-  } catch {
-    toast.error('Failed to update product');
+    emit('created', product.id);
+  } catch (error: any) {
+    console.log(error);
+    const message = error?.response?.data?.errorMessage ?? 'Failed to create product';
+
+    toast.error(message);
   }
 }
 
@@ -225,14 +208,17 @@ function validateNumberInput(event: KeyboardEvent) {
 
 <template>
   <Sheet :open="open" @update:open="emit('update:open', $event)">
-    <SheetContent class="w-full sm:max-w-xl">
+    <SheetContent class="w-full overflow-y-auto sm:max-w-2xl">
       <SheetHeader>
-        <SheetTitle>Edit product</SheetTitle>
+        <SheetTitle class="flex items-center gap-2">
+          <PackagePlus class="h-5 w-5" />
+          Create product
+        </SheetTitle>
 
-        <SheetDescription> Update catalog, pricing and inventory information. </SheetDescription>
+        <SheetDescription> Add a product or service to your company catalog. </SheetDescription>
       </SheetHeader>
 
-      <form class="mt-6 space-y-5" @submit.prevent="onSubmit">
+      <form class="mt-6 space-y-6" @submit.prevent="onSubmit">
         <div class="space-y-2">
           <label class="text-sm font-medium text-foreground"> Name </label>
 
@@ -242,7 +228,15 @@ function validateNumberInput(event: KeyboardEvent) {
         <div class="space-y-2">
           <label class="text-sm font-medium text-foreground"> Description </label>
 
-          <Input v-model="form.description" placeholder="Short description" />
+          <textarea
+            v-model="form.description"
+            rows="4"
+            maxlength="500"
+            placeholder="Describe the product..."
+            class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          />
+
+          <p class="text-right text-xs text-muted-foreground">{{ form.description.length }}/500</p>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
@@ -264,26 +258,6 @@ function validateNumberInput(event: KeyboardEvent) {
             </Select>
           </div>
 
-          <div class="space-y-2">
-            <label class="text-sm font-medium text-foreground"> Status </label>
-
-            <Select v-model="form.status">
-              <SelectTrigger>
-                <span>
-                  {{ form.status === '1' ? 'Active' : 'Inactive' }}
-                </span>
-              </SelectTrigger>
-
-              <SelectContent>
-                <SelectItem value="1"> Active </SelectItem>
-
-                <SelectItem value="0"> Inactive </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div class="grid gap-4 sm:grid-cols-2">
           <div class="space-y-2">
             <label class="text-sm font-medium text-foreground"> Category </label>
 
@@ -313,39 +287,39 @@ function validateNumberInput(event: KeyboardEvent) {
               </SelectContent>
             </Select>
           </div>
+        </div>
 
-          <div class="space-y-2">
-            <label class="text-sm font-medium text-foreground"> Product type </label>
+        <div class="space-y-2">
+          <label class="text-sm font-medium text-foreground"> Product type </label>
 
-            <Select
-              v-model="form.type_id"
-              :disabled="form.category_id === 'all' || productTypesLoading"
-            >
-              <SelectTrigger>
-                <span class="truncate">
-                  {{ productTypeTriggerLabel }}
-                </span>
-              </SelectTrigger>
+          <Select
+            v-model="form.type_id"
+            :disabled="form.category_id === 'all' || productTypesLoading"
+          >
+            <SelectTrigger>
+              <span class="truncate">
+                {{ productTypeTriggerLabel }}
+              </span>
+            </SelectTrigger>
 
-              <SelectContent>
-                <SelectItem
-                  v-for="productType in availableProductTypes"
-                  :key="productType.id"
-                  :value="String(productType.id)"
-                >
-                  <div class="flex flex-col py-0.5">
-                    <span class="text-sm font-medium">
-                      {{ productType.name }}
-                    </span>
+            <SelectContent>
+              <SelectItem
+                v-for="productType in availableProductTypes"
+                :key="productType.id"
+                :value="String(productType.id)"
+              >
+                <div class="flex flex-col py-0.5">
+                  <span class="text-sm font-medium">
+                    {{ productType.name }}
+                  </span>
 
-                    <span v-if="productType.description" class="text-xs text-muted-foreground">
-                      {{ productType.description }}
-                    </span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+                  <span v-if="productType.description" class="text-xs text-muted-foreground">
+                    {{ productType.description }}
+                  </span>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div
@@ -383,11 +357,11 @@ function validateNumberInput(event: KeyboardEvent) {
           </div>
 
           <div class="space-y-2">
-            <label class="text-sm font-medium text-foreground"> Stock </label>
+            <label class="text-sm font-medium text-foreground"> Initial stock </label>
 
             <Input
-              v-model="form.stock"
               @keydown="validateNumberInput"
+              v-model="form.stock"
               type="text"
               inputmode="numeric"
               placeholder="0"
@@ -395,13 +369,38 @@ function validateNumberInput(event: KeyboardEvent) {
           </div>
         </div>
 
-        <div class="flex justify-end gap-2 pt-4">
-          <Button type="button" variant="outline" @click="emit('update:open', false)">
+        <div class="rounded-xl border border-border bg-card p-4">
+          <div class="flex items-start gap-3">
+            <div class="rounded-lg border border-border bg-muted p-2 text-muted-foreground">
+              <FilePlus2 class="h-4 w-4" />
+            </div>
+
+            <div>
+              <p class="text-sm font-medium text-foreground">Image upload comes next</p>
+
+              <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                After creating the product, you can upload its catalog image.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            :disabled="isSubmitting"
+            @click="emit('update:open', false)"
+          >
             Cancel
           </Button>
 
           <Button type="submit" :disabled="isSubmitting">
-            {{ isSubmitting ? 'Saving...' : 'Save changes' }}
+            <Loader2 v-if="isSubmitting" class="mr-2 h-4 w-4 animate-spin" />
+
+            <PackagePlus v-else class="mr-2 h-4 w-4" />
+
+            {{ isSubmitting ? 'Creating...' : 'Create product' }}
           </Button>
         </div>
       </form>
