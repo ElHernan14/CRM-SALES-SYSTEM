@@ -14,7 +14,6 @@ import {
   Select,
   SelectContent,
   SelectItem,
-  SelectItemText,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -225,7 +224,7 @@ const companyCategoryTriggerLabel = computed(() => {
             </div>
 
             <div
-              class="absolute inset-0 bg-gradient-to-t from-background/75 via-transparent to-transparent"
+              class="absolute inset-0 bg-linear-to-t from-background/75 via-transparent to-transparent"
             />
 
             <span

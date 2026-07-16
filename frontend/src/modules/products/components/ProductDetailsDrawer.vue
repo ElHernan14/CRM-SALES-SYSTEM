@@ -46,13 +46,13 @@ const emit = defineEmits<{
 
         <div
           v-else
-          class="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted to-background"
+          class="flex h-full w-full items-center justify-center bg-linear-to-br from-muted to-background"
         >
           <ImageIcon class="h-10 w-10 text-muted-foreground/50" />
         </div>
 
         <div
-          class="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent"
+          class="absolute inset-0 bg-linear-to-t from-background/70 via-transparent to-transparent"
         />
 
         <div class="absolute bottom-4 left-4 flex flex-wrap gap-2">
