@@ -187,7 +187,9 @@ func (r *invoiceRepository) GetActiveDraft(
 			status_invoice,
 			created_at,
 			created_by_user_id,
-			total_amount
+			total_amount,
+			subtotal,
+			taxes
 		FROM invoice
 		WHERE
 			buyer_client_id = $1
@@ -213,6 +215,8 @@ func (r *invoiceRepository) GetActiveDraft(
 		&invoice.CreatedAt,
 		&invoice.CreatedByUserID,
 		&invoice.TotalAmount,
+		&invoice.Subtotal,
+		&invoice.Taxes,
 	)
 
 	if err == sql.ErrNoRows {
