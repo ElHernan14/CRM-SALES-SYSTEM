@@ -209,4 +209,4 @@ JOIN permission p ON p.name IN (
     'store:checkout'
 
 )
-WHERE r.name IN ('individual_user', 'super_admin');
+WHERE r.name IN ('individual_user', 'super_admin', 'company_user');
