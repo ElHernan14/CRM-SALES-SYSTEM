@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { Building2, Minus, Plus, ShoppingCart } from 'lucide-vue-next';
+import { Building2, Minus, Plus, ShoppingCart, Loader2 } from 'lucide-vue-next';
 
 import { Button } from '@/components/ui/button';
 
@@ -18,6 +18,7 @@ import type { StoreProduct } from '../types/store-product.types';
 const props = defineProps<{
   open: boolean;
   product: StoreProduct | null;
+  adding?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -153,7 +154,7 @@ function handleAdd() {
                   variant="ghost"
                   size="icon"
                   class="h-8 w-8 rounded-full"
-                  :disabled="!canDecrease"
+                  :disabled="!canDecrease || adding"
                   @click="quantity--"
                 >
                   <Minus class="h-4 w-4" />
@@ -167,7 +168,7 @@ function handleAdd() {
                   variant="ghost"
                   size="icon"
                   class="h-8 w-8 rounded-full"
-                  :disabled="!canIncrease"
+                  :disabled="!canIncrease || adding"
                   @click="quantity++"
                 >
                   <Plus class="h-4 w-4" />
@@ -184,9 +185,12 @@ function handleAdd() {
                 </p>
               </div>
 
-              <Button :disabled="product.available_stock <= 0" @click="handleAdd">
-                <ShoppingCart class="mr-2 h-4 w-4" />
-                Add to purchase
+              <Button :disabled="product.available_stock <= 0 || adding" @click="handleAdd">
+                <Loader2 v-if="adding" class="mr-2 h-4 w-4 animate-spin" />
+
+                <ShoppingCart v-else class="mr-2 h-4 w-4" />
+
+                {{ adding ? 'Adding...' : 'Add to purchase' }}
               </Button>
             </div>
           </div>

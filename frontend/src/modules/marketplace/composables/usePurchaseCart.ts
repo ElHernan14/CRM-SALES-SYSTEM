@@ -10,6 +10,8 @@ export function usePurchaseCart(sellerCompanyId: Ref<number | null>) {
 
     queryFn: () => getPurchaseCart(sellerCompanyId.value as number),
 
+    staleTime: 5_000,
+
     enabled: computed(() => !!sellerCompanyId.value),
   });
 }

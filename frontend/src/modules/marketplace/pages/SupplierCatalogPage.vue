@@ -11,8 +11,10 @@ import {
   RotateCcw,
   SlidersHorizontal,
   ChevronDown,
+  Loader2,
 } from 'lucide-vue-next';
 import { useQueryClient } from '@tanstack/vue-query';
+import { toast } from 'vue-sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,9 +32,12 @@ import PageContainer from '@/shared/components/erp/PageContainer.vue';
 import EmptyState from '@/shared/components/erp/EmptyState.vue';
 import DataPagination from '@/shared/components/erp/DataPagination.vue';
 import MarketplaceProductDrawer from '../components/MarketplaceProductDrawer.vue';
+import PurchaseCartDrawer from '../components/PurchaseCartDrawer.vue';
 
 import { useStoreProducts } from '../composables/useStoreProducts';
 import { useCategories } from '@/modules/categories/composables/useCategories';
+import { useEnsurePurchaseCart } from '../composables/useEnsurePurchaseCart';
+import { useAddPurchaseCartItem } from '../composables/useAddPurchaseCartItem';
 
 import type { StoreProduct } from '../types/store-product.types';
 import type { Supplier } from '../types/supplier.types';
@@ -41,16 +46,21 @@ import { useProductTypes } from '@/modules/product-types/composables/useProductT
 import { getCompanyCoverUrl, getCompanyLogoUrl } from '@/shared/utils/assets';
 import { getProductImageUrl } from '@/shared/utils/assets';
 
+import { getPurchaseCart } from '../api/purchase-cart.api';
+
 const route = useRoute();
 const router = useRouter();
 
 const supplierId = computed(() => Number(route.params.supplierId));
 
+const purchaseCartOpen = ref(false);
+
+const activeSellerCompanyId = ref<number | null>(null);
+const addingProductId = ref<number | null>(null);
 const filtersOpen = ref(false);
 const categoryId = ref('all');
 const typeId = ref('all');
 const kind = ref('all');
-const type = ref('all');
 const search = ref('');
 const minPrice = ref('');
 const maxPrice = ref('');
@@ -109,7 +119,8 @@ const productParams = computed(() => ({
 
 const advancedFiltersCount = computed(() => {
   return [
-    type.value !== 'all' ? type.value : '',
+    kind.value !== 'all' ? kind.value : '',
+    typeId.value !== 'all' ? typeId.value : '',
     minPrice.value,
     maxPrice.value,
     sortColumn.value !== 'name' ? sortColumn.value : '',
@@ -142,8 +153,88 @@ function formatCurrency(value: number) {
   return `$${value.toFixed(2)}`;
 }
 
-function addToPurchase(product: StoreProduct) {
-  console.log('Add to purchase:', product);
+async function addProductToCart(
+  product: StoreProduct,
+  quantity = 1,
+  openCart = true
+): Promise<boolean> {
+  if (quantity < 1) {
+    toast.error('Enter a valid quantity');
+    return false;
+  }
+
+  if (product.available_stock <= 0) {
+    toast.error('This product is currently unavailable');
+    return false;
+  }
+
+  if (quantity > product.available_stock) {
+    toast.error('Quantity exceeds available stock');
+    return false;
+  }
+
+  const cartQueryKey = ['purchase-cart', product.company_id] as const;
+
+  try {
+    addingProductId.value = product.id;
+
+    /*
+     * Si había una consulta vieja o en curso, la cancelamos.
+     * Evita que una respuesta anterior sobrescriba el cart nuevo.
+     */
+    await queryClient.cancelQueries({
+      queryKey: cartQueryKey,
+    });
+
+    const ensuredCart = await ensureCartMutation.mutateAsync(product.company_id);
+
+    await addCartItemMutation.mutateAsync({
+      invoiceId: ensuredCart.invoice_id,
+      sellerCompanyId: product.company_id,
+      productId: product.id,
+      quantity,
+    });
+
+    /*
+     * Consultamos explícitamente el estado final,
+     * después de que el item ya fue agregado.
+     */
+    const updatedCart = await getPurchaseCart(product.company_id);
+
+    queryClient.setQueryData(cartQueryKey, updatedCart);
+
+    /*
+     * Esperamos el catálogo actualizado antes
+     * de considerar terminada la operación.
+     */
+    await queryClient.refetchQueries({
+      queryKey: ['store-products'],
+      type: 'active',
+    });
+
+    toast.success('Product added to purchase', {
+      description: `${quantity} × ${product.name}`,
+    });
+
+    if (openCart) {
+      activeSellerCompanyId.value = product.company_id;
+
+      purchaseCartOpen.value = true;
+    }
+
+    return true;
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.errorMessage ??
+      error?.response?.data?.message ??
+      'Failed to add product to purchase';
+
+    toast.error(message);
+
+    return false;
+  } finally {
+    addingProductId.value = null;
+  }
 }
 
 const queryClient = useQueryClient();
@@ -184,12 +275,24 @@ function openProductDetails(product: StoreProduct) {
   productDetailsOpen.value = true;
 }
 
-function handleAddFromDrawer(payload: { product: StoreProduct; quantity: number }) {
-  addToPurchase(payload.product);
+function addToPurchase(product: StoreProduct) {
+  return addProductToCart(product, 1, true);
+}
 
-  console.log('Quantity:', payload.quantity);
+async function handleAddFromDrawer(payload: { product: StoreProduct; quantity: number }) {
+  const added = await addProductToCart(payload.product, payload.quantity, false);
+
+  if (!added) return;
 
   productDetailsOpen.value = false;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      activeSellerCompanyId.value = payload.product.company_id;
+
+      purchaseCartOpen.value = true;
+    });
+  });
 }
 
 const selectedCategory = computed(() =>
@@ -220,6 +323,23 @@ const productTypeTriggerLabel = computed(() => {
 
   return selectedProductType.value?.name ?? 'Select product type';
 });
+
+const ensureCartMutation = useEnsurePurchaseCart();
+const addCartItemMutation = useAddPurchaseCartItem();
+
+const isAddingToCart = computed(() => {
+  return (
+    addingProductId.value !== null ||
+    ensureCartMutation.isPending.value ||
+    addCartItemMutation.isPending.value
+  );
+});
+
+function handleCheckoutCompleted(invoiceId: number) {
+  console.log('Purchase checkout completed:', invoiceId);
+
+  activeSellerCompanyId.value = null;
+}
 </script>
 
 <template>
@@ -628,11 +748,17 @@ const productTypeTriggerLabel = computed(() => {
                 <Button
                   size="sm"
                   class="rounded-full px-4"
-                  :disabled="product.available_stock <= 0"
+                  :disabled="product.available_stock <= 0 || isAddingToCart"
                   @click="addToPurchase(product)"
                 >
-                  <ShoppingCart class="mr-2 h-4 w-4" />
-                  Add
+                  <Loader2
+                    v-if="addingProductId === product.id"
+                    class="mr-2 h-4 w-4 animate-spin"
+                  />
+
+                  <ShoppingCart v-else class="mr-2 h-4 w-4" />
+
+                  {{ addingProductId === product.id ? 'Adding...' : 'Add' }}
                 </Button>
               </div>
             </div>
@@ -652,7 +778,14 @@ const productTypeTriggerLabel = computed(() => {
     <MarketplaceProductDrawer
       v-model:open="productDetailsOpen"
       :product="selectedProduct"
+      :adding="selectedProduct ? addingProductId === selectedProduct.id : false"
       @add="handleAddFromDrawer"
+    />
+
+    <PurchaseCartDrawer
+      v-model:open="purchaseCartOpen"
+      :seller-company-id="activeSellerCompanyId"
+      @checkout-completed="handleCheckoutCompleted"
     />
   </PageContainer>
 </template>
