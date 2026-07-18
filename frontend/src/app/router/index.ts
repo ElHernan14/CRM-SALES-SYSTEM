@@ -9,7 +9,7 @@ const InvoicesPage = () => import('@/modules/invoices/pages/InvoicesPage.vue');
 const PaymentsPage = () => import('@/modules/erp/pages/PaymentsPage.vue');
 const MarketplacePage = () => import('@/modules/marketplace/pages/MarketplacePage.vue');
 const SupplierCatalogPage = () => import('@/modules/marketplace/pages/SupplierCatalogPage.vue');
-const PurchasesPage = () => import('@/modules/erp/pages/PurchasesPage.vue');
+const PurchasesPage = () => import('@/modules/purchases/pages/PurchasesPage.vue');
 const InventoryPage = () => import('@/modules/erp/pages/InventoryPage.vue');
 const CustomersPage = () => import('@/modules/erp/pages/CustomersPage.vue');
 const AnalyticsPage = () => import('@/modules/erp/pages/AnalyticsPage.vue');
