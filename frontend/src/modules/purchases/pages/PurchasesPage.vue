@@ -213,18 +213,6 @@ function openPurchasePayment(purchase: PurchaseListItem) {
   console.log('Pay purchase:', purchase.id);
 }
 
-function handleViewPurchaseItems(invoiceId: number) {
-  console.log('View purchase items:', invoiceId);
-}
-
-function handleViewPurchasePayments(invoiceId: number) {
-  console.log('View purchase payments:', invoiceId);
-}
-
-function handlePayPurchase(invoiceId: number) {
-  console.log('Pay purchase:', invoiceId);
-}
-
 function handleSort(columnKey: string) {
   const supportedColumns = ['created_at', 'total_amount', 'paid_amount', 'status_invoice'] as const;
 
@@ -556,12 +544,6 @@ function clearFilters() {
       </template>
     </SectionCard>
 
-    <PurchaseDetailsDrawer
-      v-model:open="purchaseDetailsOpen"
-      :purchase="selectedPurchase"
-      @view-items="handleViewPurchaseItems"
-      @view-payments="handleViewPurchasePayments"
-      @pay="handlePayPurchase"
-    />
+    <PurchaseDetailsDrawer v-model:open="purchaseDetailsOpen" :purchase="selectedPurchase" />
   </PageContainer>
 </template>
