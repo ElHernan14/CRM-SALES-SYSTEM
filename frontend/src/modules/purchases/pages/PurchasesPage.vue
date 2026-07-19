@@ -192,12 +192,15 @@ function getStatusClass(value: unknown) {
   return classes[status] ?? 'border-border bg-muted text-muted-foreground';
 }
 
+const purchaseInitialAction = ref<'overview' | 'checkout' | 'payment'>('overview');
+
 function canPayPurchase(purchase: PurchaseListItem) {
   return purchase.status_invoice === 'pending' && purchase.paid_amount < purchase.total_amount;
 }
 
 function openPurchaseDetails(purchase: PurchaseListItem) {
   selectedPurchase.value = purchase;
+  purchaseInitialAction.value = 'overview';
   purchaseDetailsOpen.value = true;
 }
 
@@ -236,6 +239,18 @@ function clearFilters() {
   sortColumn.value = 'created_at';
   order.value = 'desc';
   page.value = 1;
+}
+
+function openPurchaseForCheckout(purchase: PurchaseListItem) {
+  selectedPurchase.value = purchase;
+  purchaseInitialAction.value = 'checkout';
+  purchaseDetailsOpen.value = true;
+}
+
+function openPurchaseForPayment(purchase: PurchaseListItem) {
+  selectedPurchase.value = purchase;
+  purchaseInitialAction.value = 'payment';
+  purchaseDetailsOpen.value = true;
 }
 </script>
 
@@ -510,20 +525,19 @@ function clearFilters() {
                   View purchase
                 </DropdownMenuItem>
 
-                <DropdownMenuItem @click="openPurchaseItems(row as PurchaseListItem)">
-                  <ReceiptText class="mr-2 h-4 w-4" />
-                  View items
-                </DropdownMenuItem>
-
-                <DropdownMenuItem @click="openPurchasePayments(row as PurchaseListItem)">
-                  <CreditCard class="mr-2 h-4 w-4" />
-                  Payment history
-                </DropdownMenuItem>
-
-                <template v-if="canPayPurchase(row as PurchaseListItem)">
+                <template v-if="row.status_invoice === 'draft'">
                   <DropdownMenuSeparator />
 
-                  <DropdownMenuItem @click="openPurchasePayment(row as PurchaseListItem)">
+                  <DropdownMenuItem @click="openPurchaseForCheckout(row as PurchaseListItem)">
+                    <ShoppingBag class="mr-2 h-4 w-4" />
+                    Continue checkout
+                  </DropdownMenuItem>
+                </template>
+
+                <template v-else-if="canPayPurchase(row as PurchaseListItem)">
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem @click="openPurchaseForPayment(row as PurchaseListItem)">
                     <WalletCards class="mr-2 h-4 w-4" />
                     Pay invoice
                   </DropdownMenuItem>
@@ -544,6 +558,10 @@ function clearFilters() {
       </template>
     </SectionCard>
 
-    <PurchaseDetailsDrawer v-model:open="purchaseDetailsOpen" :purchase="selectedPurchase" />
+    <PurchaseDetailsDrawer
+      v-model:open="purchaseDetailsOpen"
+      :purchase="selectedPurchase"
+      :initial-action="purchaseInitialAction"
+    />
   </PageContainer>
 </template>

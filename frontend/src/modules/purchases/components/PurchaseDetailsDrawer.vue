@@ -22,6 +22,8 @@ import {
   Landmark,
   Receipt,
   RefreshCw,
+  ArrowRight,
+  Send,
 } from 'lucide-vue-next';
 
 import { Button } from '@/components/ui/button';
@@ -42,6 +44,7 @@ import { usePayPurchase } from '../composables/usePayPurchase';
 import { usePurchasePayments } from '../composables/usePurchasePayments';
 import { usePurchaseItems } from '../composables/usePurchaseItems';
 import { useInvoiceDetail } from '@/modules/invoices/composables/useInvoiceDetail';
+import { useCheckoutPurchase } from '../composables/useCheckoutPurchase';
 
 import type { PaymentMethod } from '../types/purchase-payment.types';
 import type { PurchaseListItem } from '../types/purchase.types';
@@ -50,6 +53,7 @@ import { toast } from 'vue-sonner';
 const props = defineProps<{
   open: boolean;
   purchase: PurchaseListItem | null;
+  initialAction?: 'overview' | 'checkout' | 'payment';
 }>();
 
 const emit = defineEmits<{
@@ -366,6 +370,62 @@ async function submitPayment() {
     toast.error(message);
   }
 }
+
+const checkoutPurchaseMutation = useCheckoutPurchase();
+
+const isCheckingOut = computed(() => {
+  return checkoutPurchaseMutation.isPending.value;
+});
+
+const canCheckout = computed(() => {
+  if (!invoice.value) return false;
+
+  return invoice.value.status_invoice === 'draft' && purchaseItems.value.length > 0;
+});
+
+async function submitCheckout() {
+  if (!invoice.value) {
+    toast.error('Missing purchase information');
+    return;
+  }
+
+  if (invoice.value.status_invoice !== 'draft') {
+    toast.error('Only draft purchases can be submitted');
+    return;
+  }
+
+  if (purchaseItems.value.length === 0) {
+    toast.error('Add at least one item before checkout');
+    return;
+  }
+
+  try {
+    await checkoutPurchaseMutation.mutateAsync(invoice.value.id);
+
+    await Promise.all([refetch(), refetchItems()]);
+
+    toast.success('Purchase submitted', {
+      description: 'The supplier invoice is now awaiting payment.',
+    });
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.errorMessage ??
+      error?.response?.data?.message ??
+      'Failed to submit purchase';
+
+    toast.error(message);
+  }
+}
+
+watch([() => props.open, () => props.purchase?.id], ([open]) => {
+  if (!open) return;
+
+  if (props.initialAction === 'payment') {
+    requestAnimationFrame(() => {
+      handlePay();
+    });
+  }
+});
 
 // Validate number input for minPrice and maxPrice
 function validateNumberInput(event: KeyboardEvent) {
@@ -984,6 +1044,96 @@ function validateNumberInput(event: KeyboardEvent) {
               </div>
             </div>
           </Transition>
+        </section>
+
+        <!-- DRAFT CHECKOUT -->
+        <section
+          v-if="invoice.status_invoice === 'draft'"
+          class="overflow-hidden rounded-2xl border border-primary/20 bg-card shadow-lg"
+        >
+          <div
+            class="border-b border-border bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-5"
+          >
+            <div class="flex items-start gap-3">
+              <div
+                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm"
+              >
+                <ShoppingBag class="h-5 w-5" />
+              </div>
+
+              <div>
+                <h3 class="text-sm font-semibold text-foreground">
+                  Draft purchase ready for checkout
+                </h3>
+
+                <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                  Review the items and financial summary before submitting this order to the
+                  supplier.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-5 p-5">
+            <div class="grid gap-3 sm:grid-cols-3">
+              <div class="rounded-xl border border-border bg-muted/20 p-4">
+                <p class="text-xs text-muted-foreground">Line items</p>
+
+                <p class="mt-2 text-lg font-semibold text-foreground">
+                  {{ purchaseItems.length }}
+                </p>
+              </div>
+
+              <div class="rounded-xl border border-border bg-muted/20 p-4">
+                <p class="text-xs text-muted-foreground">Total units</p>
+
+                <p class="mt-2 text-lg font-semibold text-foreground">
+                  {{ totalUnits }}
+                </p>
+              </div>
+
+              <div class="rounded-xl border border-border bg-muted/20 p-4">
+                <p class="text-xs text-muted-foreground">Order total</p>
+
+                <p class="mt-2 text-lg font-semibold text-foreground">
+                  {{ formatCurrency(invoice.total_amount) }}
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 p-4"
+            >
+              <ShieldCheck class="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+
+              <div>
+                <p class="text-sm font-medium text-amber-700 dark:text-amber-400">
+                  Checkout locks purchase editing
+                </p>
+
+                <p class="mt-1 text-xs leading-5 text-amber-700/80 dark:text-amber-400/80">
+                  After submitting, the draft becomes pending and its items can no longer be changed
+                  from the buyer flow.
+                </p>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              size="lg"
+              class="w-full"
+              :disabled="!canCheckout || isCheckingOut || itemsLoading || itemsRefreshing"
+              @click="submitCheckout"
+            >
+              <Loader2 v-if="isCheckingOut" class="mr-2 h-4 w-4 animate-spin" />
+
+              <Send v-else class="mr-2 h-4 w-4" />
+
+              {{ isCheckingOut ? 'Submitting purchase...' : 'Submit purchase to supplier' }}
+
+              <ArrowRight v-if="!isCheckingOut" class="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         </section>
 
         <!-- PAYMENT PANEL -->
