@@ -21,6 +21,7 @@ const typeId = defineModel<string>('typeId', { required: true });
 const search = defineModel<string>('search', { required: true });
 const minPrice = defineModel<string>('minPrice', { required: true });
 const maxPrice = defineModel<string>('maxPrice', { required: true });
+const status = defineModel<string>('status', { required: true });
 
 // Validate number input for minPrice and maxPrice
 function validateNumberInput(event: KeyboardEvent) {
@@ -105,7 +106,7 @@ const productTypeTriggerLabel = computed(() => {
 
 <template>
   <div class="space-y-4">
-    <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-[1.5fr_180px_220px_220px]">
+    <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-[1.4fr_160px_190px_210px_190px]">
       <div class="relative">
         <Search
           class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -190,6 +191,35 @@ const productTypeTriggerLabel = computed(() => {
               <span v-if="productType.description" class="text-xs text-muted-foreground">
                 {{ productType.description }}
               </span>
+            </div>
+          </SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select v-model="status">
+        <SelectTrigger>
+          <span
+            class="truncate"
+            :class="status === 'all' ? 'text-muted-foreground' : 'text-foreground'"
+          >
+            {{ status === 'all' ? 'All statuses' : status === '1' ? 'Active' : 'Inactive' }}
+          </span>
+        </SelectTrigger>
+
+        <SelectContent>
+          <SelectItem value="all"> All statuses </SelectItem>
+
+          <SelectItem value="1">
+            <div class="flex items-center gap-2">
+              <span class="h-2 w-2 rounded-full bg-emerald-500" />
+              Active
+            </div>
+          </SelectItem>
+
+          <SelectItem value="0">
+            <div class="flex items-center gap-2">
+              <span class="h-2 w-2 rounded-full bg-muted-foreground" />
+              Inactive
             </div>
           </SelectItem>
         </SelectContent>

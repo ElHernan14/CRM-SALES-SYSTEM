@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { Package, MoreHorizontal, Plus } from 'lucide-vue-next';
+import { Package, MoreHorizontal, Plus, Loader2, Trash2 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
 import { Button } from '@/components/ui/button';
@@ -32,11 +32,12 @@ import { useUiStore } from '@/shared/stores/ui.store';
 
 import { useProducts } from '../composables/useProducts';
 import { useDeleteProduct } from '../composables/useDeleteProduct';
+import { useBulkDeleteProducts } from '../composables/useBulkDeleteProducts';
 
 // Store
 const auth = useAuthStore();
 const { user } = storeToRefs(auth);
-const ui = useUiStore();
+const uiStore = useUiStore();
 
 // State image
 const imageOpen = ref(false);
@@ -85,6 +86,7 @@ const categoryId = ref('all');
 const typeId = ref('all');
 const minPrice = ref('');
 const maxPrice = ref('');
+const status = ref('all');
 
 const productParams = computed(() => ({
   search: search.value || undefined,
@@ -95,9 +97,11 @@ const productParams = computed(() => ({
 
   type_id: typeId.value !== 'all' ? Number(typeId.value) : undefined,
 
-  min_price: minPrice.value ? Number(minPrice.value) : undefined,
+  min_price: minPrice.value !== '' ? Number(minPrice.value) : undefined,
 
-  max_price: maxPrice.value ? Number(maxPrice.value) : undefined,
+  max_price: maxPrice.value !== '' ? Number(maxPrice.value) : undefined,
+
+  status: status.value !== 'all' ? (Number(status.value) as 0 | 1) : undefined,
 
   company_id: user.value?.company_id,
 
@@ -105,7 +109,7 @@ const productParams = computed(() => ({
   limit: limit.value,
 }));
 
-watch([search, kind, categoryId, typeId, minPrice, maxPrice], () => {
+watch([search, kind, status, categoryId, typeId, minPrice, maxPrice], () => {
   page.value = 1;
 });
 
@@ -113,6 +117,8 @@ function clearFilters() {
   search.value = '';
 
   kind.value = 'all';
+  status.value = 'all';
+
   categoryId.value = 'all';
   typeId.value = 'all';
 
@@ -197,7 +203,7 @@ const allSelected = computed(() => {
 });
 
 function confirmBulkDelete() {
-  ui.openConfirm({
+  uiStore.openConfirm({
     title: 'Delete selected products?',
     description: `This action will delete ${selectedProductIds.value.length} selected products.`,
     confirmText: 'Delete products',
@@ -215,7 +221,7 @@ function confirmDeleteProduct(row: Record<string, unknown>) {
   const id = Number(row.id);
   const name = String(row.name);
 
-  ui.openConfirm({
+  uiStore.openConfirm({
     title: 'Delete product?',
     description: `This will delete "${name}" from the product catalog.`,
     confirmText: 'Delete product',
@@ -236,6 +242,63 @@ const deleteMutation = useDeleteProduct();
 function openProductImage(row: Record<string, unknown>) {
   imageProductId.value = Number(row.id);
   imageOpen.value = true;
+}
+
+const bulkDeleteMutation = useBulkDeleteProducts();
+
+const isBulkDeleting = computed(() => {
+  return bulkDeleteMutation.isPending.value;
+});
+
+const selectedCount = computed(() => {
+  return selectedProductIds.value.length;
+});
+
+function requestBulkDelete() {
+  if (selectedProductIds.value.length === 0) {
+    toast.error('Select at least one product');
+    return;
+  }
+
+  uiStore.openConfirm({
+    title: 'Deactivate selected products?',
+    description: `${selectedProductIds.value.length} products will be removed from the active catalog. This action uses logical deletion and preserves historical records.`,
+
+    confirmText: 'Deactivate products',
+    cancelText: 'Keep products',
+    variant: 'destructive',
+
+    onConfirm: executeBulkDelete,
+  });
+}
+
+async function executeBulkDelete() {
+  if (selectedProductIds.value.length === 0) {
+    return;
+  }
+
+  try {
+    const result = await bulkDeleteMutation.mutateAsync(selectedProductIds.value);
+
+    toast.success(
+      result.count === 1 ? 'Product deactivated' : `${result.count} products deactivated`
+    );
+
+    selectedProductIds.value = [];
+
+    /*
+     * Si tu DataTable usa una key para resetear
+     * el checkbox del header, actualizala acá.
+     */
+    // tableSelectionVersion.value++
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.errorMessage ??
+      error?.response?.data?.message ??
+      'Failed to deactivate selected products';
+
+    toast.error(message);
+  }
 }
 </script>
 
@@ -261,6 +324,7 @@ function openProductImage(row: Record<string, unknown>) {
       <ProductsFilters
         v-model:search="search"
         v-model:kind="kind"
+        v-model:status="status"
         v-model:category-id="categoryId"
         v-model:type-id="typeId"
         v-model:min-price="minPrice"
@@ -334,14 +398,19 @@ function openProductImage(row: Record<string, unknown>) {
 
         <template #cell-status="{ value }">
           <span
-            class="rounded-full px-2 py-1 text-xs font-medium"
+            class="inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold"
             :class="
-              value === 1
-                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                : 'bg-muted text-muted-foreground'
+              Number(value) === 1
+                ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                : 'border-border bg-muted text-muted-foreground'
             "
           >
-            {{ value === 1 ? 'Active' : 'Inactive' }}
+            <span
+              class="h-1.5 w-1.5 rounded-full"
+              :class="Number(value) === 1 ? 'bg-emerald-500' : 'bg-muted-foreground'"
+            />
+
+            {{ Number(value) === 1 ? 'Active' : 'Inactive' }}
           </span>
         </template>
 
