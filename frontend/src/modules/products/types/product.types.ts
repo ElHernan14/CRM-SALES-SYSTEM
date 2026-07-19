@@ -50,6 +50,8 @@ export const GetProductsRequestSchema = z.object({
   min_price: z.number().optional(),
   max_price: z.number().optional(),
 
+  status: z.union([z.literal(0), z.literal(1)]).optional(),
+
   company_id: z.number().optional(),
 
   page: z.number().default(1),
@@ -135,3 +137,16 @@ export const UploadProductImageResponseSchema = z.object({
 });
 
 export type UploadProductImageResponse = z.infer<typeof UploadProductImageResponseSchema>;
+
+export const BulkDeleteProductsRequestSchema = z.object({
+  product_ids: z.array(z.number().int().positive()).min(1),
+});
+
+export type BulkDeleteProductsRequest = z.infer<typeof BulkDeleteProductsRequestSchema>;
+
+export const BulkDeleteProductsResponseSchema = z.object({
+  deleted_ids: z.array(z.number()),
+  count: z.number(),
+});
+
+export type BulkDeleteProductsResponse = z.infer<typeof BulkDeleteProductsResponseSchema>;

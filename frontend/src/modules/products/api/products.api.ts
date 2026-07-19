@@ -14,6 +14,10 @@ import {
   // Image
   UploadProductImageResponseSchema,
   type UploadProductImageResponse,
+  // Bulk delete
+  BulkDeleteProductsResponseSchema,
+  type BulkDeleteProductsRequest,
+  type BulkDeleteProductsResponse,
 } from '../types/product.types';
 
 export async function getProducts(params: GetProductsRequest): Promise<GetProductsResponse> {
@@ -58,4 +62,14 @@ export async function uploadProductImage(
   });
 
   return unwrapResponse(UploadProductImageResponseSchema, response.data);
+}
+
+export async function bulkDeleteProducts(
+  payload: BulkDeleteProductsRequest
+): Promise<BulkDeleteProductsResponse> {
+  const response = await http.delete('/product/bulk-delete', {
+    data: payload,
+  });
+
+  return unwrapResponse(BulkDeleteProductsResponseSchema, response.data);
 }
