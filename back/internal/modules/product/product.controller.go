@@ -65,6 +65,13 @@ func (c *ProductController) GetProducts(w http.ResponseWriter, r *http.Request) 
 		}
 		req.TypeID = &typeID
 	}
+	if v := q.Get("status"); v != "" {
+		status, err := strconv.Atoi(v)
+		if err != nil || (status != 0 && status != 1) {
+			return errorHandler.NewAppError(http.StatusBadRequest, "status debe ser 0 o 1")
+		}
+		req.Status = &status
+	}
 	if v := q.Get("min_price"); v != "" {
 		min, err := strconv.ParseFloat(v, 64)
 		if err != nil {
@@ -187,6 +194,25 @@ func (c *ProductController) DeleteProduct(w http.ResponseWriter, r *http.Request
 	}
 
 	return json.NewEncoder(w).Encode(response.Success(nil))
+}
+
+func (c *ProductController) BulkDeleteProducts(w http.ResponseWriter, r *http.Request) error {
+	var req productdto.BulkDeleteProductsRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return errorHandler.NewAppError(http.StatusBadRequest, "body json invÃ¡lido")
+	}
+
+	msg, invalid := validatorx.ValidateStruct(req)
+	if invalid {
+		return errorHandler.NewAppError(http.StatusBadRequest, msg)
+	}
+
+	res, err := c.service.BulkDelete(r.Context(), &req)
+	if err != nil {
+		return err
+	}
+
+	return json.NewEncoder(w).Encode(response.Success(res))
 }
 
 func (c *ProductController) GetCompanyProducts(w http.ResponseWriter, r *http.Request) error {

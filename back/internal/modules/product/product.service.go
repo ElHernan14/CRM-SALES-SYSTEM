@@ -27,6 +27,7 @@ type ProductService interface {
 	Update(ctx context.Context, id int, req *productdto.UpdateProductRequest) (*productdto.ProductDetailResponse, error)
 	UploadImage(ctx context.Context, id int, file multipart.File, header *multipart.FileHeader) (*productdto.UploadProductImageResponse, error)
 	Delete(ctx context.Context, id int) error
+	BulkDelete(ctx context.Context, req *productdto.BulkDeleteProductsRequest) (*productdto.BulkDeleteProductsResponse, error)
 	GetCompanyProducts(ctx context.Context, req *productdto.GetCompanyProductsRequest) (*productdto.GetCompanyProductsResponse, error)
 }
 
@@ -92,7 +93,7 @@ func (s *productService) GetProducts(ctx context.Context, req *productdto.GetPro
 		return nil, err
 	}
 
-	products, total, err := s.repo.GetAll(ctx, req.Search, req.Kind, req.CategoryID, req.Category, req.TypeID, req.Type, req.MinPrice, req.MaxPrice, companyID, req.Limit, offset)
+	products, total, err := s.repo.GetAll(ctx, req.Search, req.Kind, req.CategoryID, req.Category, req.TypeID, req.Type, req.Status, req.MinPrice, req.MaxPrice, companyID, req.Limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -211,6 +212,39 @@ func (s *productService) Delete(ctx context.Context, id int) error {
 		return errorHandler.NewAppError(http.StatusBadRequest, "Producto ya fue eliminado")
 	}
 	return s.repo.SoftDelete(ctx, id)
+}
+
+func (s *productService) BulkDelete(ctx context.Context, req *productdto.BulkDeleteProductsRequest) (*productdto.BulkDeleteProductsResponse, error) {
+	if len(req.ProductIDs) == 0 {
+		return nil, errorHandler.NewAppError(http.StatusBadRequest, "Debe enviar al menos un producto")
+	}
+
+	seen := make(map[int]struct{}, len(req.ProductIDs))
+	deletedIDs := make([]int, 0, len(req.ProductIDs))
+
+	for _, id := range req.ProductIDs {
+		if id <= 0 {
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "product_id invalido")
+		}
+		if _, exists := seen[id]; exists {
+			continue
+		}
+		seen[id] = struct{}{}
+
+		product, err := s.getOwnedProduct(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		if product.Status == 0 {
+			continue
+		}
+		if err := s.repo.SoftDelete(ctx, id); err != nil {
+			return nil, err
+		}
+		deletedIDs = append(deletedIDs, id)
+	}
+
+	return &productdto.BulkDeleteProductsResponse{DeletedIDs: deletedIDs, Count: len(deletedIDs)}, nil
 }
 
 func (s *productService) GetCompanyProducts(ctx context.Context, req *productdto.GetCompanyProductsRequest) (*productdto.GetCompanyProductsResponse, error) {

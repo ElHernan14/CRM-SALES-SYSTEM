@@ -11,7 +11,7 @@ type GetCompanyProductsRequest struct {
 	TypeID     *int   `json:"type_id" validate:"omitempty,gt=0"`
 	Type       string `json:"type" validate:"omitempty,min=2,max=80"`
 
-	Status int `json:"status" validate:"omitempty,min=0"`
+	Status *int `json:"status" validate:"omitempty,oneof=0 1"`
 
 	SortColumn string `json:"sort_column" validate:"omitempty,max=50,oneof=name description kind type category price stock"`
 	Order      string `json:"order" validate:"omitempty,oneof=asc desc"`

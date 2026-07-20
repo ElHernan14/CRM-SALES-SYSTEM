@@ -41,6 +41,7 @@ type GetProductsRequest struct {
 	Category   string  `validate:"omitempty,min=2,max=80" example:"Technology"`
 	TypeID     *int    `validate:"omitempty,gt=0" example:"3"`
 	Type       string  `validate:"omitempty,min=2,max=80" example:"Notebook"`
+	Status     *int    `validate:"omitempty,oneof=0 1" example:"1"`
 	MinPrice   float64 `validate:"omitempty,gte=0" example:"100"`
 	MaxPrice   float64 `validate:"omitempty,gte=0" example:"5000"`
 	CompanyID  *int    `validate:"omitempty,gt=0" example:"1"`
@@ -95,4 +96,13 @@ type UpdateProductRequest struct {
 	Price       *float64 `json:"price" validate:"omitempty,gte=0" example:"1350.75"`
 	Stock       *int     `json:"stock" validate:"omitempty,gte=0" example:"75"`
 	Status      *int     `json:"status" validate:"omitempty,oneof=0 1" example:"1"`
+}
+
+type BulkDeleteProductsRequest struct {
+	ProductIDs []int `json:"product_ids" validate:"required,min=1" example:"1,2,3"`
+}
+
+type BulkDeleteProductsResponse struct {
+	DeletedIDs []int `json:"deleted_ids"`
+	Count      int   `json:"count" example:"3"`
 }

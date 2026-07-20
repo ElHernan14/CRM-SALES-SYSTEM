@@ -13,7 +13,7 @@ import (
 
 type ProductRepository interface {
 	Create(ctx context.Context, p *models.Product) error
-	GetAll(ctx context.Context, search string, kind string, categoryID *int, category string, typeID *int, productType string, minPrice float64, maxPrice float64, companyID *int, limit int, offset int) ([]models.Product, int, error)
+	GetAll(ctx context.Context, search string, kind string, categoryID *int, category string, typeID *int, productType string, status *int, minPrice float64, maxPrice float64, companyID *int, limit int, offset int) ([]models.Product, int, error)
 	GetByID(ctx context.Context, id int) (*models.Product, error)
 	Update(ctx context.Context, p *models.Product) error
 	UpdateImage(ctx context.Context, productID int, imagePath string) error
@@ -41,7 +41,7 @@ func (r *productRepository) Create(ctx context.Context, p *models.Product) error
 	return r.db.QueryRowContext(ctx, query, p.CompanyID, p.Name, p.Description, p.Kind, p.CategoryID, p.TypeID, p.Price, p.Stock, p.ImagePath).Scan(&p.ID)
 }
 
-func (r *productRepository) GetAll(ctx context.Context, search string, kind string, categoryID *int, category string, typeID *int, productType string, minPrice float64, maxPrice float64, companyID *int, limit int, offset int) ([]models.Product, int, error) {
+func (r *productRepository) GetAll(ctx context.Context, search string, kind string, categoryID *int, category string, typeID *int, productType string, status *int, minPrice float64, maxPrice float64, companyID *int, limit int, offset int) ([]models.Product, int, error) {
 	baseQuery := `
 		FROM product p
 		INNER JOIN category_product cat ON cat.id = p.category_id
@@ -83,6 +83,11 @@ func (r *productRepository) GetAll(ctx context.Context, search string, kind stri
 	} else if productType != "" {
 		baseQuery += fmt.Sprintf(" AND LOWER(pt.name) = LOWER($%d)", i)
 		args = append(args, productType)
+		i++
+	}
+	if status != nil {
+		baseQuery += fmt.Sprintf(" AND p.status = $%d", i)
+		args = append(args, *status)
 		i++
 	}
 	if minPrice > 0 {
@@ -240,9 +245,9 @@ func (r *productRepository) ListByCompanyID(ctx context.Context, companyID int, 
 		args = append(args, req.Type)
 		argPos++
 	}
-	if req.Status != 0 {
+	if req.Status != nil {
 		baseQuery += fmt.Sprintf(" AND p.status = $%d", argPos)
-		args = append(args, req.Status)
+		args = append(args, *req.Status)
 		argPos++
 	}
 

@@ -78,7 +78,7 @@ func ParseGetCompanyProductsRequest(r *http.Request) (*productdto.GetCompanyProd
 	if v := q.Get("category_id"); v != "" {
 		categoryID, err := strconv.Atoi(v)
 		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "category_id invÃ¡lido")
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "category_id invalido")
 		}
 		req.CategoryID = &categoryID
 	}
@@ -91,10 +91,10 @@ func ParseGetCompanyProductsRequest(r *http.Request) (*productdto.GetCompanyProd
 	}
 	if v := q.Get("status"); v != "" {
 		status, err := strconv.Atoi(v)
-		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "status invÃ¡lido")
+		if err != nil || (status != 0 && status != 1) {
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "status invalido")
 		}
-		req.Status = status
+		req.Status = &status
 	}
 	if err := parsePagination(q.Get("page"), q.Get("limit"), &req.Page, &req.Limit); err != nil {
 		return nil, err
