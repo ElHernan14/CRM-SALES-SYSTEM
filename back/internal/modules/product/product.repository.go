@@ -89,6 +89,9 @@ func (r *productRepository) GetAll(ctx context.Context, search string, kind stri
 		baseQuery += fmt.Sprintf(" AND p.status = $%d", i)
 		args = append(args, *status)
 		i++
+		if *status == 1 {
+			baseQuery += " AND p.deleted_at IS NULL"
+		}
 	}
 	if minPrice > 0 {
 		baseQuery += fmt.Sprintf(" AND p.price >= $%d", i)
