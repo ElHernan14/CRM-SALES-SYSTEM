@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, toRef } from 'vue';
-import { Minus, Plus, Trash2, PackagePlus, Loader2 } from 'lucide-vue-next';
+import { computed, onUnmounted, ref, toRef, watch } from 'vue';
+import { Minus, Plus, Trash2, PackagePlus, Loader2, Search, Check } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
 import { useUiStore } from '@/shared/stores/ui.store';
@@ -8,6 +8,7 @@ import { useAuthStore } from '@/modules/auth/stores/auth.store';
 import { storeToRefs } from 'pinia';
 
 import type { InvoiceItem } from '../types/invoice-item.types';
+import type { ProductListItem } from '@/modules/products/types/product.types';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,13 +19,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import SkeletonBlock from '@/shared/components/erp/SkeletonBlock.vue';
 
 import { useInvoiceItems } from '../composables/useInvoiceItems';
@@ -51,8 +45,36 @@ const emit = defineEmits<{
 
 const invoiceIdRef = toRef(props, 'invoiceId');
 
+const productSearch = ref('');
+const selectedProduct = ref<ProductListItem | null>(null);
+const suggestionsOpen = ref(false);
+
 const page = ref(1);
 const limit = ref(10);
+
+const debouncedProductSearch = ref('');
+
+let productSearchTimer: ReturnType<typeof setTimeout> | undefined;
+
+watch(productSearch, (value) => {
+  if (selectedProduct.value && value !== selectedProduct.value.name) {
+    selectedProduct.value = null;
+  }
+
+  if (productSearchTimer) {
+    clearTimeout(productSearchTimer);
+  }
+
+  productSearchTimer = setTimeout(() => {
+    debouncedProductSearch.value = value.trim();
+  }, 300);
+});
+
+onUnmounted(() => {
+  if (productSearchTimer) {
+    clearTimeout(productSearchTimer);
+  }
+});
 
 const params = computed(() => ({
   page: page.value,
@@ -80,24 +102,45 @@ const isRefreshingItems = computed(() => {
   return isFetching.value && !isLoading.value;
 });
 
-const selectedProductId = ref('');
 const newItemQuantity = ref('1');
 
 const productParams = computed(() => ({
   company_id: user.value?.company_id,
+
+  search: debouncedProductSearch.value.length >= 2 ? debouncedProductSearch.value : undefined,
+
+  status: 1 as const,
+
   page: 1,
-  limit: 100,
+  limit: 15,
 }));
 
 const { data: productsData, isLoading: productsLoading } = useProducts(productParams);
 
-const availableProducts = computed(() => {
+const productSuggestions = computed(() => {
+  if (debouncedProductSearch.value.length < 2 || selectedProduct.value) {
+    return [];
+  }
+
   return productsData.value?.data ?? [];
 });
 
-const selectedProduct = computed(() => {
-  return availableProducts.value.find((product) => product.id === Number(selectedProductId.value));
+const showProductSuggestions = computed(() => {
+  return suggestionsOpen.value && productSearch.value.trim().length >= 2 && !selectedProduct.value;
 });
+
+function selectProduct(product: ProductListItem) {
+  selectedProduct.value = product;
+  productSearch.value = product.name;
+  suggestionsOpen.value = false;
+}
+
+function clearSelectedProduct() {
+  selectedProduct.value = null;
+  productSearch.value = '';
+  debouncedProductSearch.value = '';
+  suggestionsOpen.value = false;
+}
 
 const selectedProductAvailableStock = computed(() => {
   if (!selectedProduct.value) return 0;
@@ -108,25 +151,25 @@ const selectedProductAvailableStock = computed(() => {
 async function addItem() {
   if (!props.invoiceId) return;
 
-  const productId = Number(selectedProductId.value);
+  const product = selectedProduct.value;
   const quantity = Number(newItemQuantity.value);
 
-  if (!productId) {
+  if (!product) {
     toast.error('Select a product');
     return;
   }
 
-  if (!quantity || quantity <= 0) {
+  if (!Number.isInteger(quantity) || quantity <= 0) {
     toast.error('Enter a valid quantity');
     return;
   }
 
-  if (selectedProduct.value && selectedProductAvailableStock.value <= 0) {
+  if (selectedProductAvailableStock.value <= 0) {
     toast.error('This product has no available stock');
     return;
   }
 
-  if (selectedProduct.value && quantity > selectedProductAvailableStock.value) {
+  if (quantity > selectedProductAvailableStock.value) {
     toast.error('Quantity exceeds available stock');
     return;
   }
@@ -134,18 +177,22 @@ async function addItem() {
   try {
     await createItemMutation.mutateAsync({
       invoiceId: props.invoiceId,
+
       payload: {
-        product_id: productId,
+        product_id: product.id,
         quantity,
       },
     });
 
     toast.success('Item added');
 
-    selectedProductId.value = '';
+    clearSelectedProduct();
     newItemQuantity.value = '1';
-  } catch {
-    toast.error('Failed to add item');
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.errorMessage ?? error?.response?.data?.message ?? 'Failed to add item';
+
+    toast.error(message);
   }
 }
 
@@ -218,27 +265,102 @@ function confirmDeleteItem(item: InvoiceItem) {
           </div>
 
           <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_120px_auto]">
-            <Select v-model="selectedProductId">
-              <SelectTrigger class="min-w-0">
-                <SelectValue
-                  :placeholder="productsLoading ? 'Loading products...' : 'Select product'"
+            <div class="relative min-w-0">
+              <div class="relative">
+                <Search
+                  class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                 />
-              </SelectTrigger>
 
-              <SelectContent>
-                <SelectItem
-                  v-for="product in availableProducts"
-                  :key="product.id"
-                  :value="String(product.id)"
+                <Input
+                  v-model="productSearch"
+                  class="pl-9"
+                  autocomplete="off"
+                  placeholder="Search product by name..."
+                  :disabled="createItemMutation.isPending.value"
+                  @focus="suggestionsOpen = true"
+                  @input="suggestionsOpen = true"
+                />
+              </div>
+
+              <div
+                v-if="showProductSuggestions"
+                class="absolute left-0 right-0 top-full z-50 mt-2 max-h-80 overflow-y-auto rounded-xl border border-border bg-popover p-1 shadow-xl"
+              >
+                <div
+                  v-if="productsLoading"
+                  class="flex items-center gap-2 px-3 py-4 text-sm text-muted-foreground"
                 >
-                  {{ product.name }} · ${{ product.price.toFixed(2) }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+                  <Loader2 class="h-4 w-4 animate-spin" />
+                  Searching products...
+                </div>
+
+                <button
+                  v-for="product in productSuggestions"
+                  v-else
+                  :key="product.id"
+                  type="button"
+                  class="flex w-full items-center justify-between gap-4 rounded-lg px-3 py-3 text-left transition hover:bg-muted"
+                  @mousedown.prevent="selectProduct(product)"
+                >
+                  <div class="min-w-0">
+                    <p class="truncate text-sm font-medium text-foreground">
+                      {{ product.name }}
+                    </p>
+
+                    <div
+                      class="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground"
+                    >
+                      <span>
+                        {{ product.category }}
+                      </span>
+
+                      <span>→</span>
+
+                      <span>
+                        {{ product.type }}
+                      </span>
+
+                      <span>·</span>
+
+                      <span>
+                        {{ formatCurrency(product.price) }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="shrink-0 text-right">
+                    <p
+                      class="text-xs font-medium"
+                      :class="
+                        (product.available_stock ?? product.stock) > 0
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : 'text-destructive'
+                      "
+                    >
+                      {{ product.available_stock ?? product.stock }}
+                      available
+                    </p>
+                  </div>
+                </button>
+
+                <div
+                  v-if="!productsLoading && productSuggestions.length === 0"
+                  class="px-3 py-6 text-center"
+                >
+                  <p class="text-sm font-medium text-foreground">No matching products</p>
+
+                  <p class="mt-1 text-xs text-muted-foreground">Try another product name.</p>
+                </div>
+              </div>
+            </div>
 
             <Input v-model="newItemQuantity" type="text" inputmode="numeric" placeholder="Qty" />
 
-            <Button type="button" :disabled="createItemMutation.isPending.value" @click="addItem">
+            <Button
+              type="button"
+              :disabled="!selectedProduct || createItemMutation.isPending.value"
+              @click="addItem"
+            >
               <Loader2
                 v-if="createItemMutation.isPending.value"
                 class="mr-2 h-4 w-4 animate-spin"
@@ -252,20 +374,57 @@ function confirmDeleteItem(item: InvoiceItem) {
 
           <div
             v-if="selectedProduct"
-            class="mt-3 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2"
+            class="mt-3 rounded-xl border border-primary/20 bg-primary/5 p-4"
           >
-            <span class="text-sm text-muted-foreground"> Available stock </span>
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex min-w-0 items-start gap-3">
+                <div
+                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background"
+                >
+                  <Check class="h-4 w-4 text-primary" />
+                </div>
 
-            <span
-              class="rounded-full px-2 py-1 text-xs font-medium"
-              :class="
-                selectedProductAvailableStock > 0
-                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                  : 'bg-destructive/10 text-destructive'
-              "
-            >
-              {{ selectedProductAvailableStock }} units
-            </span>
+                <div class="min-w-0">
+                  <p class="truncate text-sm font-semibold text-foreground">
+                    {{ selectedProduct.name }}
+                  </p>
+
+                  <p class="mt-1 text-xs text-muted-foreground">
+                    {{ selectedProduct.category }}
+                    →
+                    {{ selectedProduct.type }}
+                    ·
+                    {{ formatCurrency(selectedProduct.price) }}
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                :disabled="createItemMutation.isPending.value"
+                @click="clearSelectedProduct"
+              >
+                Change
+              </Button>
+            </div>
+
+            <div class="mt-4 flex items-center justify-between border-t border-primary/10 pt-3">
+              <span class="text-sm text-muted-foreground"> Available stock </span>
+
+              <span
+                class="rounded-full px-2.5 py-1 text-xs font-medium"
+                :class="
+                  selectedProductAvailableStock > 0
+                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                    : 'bg-destructive/10 text-destructive'
+                "
+              >
+                {{ selectedProductAvailableStock }}
+                units
+              </span>
+            </div>
           </div>
         </div>
 

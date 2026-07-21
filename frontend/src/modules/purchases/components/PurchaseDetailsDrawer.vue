@@ -60,6 +60,8 @@ const emit = defineEmits<{
   'update:open': [value: boolean];
 }>();
 
+const paymentBalanceLimit = ref(0);
+
 const paymentExpanded = ref(false);
 
 const paymentForm = reactive({
@@ -80,11 +82,11 @@ const paymentAmount = computed(() => {
 });
 
 const paymentAmountValid = computed(() => {
-  return paymentAmount.value > 0 && paymentAmount.value <= remainingAmount.value;
+  return paymentAmount.value > 0 && paymentAmount.value <= paymentBalanceLimit.value;
 });
 
 const balanceAfterPayment = computed(() => {
-  return Math.max(remainingAmount.value - paymentAmount.value, 0);
+  return Math.max(paymentBalanceLimit.value - paymentAmount.value, 0);
 });
 
 const willCompletePurchase = computed(() => {
@@ -149,10 +151,6 @@ const purchaseItems = computed(() => {
 
 const totalUnits = computed(() => {
   return purchaseItems.value.reduce((total, item) => total + item.quantity, 0);
-});
-
-const calculatedItemsSubtotal = computed(() => {
-  return purchaseItems.value.reduce((total, item) => total + item.subtotal, 0);
 });
 
 const itemsRefreshing = computed(() => {
@@ -242,10 +240,11 @@ function getStatusClass(status?: string) {
 function handlePay() {
   if (!invoice.value || !canPay.value) return;
 
-  paymentForm.amount = remainingAmount.value.toFixed(2);
+  paymentBalanceLimit.value = remainingAmount.value;
+
+  paymentForm.amount = paymentBalanceLimit.value.toFixed(2);
 
   paymentForm.method = 'transfer';
-
   paymentExpanded.value = true;
 }
 
@@ -255,8 +254,8 @@ watch(
     itemsExpanded.value = true;
     paymentsExpanded.value = false;
     paymentExpanded.value = false;
-
     paymentForm.amount = '';
+    paymentBalanceLimit.value = 0;
     paymentForm.method = 'transfer';
   }
 );
@@ -680,7 +679,7 @@ function validateNumberInput(event: KeyboardEvent) {
                 v-if="purchaseItems.length"
                 class="hidden text-sm font-semibold text-foreground sm:block"
               >
-                {{ formatCurrency(calculatedItemsSubtotal) }}
+                {{ formatCurrency(invoice.subtotal) }}
               </span>
 
               <ChevronUp v-if="itemsExpanded" class="h-4 w-4 text-muted-foreground" />
@@ -843,7 +842,7 @@ function validateNumberInput(event: KeyboardEvent) {
                   </div>
 
                   <p class="text-lg font-semibold text-foreground">
-                    {{ formatCurrency(calculatedItemsSubtotal) }}
+                    {{ formatCurrency(invoice.subtotal) }}
                   </p>
                 </div>
               </div>
@@ -1226,7 +1225,7 @@ function validateNumberInput(event: KeyboardEvent) {
                   </div>
 
                   <p
-                    v-if="paymentAmount > remainingAmount"
+                    v-if="!isPaying && paymentExpanded && paymentAmount > paymentBalanceLimit"
                     class="flex items-center gap-1 text-xs text-destructive"
                   >
                     <AlertCircle class="h-3.5 w-3.5" />

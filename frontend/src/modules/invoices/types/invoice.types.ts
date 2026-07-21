@@ -20,12 +20,18 @@ export type SortColumn = z.infer<typeof SortColumnSchema>;
 
 // Request completo
 export const GetCompanyInvoicesRequestSchema = z.object({
-  page: z.number(),
-  limit: z.number(),
+  page: z.number().min(1),
+  limit: z.number().min(1).max(100),
+
+  buyer_name: z.string().optional(),
+  seller_company: z.string().optional(),
+
   status_invoice: InvoiceStatusSchema.optional(),
   status: z.number().optional(),
-  sort_column: SortColumnSchema.optional(),
-  order: SortOrderSchema.optional(),
+
+  sort_column: z.enum(['created_at', 'total_amount', 'paid_amount', 'status_invoice']).optional(),
+
+  order: z.enum(['asc', 'desc']).optional(),
 });
 
 export type GetCompanyInvoicesRequest = z.infer<typeof GetCompanyInvoicesRequestSchema>;

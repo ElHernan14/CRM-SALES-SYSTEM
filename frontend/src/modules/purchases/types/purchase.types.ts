@@ -9,8 +9,8 @@ export const PurchaseListItemSchema = z.object({
   buyer_client_id: z.number(),
   seller_company_id: z.number(),
 
-  buyer_name: z.string(),
-  seller_company: z.string(),
+  seller_company: z.string().optional(),
+  buyer_name: z.string().optional(),
 
   status_invoice: InvoiceStatusSchema,
 
@@ -28,6 +28,8 @@ export const GetPurchasesRequestSchema = z.object({
 
   status_invoice: InvoiceStatusSchema.optional(),
   status: z.number().int().min(0).optional(),
+  seller_company: z.string().optional(),
+  buyer_name: z.string().optional(),
 
   sort_column: z.enum(['created_at', 'total_amount', 'paid_amount', 'status_invoice']).optional(),
 

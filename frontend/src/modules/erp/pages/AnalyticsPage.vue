@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ShoppingBag } from 'lucide-vue-next';
+import { BarChart3 } from 'lucide-vue-next';
 
 import PageContainer from '@/shared/components/erp/PageContainer.vue';
 import PageHeader from '@/shared/components/erp/PageHeader.vue';
@@ -9,14 +9,14 @@ import EmptyState from '@/shared/components/erp/EmptyState.vue';
 <template>
   <PageContainer>
     <PageHeader
-      title="Purchases"
-      description="Track invoices where your company acts as the buyer."
+      title="Analytics"
+      description="Visualize performance metrics and business insights."
     />
 
     <EmptyState
-      title="Purchases module coming soon"
-      description="Purchase workflows will be connected after the B2B marketplace flow."
-      :icon="ShoppingBag"
+      title="Analytics module coming soon"
+      description="Data visualization and reporting will be connected after the BI integration."
+      :icon="BarChart3"
     />
   </PageContainer>
 </template>

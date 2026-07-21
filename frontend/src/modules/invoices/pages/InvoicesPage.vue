@@ -1,6 +1,17 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { FileText, RefreshCw, MoreHorizontal, Plus } from 'lucide-vue-next';
+import { computed, ref, watch, unref } from 'vue';
+import {
+  FileText,
+  RefreshCw,
+  MoreHorizontal,
+  Plus,
+  Eye,
+  PackageSearch,
+  Send,
+  CreditCard,
+  Ban,
+  Search,
+} from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 import { useQueryClient } from '@tanstack/vue-query';
 
@@ -12,10 +23,10 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 import {
   type InvoiceStatus,
-  type SortOrder,
   type SortColumn,
   SortColumnSchema,
 } from '@/modules/invoices/types/invoice.types.ts';
@@ -61,9 +72,10 @@ async function refreshInvoicesWorkspace() {
 const page = ref(1);
 const limit = ref(10);
 
-const statusInvoice = defineModel<InvoiceStatus>('statusInvoice');
-const sortColumn = defineModel<SortColumn>('sortColumn');
-const order = defineModel<SortOrder>('order');
+const statusInvoice = ref('all');
+const buyerSearch = ref('');
+const sortColumn = ref<SortColumn>('created_at');
+const order = ref<'asc' | 'desc'>('desc');
 
 function handleSort(columnKey: string) {
   const key = columnKey as SortColumn;
@@ -76,16 +88,21 @@ function handleSort(columnKey: string) {
   order.value = 'desc';
 }
 
-watch([statusInvoice, sortColumn, order], () => {
+watch([buyerSearch, statusInvoice, sortColumn, order], () => {
   page.value = 1;
 });
 
 const invoiceParams = computed(() => ({
   page: page.value,
   limit: limit.value,
-  status_invoice: statusInvoice.value || undefined,
-  sort_column: sortColumn.value || undefined,
-  order: order.value || undefined,
+
+  status_invoice:
+    statusInvoice.value !== 'all' ? (statusInvoice.value as InvoiceStatus) : undefined,
+
+  buyer_name: buyerSearch.value.trim().length >= 2 ? buyerSearch.value.trim() : undefined,
+
+  sort_column: sortColumn.value,
+  order: order.value,
 }));
 
 const { data, isLoading, isError } = useInvoices(invoiceParams);
@@ -121,8 +138,9 @@ const rows = computed(() => {
 });
 
 function clearFilters() {
-  statusInvoice.value = undefined;
+  statusInvoice.value = 'all';
   sortColumn.value = 'created_at';
+  buyerSearch.value = '';
   order.value = 'desc';
   page.value = 1;
 }
@@ -133,6 +151,22 @@ function formatCurrency(value: unknown) {
 
 function formatDate(value: unknown) {
   return new Date(String(value)).toLocaleDateString();
+}
+
+function getStatusLabel(status: unknown) {
+  const s = String(unref(status) ?? 'all');
+  switch (s) {
+    case 'draft':
+      return 'Draft';
+    case 'pending':
+      return 'Pending';
+    case 'paid':
+      return 'Paid';
+    case 'cancelled':
+      return 'Cancelled';
+    default:
+      return 'All statuses';
+  }
 }
 
 // Permissions and actions based on invoice status
@@ -254,13 +288,29 @@ function handleInvoiceCreated(invoiceId: number) {
       </template>
 
       <div class="mb-5 space-y-4">
-        <div class="grid gap-3 md:grid-cols-3">
+        <div class="grid gap-3 md:grid-cols-[minmax(260px,1fr)_220px]">
+          <div class="relative">
+            <Search
+              class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            />
+
+            <Input
+              v-model="buyerSearch"
+              class="pl-9"
+              placeholder="Search buyer company or contact..."
+            />
+          </div>
+
           <Select v-model="statusInvoice">
             <SelectTrigger>
-              <SelectValue placeholder="Invoice status" />
+              <span :class="statusInvoice === 'all' ? 'text-muted-foreground' : 'text-foreground'">
+                {{ statusInvoice === 'all' ? 'All statuses' : getStatusLabel(statusInvoice) }}
+              </span>
             </SelectTrigger>
 
             <SelectContent>
+              <SelectItem value="all"> All statuses </SelectItem>
+
               <SelectItem value="draft"> Draft </SelectItem>
 
               <SelectItem value="pending"> Pending </SelectItem>
@@ -350,37 +400,37 @@ function handleInvoiceCreated(invoiceId: number) {
 
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem @click="openInvoiceDetails(row)">
+                    <Eye class="mr-2 h-4 w-4" />
                     View invoice
                   </DropdownMenuItem>
 
                   <DropdownMenuItem
-                    v-if="canManageItems(String(row.status_invoice))"
+                    v-if="row.status_invoice === 'draft'"
                     @click="openManageItems(row)"
                   >
+                    <PackageSearch class="mr-2 h-4 w-4" />
                     Manage items
                   </DropdownMenuItem>
 
                   <DropdownMenuItem
-                    v-if="canSubmit(String(row.status_invoice))"
+                    v-if="row.status_invoice === 'draft'"
                     @click="confirmSubmitInvoice(row)"
                   >
+                    <Send class="mr-2 h-4 w-4" />
                     Submit invoice
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem
-                    v-if="canViewPayments(String(row.status_invoice))"
-                    @click="openInvoicePayments(row)"
-                  >
-                    View payments
+                  <DropdownMenuItem @click="openInvoicePayments(row)">
+                    <CreditCard class="mr-2 h-4 w-4" />
+                    Payment history
                   </DropdownMenuItem>
-
-                  <DropdownMenuSeparator v-if="canCancel(String(row.status_invoice))" />
 
                   <DropdownMenuItem
                     v-if="canCancel(String(row.status_invoice))"
                     class="text-destructive"
                     @click="confirmCancelInvoice(row)"
                   >
+                    <Ban class="mr-2 h-4 w-4" />
                     Cancel invoice
                   </DropdownMenuItem>
                 </DropdownMenuContent>

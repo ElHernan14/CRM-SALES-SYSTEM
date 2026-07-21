@@ -12,9 +12,11 @@ import {
   RefreshCw,
   ShoppingBag,
   WalletCards,
+  Search,
 } from 'lucide-vue-next';
 
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 import {
   Select,
@@ -52,13 +54,15 @@ const limit = ref(10);
 
 const statusInvoice = ref('all');
 
+const supplierSearch = ref('');
+
 const sortColumn = ref<'created_at' | 'total_amount' | 'paid_amount' | 'status_invoice'>(
   'created_at'
 );
 
 const order = ref<'asc' | 'desc'>('desc');
 
-watch([statusInvoice, sortColumn, order], () => {
+watch([supplierSearch, statusInvoice, sortColumn, order], () => {
   page.value = 1;
 });
 
@@ -68,6 +72,8 @@ const purchaseParams = computed(() => ({
 
   status_invoice:
     statusInvoice.value !== 'all' ? (statusInvoice.value as InvoiceStatus) : undefined,
+
+  seller_company: supplierSearch.value.trim().length >= 2 ? supplierSearch.value.trim() : undefined,
 
   sort_column: sortColumn.value,
   order: order.value,
@@ -237,6 +243,7 @@ function handleSort(columnKey: string) {
 function clearFilters() {
   statusInvoice.value = 'all';
   sortColumn.value = 'created_at';
+  supplierSearch.value = '';
   order.value = 'desc';
   page.value = 1;
 }
@@ -355,7 +362,17 @@ function openPurchaseForPayment(purchase: PurchaseListItem) {
 
       <!-- Filters -->
       <div class="mb-5 space-y-4">
-        <div class="grid gap-3 md:grid-cols-[220px_220px_180px_auto]">
+        <div
+          class="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_220px_220px_180px_auto]"
+        >
+          <div class="relative">
+            <Search
+              class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            />
+
+            <Input v-model="supplierSearch" class="pl-9" placeholder="Search supplier..." />
+          </div>
+
           <Select v-model="statusInvoice">
             <SelectTrigger>
               <span :class="statusInvoice === 'all' ? 'text-muted-foreground' : 'text-foreground'">
@@ -365,6 +382,8 @@ function openPurchaseForPayment(purchase: PurchaseListItem) {
 
             <SelectContent>
               <SelectItem value="all"> All statuses </SelectItem>
+
+              <SelectItem value="draft"> Draft </SelectItem>
 
               <SelectItem value="pending"> Awaiting payment </SelectItem>
 

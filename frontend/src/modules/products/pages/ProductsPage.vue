@@ -1,6 +1,16 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { Package, MoreHorizontal, Plus, Loader2, Trash2 } from 'lucide-vue-next';
+import {
+  Package,
+  MoreHorizontal,
+  Plus,
+  Loader2,
+  CircleOff,
+  Eye,
+  ImageIcon,
+  Pencil,
+  Trash2,
+} from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
 import { Button } from '@/components/ui/button';
@@ -86,7 +96,7 @@ const categoryId = ref('all');
 const typeId = ref('all');
 const minPrice = ref('');
 const maxPrice = ref('');
-const status = ref('all');
+const status = ref('1');
 
 const productParams = computed(() => ({
   search: search.value || undefined,
@@ -428,14 +438,31 @@ async function executeBulkDelete() {
               </DropdownMenuTrigger>
 
               <DropdownMenuContent align="end">
-                <DropdownMenuItem @click="openProductImage(row)"> Change image </DropdownMenuItem>
+                <DropdownMenuItem @click="openProductImage(row)">
+                  <ImageIcon class="mr-2 h-4 w-4" />
+                  Change image
+                </DropdownMenuItem>
 
-                <DropdownMenuItem @click="openProductDetails(row)"> View details </DropdownMenuItem>
+                <DropdownMenuItem @click="openProductDetails(row)">
+                  <Eye class="mr-2 h-4 w-4" />
+                  View details
+                </DropdownMenuItem>
 
-                <DropdownMenuItem @click="openEditProduct(row)"> Edit product </DropdownMenuItem>
+                <DropdownMenuItem @click="openEditProduct(row)">
+                  <Pencil class="mr-2 h-4 w-4" />
+                  Edit product
+                </DropdownMenuItem>
 
-                <DropdownMenuItem class="text-destructive" @click="confirmDeleteProduct(row)">
+                <DropdownMenuItem
+                  v-if="Number(row.status) === 1"
+                  class="text-destructive"
+                  @click="confirmDeleteProduct(row)"
+                >
                   Delete product
+                </DropdownMenuItem>
+                <DropdownMenuItem v-else disabled>
+                  <CircleOff class="mr-2 h-4 w-4" />
+                  Product inactive
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
