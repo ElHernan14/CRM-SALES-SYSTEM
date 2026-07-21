@@ -111,6 +111,11 @@ const productParams = computed(() => ({
 
 watch([search, kind, status, categoryId, typeId, minPrice, maxPrice], () => {
   page.value = 1;
+  selectedProductIds.value = [];
+});
+
+watch(page, () => {
+  selectedProductIds.value = [];
 });
 
 function clearFilters() {
@@ -202,20 +207,6 @@ const allSelected = computed(() => {
   return rows.value.every((row) => selectedProductIds.value.includes(Number(row.id)));
 });
 
-function confirmBulkDelete() {
-  uiStore.openConfirm({
-    title: 'Delete selected products?',
-    description: `This action will delete ${selectedProductIds.value.length} selected products.`,
-    confirmText: 'Delete products',
-    cancelText: 'Cancel',
-    variant: 'destructive',
-    onConfirm: async () => {
-      toast.success('Selected products deleted');
-      selectedProductIds.value = [];
-    },
-  });
-}
-
 // Confirm delete product
 function confirmDeleteProduct(row: Record<string, unknown>) {
   const id = Number(row.id);
@@ -285,12 +276,6 @@ async function executeBulkDelete() {
     );
 
     selectedProductIds.value = [];
-
-    /*
-     * Si tu DataTable usa una key para resetear
-     * el checkbox del header, actualizala acá.
-     */
-    // tableSelectionVersion.value++
   } catch (error: any) {
     const message =
       error?.response?.data?.errorMessage ??
@@ -333,11 +318,29 @@ async function executeBulkDelete() {
         @clear="clearFilters"
       />
 
-      <BulkActionBar :selected-count="selectedProductIds.length">
-        <Button variant="outline" size="sm"> Export </Button>
+      <BulkActionBar :selected-count="selectedCount">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          :disabled="isBulkDeleting"
+          @click="selectedProductIds = []"
+        >
+          Clear selection
+        </Button>
 
-        <Button variant="destructive" size="sm" @click="confirmBulkDelete">
-          Delete selected
+        <Button
+          type="button"
+          variant="destructive"
+          size="sm"
+          :disabled="isBulkDeleting"
+          @click="requestBulkDelete"
+        >
+          <Loader2 v-if="isBulkDeleting" class="mr-2 h-4 w-4 animate-spin" />
+
+          <Trash2 v-else class="mr-2 h-4 w-4" />
+
+          {{ isBulkDeleting ? 'Deactivating...' : 'Deactivate selected' }}
         </Button>
       </BulkActionBar>
 
@@ -371,6 +374,7 @@ async function executeBulkDelete() {
         :rows="rows"
         :selected-rows="selectedProductIds"
         :header-checked="allSelected"
+        :selection-disabled="isBulkDeleting"
         @toggle-row="toggleProduct"
         @toggle-all="toggleAllProducts"
       >

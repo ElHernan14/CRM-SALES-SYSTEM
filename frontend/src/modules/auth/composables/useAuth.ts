@@ -1,74 +1,87 @@
-import { useAuthStore } from "@/modules/auth/stores/auth.store"
-import { login as loginApi, me } from "@/modules/auth/api/auth.api"
-import { router } from "@/app/router"
-import type { LoginRequest, TenantContext } from "@/modules/auth/types/auth.types"
+import { useAuthStore } from '@/modules/auth/stores/auth.store';
+import { login as loginApi, me } from '@/modules/auth/api/auth.api';
+import { router } from '@/app/router';
+import type { LoginRequest, TenantContext } from '@/modules/auth/types/auth.types';
+import { queryClient } from '@/app/providers/query-client';
 
 export async function login(credentials: LoginRequest) {
-  const auth = useAuthStore()
+  const auth = useAuthStore();
 
   try {
+    await queryClient.cancelQueries();
+    queryClient.clear();
     // 1. POST /auth/login
-    const response = await loginApi(credentials)
+    const response = await loginApi(credentials);
     // 2. Guardar token
-    auth.setToken(response.token)
+    auth.setToken(response.token);
 
     // 3. GET /auth/me
-    const user: TenantContext = await me()
+    const user: TenantContext = await me();
 
     // 4. Guardar user
-    auth.setUser(user)
-    auth.setInitialized(true)
+    auth.setUser(user);
+    auth.setInitialized(true);
 
     // 5. Redirección según TenantContext
     if (user.company_id) {
-      router.push("/erp/dashboard")
+      router.push('/erp/dashboard');
     } else {
-      router.push("/store/dashboard")
+      router.push('/store/dashboard');
     }
   } catch (error: any) {
-    console.error("Login error:", error.message)
-    throw error
+    console.error('Login error:', error.message);
+    throw error;
   }
 }
 
-export function logout() {
-  const auth = useAuthStore()
-  auth.logout()
-  router.push("/login")
+export async function logout() {
+  const auth = useAuthStore();
+  /*
+   * Detiene requests que todavía podrían escribir datos
+   * del tenant anterior en el cache.
+   */
+  await queryClient.cancelQueries();
+  /*
+   * Elimina queries y mutations de la sesión anterior.
+   */
+  queryClient.clear();
+
+  auth.logout();
+  router.push('/login');
 }
 
 export async function bootstrap() {
-  const auth = useAuthStore()
+  const auth = useAuthStore();
 
   // 1. Leer token
-  const token = localStorage.getItem("access_token")
+  const token = localStorage.getItem('access_token');
 
   if (!token) {
     // 2. No existe → inicializar
-    auth.setInitialized(true)
-    return
+    auth.setInitialized(true);
+    return;
   }
 
   try {
     // 3. Setear token
-    auth.setToken(token)
+    auth.setToken(token);
 
     // 4. Llamar /auth/me
-    const user = await me()
+    const user = await me();
 
     // 5. Guardar usuario
-    auth.setUser(user)
+    auth.setUser(user);
   } catch (error) {
-    console.error("Bootstrap error:", error)
+    console.error('Bootstrap error:', error);
     // Si falla, limpiar sesión
-    auth.logout()
+    auth.logout();
   } finally {
     // 6. Inicializar
-    auth.setInitialized(true)
+    auth.setInitialized(true);
 
     // Si ya estoy autenticado y estoy en /login, redirigir
-    if (auth.isAuthenticated && router.currentRoute.value.name === "login") {
-      router.replace("/erp/dashboard")
+    if (auth.isAuthenticated && router.currentRoute.value.name === 'login') {
+      router.replace('/erp/dashboard');
     }
   }
 }

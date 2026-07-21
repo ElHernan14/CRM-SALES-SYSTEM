@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-vue-next';
 
+import { computed, ref, watchEffect } from 'vue';
+
 const props = defineProps<{
   columns: {
     key: string;
@@ -13,6 +15,7 @@ const props = defineProps<{
   sortColumn?: string;
   sortOrder?: 'asc' | 'desc';
   sortableColumns?: string[];
+  selectionDisabled?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -24,6 +27,20 @@ const emit = defineEmits<{
 function isSortable(columnKey: string) {
   return props.sortableColumns?.includes(columnKey);
 }
+
+const headerCheckboxRef = ref<HTMLInputElement | null>(null);
+
+const someRowsSelected = computed(() => {
+  const selectedCount = props.rows.filter((row) => props.selectedRows?.includes(row.id)).length;
+
+  return selectedCount > 0 && selectedCount < props.rows.length;
+});
+
+watchEffect(() => {
+  if (!headerCheckboxRef.value) return;
+
+  headerCheckboxRef.value.indeterminate = someRowsSelected.value;
+});
 </script>
 
 <template>
@@ -33,9 +50,11 @@ function isSortable(columnKey: string) {
         <tr>
           <th v-if="selectable" class="w-10 border-b border-border px-4 py-3">
             <input
+              ref="headerCheckboxRef"
               type="checkbox"
               class="h-4 w-4 rounded border-border"
               :checked="headerChecked"
+              :disabled="selectionDisabled"
               @change="emit('toggleAll')"
             />
           </th>
@@ -80,6 +99,7 @@ function isSortable(columnKey: string) {
               type="checkbox"
               class="h-4 w-4 rounded border-border"
               :checked="selectedRows?.includes(row.id)"
+              :disabled="selectionDisabled"
               @change="emit('toggleRow', row)"
             />
           </td>
