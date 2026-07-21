@@ -199,7 +199,7 @@ func (c *ProductController) DeleteProduct(w http.ResponseWriter, r *http.Request
 func (c *ProductController) BulkDeleteProducts(w http.ResponseWriter, r *http.Request) error {
 	var req productdto.BulkDeleteProductsRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return errorHandler.NewAppError(http.StatusBadRequest, "body json invÃ¡lido")
+		return errorHandler.NewAppError(http.StatusBadRequest, "body json inválido")
 	}
 
 	msg, invalid := validatorx.ValidateStruct(req)

@@ -23,6 +23,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type InvoiceService interface {
@@ -340,6 +341,17 @@ func (s *invoiceService) GetByID(
 		return nil, err
 	}
 
+	buyerName := strings.TrimSpace(buyer.FirstName + " " + buyer.LastName)
+	if buyer.CompanyID != nil {
+		buyerCompany, err := s.CompanyRepo.GetByID(ctx, *buyer.CompanyID)
+		if err != nil {
+			return nil, err
+		}
+		if buyerCompany != nil && strings.TrimSpace(buyerCompany.Name) != "" {
+			buyerName = buyerCompany.Name
+		}
+	}
+
 	return &invoicedto.GetInvoiceResponse{
 		ID:              invoice.ID,
 		BuyerClientID:   invoice.BuyerClientID,
@@ -354,7 +366,7 @@ func (s *invoiceService) GetByID(
 		CreatedAt:       invoice.CreatedAt,
 		UpdatedAt:       invoice.UpdatedAt,
 		DeletedAt:       invoice.DeletedAt,
-		BuyerName:       buyer.FirstName + " " + buyer.LastName,
+		BuyerName:       buyerName,
 		SellerCompany:   seller.Name,
 	}, nil
 }

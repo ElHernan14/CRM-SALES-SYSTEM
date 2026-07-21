@@ -4,5 +4,5 @@ const (
 	InvoiceDraft    = "draft"
 	InvoicePending  = "pending"
 	InvoicePaid     = "paid"
-	InvoiceCanceled = "canceled"
+	InvoiceCanceled = "cancelled"
 )

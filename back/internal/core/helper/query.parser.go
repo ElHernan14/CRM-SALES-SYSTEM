@@ -21,7 +21,7 @@ func ParseGetClientsRequest(r *http.Request) (*clientdto.GetClientsRequest, erro
 	if v := q.Get("company_id"); v != "" {
 		id, err := strconv.Atoi(v)
 		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "company_id invÃ¡lido")
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "company_id inválido")
 		}
 		req.CompanyID = &id
 	}
@@ -52,12 +52,12 @@ func ParseGetInvoicePaymentsRequest(r *http.Request) (*invoicepaymentdto.GetInvo
 
 func ParseGetCompanyInvoicesRequest(r *http.Request) (*invoicedto.GetCompanyInvoicesRequest, error) {
 	q := r.URL.Query()
-	req := &invoicedto.GetCompanyInvoicesRequest{StatusInvoice: q.Get("status_invoice"), SortColumn: q.Get("sort_column"), Order: q.Get("order")}
+	req := &invoicedto.GetCompanyInvoicesRequest{StatusInvoice: q.Get("status_invoice"), BuyerName: q.Get("buyer_name"), SellerCompany: q.Get("seller_company"), SortColumn: q.Get("sort_column"), Order: q.Get("order")}
 
 	if v := q.Get("status"); v != "" {
 		status, err := strconv.Atoi(v)
 		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "status invÃ¡lido")
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "status inválido")
 		}
 		req.Status = status
 	}
@@ -130,14 +130,14 @@ func ParseGetStoreProductsRequest(r *http.Request) (*storedto.GetStoreProductsRe
 	if v := q.Get("company_id"); v != "" {
 		companyID, err := strconv.Atoi(v)
 		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "company_id invÃ¡lido")
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "company_id inválido")
 		}
 		req.CompanyID = &companyID
 	}
 	if v := q.Get("category_id"); v != "" {
 		categoryID, err := strconv.Atoi(v)
 		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "category_id invÃ¡lido")
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "category_id inválido")
 		}
 		req.CategoryID = &categoryID
 	}
@@ -151,14 +151,14 @@ func ParseGetStoreProductsRequest(r *http.Request) (*storedto.GetStoreProductsRe
 	if v := q.Get("min_price"); v != "" {
 		minPrice, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "min_price invÃ¡lido")
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "min_price inválido")
 		}
 		req.MinPrice = minPrice
 	}
 	if v := q.Get("max_price"); v != "" {
 		maxPrice, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "max_price invÃ¡lido")
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "max_price inválido")
 		}
 		req.MaxPrice = maxPrice
 	}
@@ -188,14 +188,14 @@ func parsePagination(rawPage string, rawLimit string, page *int, limit *int) err
 	if rawPage != "" {
 		parsed, err := strconv.Atoi(rawPage)
 		if err != nil {
-			return errorHandler.NewAppError(http.StatusBadRequest, "page invÃ¡lido")
+			return errorHandler.NewAppError(http.StatusBadRequest, "page inválido")
 		}
 		*page = parsed
 	}
 	if rawLimit != "" {
 		parsed, err := strconv.Atoi(rawLimit)
 		if err != nil {
-			return errorHandler.NewAppError(http.StatusBadRequest, "limit invÃ¡lido")
+			return errorHandler.NewAppError(http.StatusBadRequest, "limit inválido")
 		}
 		*limit = parsed
 	}

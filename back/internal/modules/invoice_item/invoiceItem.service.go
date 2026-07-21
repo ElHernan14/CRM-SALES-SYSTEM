@@ -108,7 +108,7 @@ func (s *invoiceItemService) Create(
 	if product.CompanyID != invoice.SellerCompanyID {
 		return nil, errorHandler.NewAppError(
 			http.StatusBadRequest,
-			"Producto invÃ¡lido para esta invoice",
+			"Producto inválido para esta invoice",
 		)
 	}
 
@@ -283,7 +283,7 @@ func (s *invoiceItemService) Update(
 	if item.InvoiceID != invoiceID {
 		return nil, errorHandler.NewAppError(
 			http.StatusBadRequest,
-			"invoice item invÃ¡lido",
+			"invoice item inválido",
 		)
 	}
 
@@ -430,7 +430,7 @@ func (s *invoiceItemService) Delete(
 	if item.InvoiceID != invoiceID {
 		return errorHandler.NewAppError(
 			http.StatusBadRequest,
-			"invoice item invÃ¡lido",
+			"invoice item inválido",
 		)
 	}
 

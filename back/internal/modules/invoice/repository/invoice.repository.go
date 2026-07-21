@@ -310,12 +310,14 @@ func (r *invoiceRepository) ListBySellerCompanyID(
 			i.created_at,
 			cb.first_name AS buyer_first_name,
 			cb.last_name AS buyer_last_name,
+			bco.name AS buyer_company_name,
 			co.name AS seller_company_name
     `
 
 	baseQuery := `
         FROM invoice i
 		LEFT JOIN client cb ON cb.id = i.buyer_client_id
+		LEFT JOIN company bco ON bco.id = cb.company_id
 		LEFT JOIN company co ON co.id = i.seller_company_id
 		WHERE i.seller_company_id = $1
     `
@@ -330,9 +332,21 @@ func (r *invoiceRepository) ListBySellerCompanyID(
 		argPos++
 	}
 
+	if req.BuyerName != "" {
+		baseQuery += fmt.Sprintf(" AND (cb.first_name ILIKE $%d OR cb.last_name ILIKE $%d OR CONCAT(cb.first_name, ' ', cb.last_name) ILIKE $%d OR bco.name ILIKE $%d)", argPos, argPos, argPos, argPos)
+		args = append(args, "%"+req.BuyerName+"%")
+		argPos++
+	}
+
+	if req.SellerCompany != "" {
+		baseQuery += fmt.Sprintf(" AND co.name ILIKE $%d", argPos)
+		args = append(args, "%"+req.SellerCompany+"%")
+		argPos++
+	}
+
 	// Filtro por status
 	if req.Status != 0 {
-		baseQuery += fmt.Sprintf(" AND status = $%d", argPos)
+		baseQuery += fmt.Sprintf(" AND i.status = $%d", argPos)
 		args = append(args, req.Status)
 		argPos++
 	}
@@ -371,7 +385,7 @@ func (r *invoiceRepository) ListBySellerCompanyID(
 	invoices := make([]*invoiceModel.Invoice, 0)
 	for rows.Next() {
 		var inv invoiceModel.Invoice
-		var buyerFirstName, buyerLastName sql.NullString
+		var buyerFirstName, buyerLastName, buyerCompanyName sql.NullString
 		var sellerCompanyName sql.NullString
 
 		err := rows.Scan(
@@ -384,13 +398,17 @@ func (r *invoiceRepository) ListBySellerCompanyID(
 			&inv.CreatedAt,
 			&buyerFirstName,
 			&buyerLastName,
+			&buyerCompanyName,
 			&sellerCompanyName,
 		)
 		if err != nil {
 			return nil, 0, err
 		}
 
-		inv.BuyerName = strings.TrimSpace(buyerLastName.String + " " + buyerFirstName.String)
+		inv.BuyerName = strings.TrimSpace(buyerFirstName.String + " " + buyerLastName.String)
+		if buyerCompanyName.Valid && strings.TrimSpace(buyerCompanyName.String) != "" {
+			inv.BuyerName = buyerCompanyName.String
+		}
 		inv.SellerName = sellerCompanyName.String
 
 		invoices = append(invoices, &inv)
@@ -470,13 +488,14 @@ func (r *invoiceRepository) ListByBuyerClientID(
 			i.total_amount,
 			i.paid_amount,
 			i.created_at,
-			(cb.first_name || ' ' || cb.last_name) AS buyer_name,
+			COALESCE(NULLIF(bco.name, ''), TRIM(cb.first_name || ' ' || cb.last_name)) AS buyer_name,
 			co.name AS seller_company_name
 	`
 
 	baseQuery := `
 		FROM invoice i
 		LEFT JOIN client cb ON cb.id = i.buyer_client_id
+		LEFT JOIN company bco ON bco.id = cb.company_id
 		LEFT JOIN company co ON co.id = i.seller_company_id
 		WHERE i.buyer_client_id = $1
 	`
@@ -487,6 +506,18 @@ func (r *invoiceRepository) ListByBuyerClientID(
 	if req.StatusInvoice != "" {
 		baseQuery += fmt.Sprintf(" AND i.status_invoice = $%d", argPos)
 		args = append(args, req.StatusInvoice)
+		argPos++
+	}
+
+	if req.BuyerName != "" {
+		baseQuery += fmt.Sprintf(" AND (cb.first_name ILIKE $%d OR cb.last_name ILIKE $%d OR CONCAT(cb.first_name, ' ', cb.last_name) ILIKE $%d OR bco.name ILIKE $%d)", argPos, argPos, argPos, argPos)
+		args = append(args, "%"+req.BuyerName+"%")
+		argPos++
+	}
+
+	if req.SellerCompany != "" {
+		baseQuery += fmt.Sprintf(" AND co.name ILIKE $%d", argPos)
+		args = append(args, "%"+req.SellerCompany+"%")
 		argPos++
 	}
 
