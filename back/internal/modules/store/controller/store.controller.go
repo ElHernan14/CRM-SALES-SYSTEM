@@ -64,12 +64,34 @@ func (c *StoreController) GetCart(w http.ResponseWriter, r *http.Request) error 
 	return json.NewEncoder(w).Encode(response.Success(res))
 }
 
+func (c *StoreController) GetCarts(w http.ResponseWriter, r *http.Request) error {
+	res, err := c.Service.GetCarts(r.Context())
+	if err != nil {
+		return err
+	}
+	return json.NewEncoder(w).Encode(response.Success(res))
+}
+
 func (c *StoreController) EnsureCart(w http.ResponseWriter, r *http.Request) error {
 	var req storedto.EnsureCartRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return errorHandler.NewAppError(http.StatusBadRequest, "json invalido")
 	}
 	res, err := c.Service.EnsureCart(r.Context(), &req)
+	if err != nil {
+		return err
+	}
+	return json.NewEncoder(w).Encode(response.Success(res))
+}
+
+func (c *StoreController) CheckoutAll(w http.ResponseWriter, r *http.Request) error {
+	req := &storedto.CheckoutAllRequest{}
+	if r.Body != nil && r.ContentLength > 0 {
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+			return errorHandler.NewAppError(http.StatusBadRequest, "json invalido")
+		}
+	}
+	res, err := c.Service.CheckoutAll(r.Context(), req)
 	if err != nil {
 		return err
 	}

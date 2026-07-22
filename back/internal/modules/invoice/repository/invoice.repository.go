@@ -19,6 +19,7 @@ type InvoiceRepository interface {
 	SetPaidAmount(ctx context.Context, tx *sql.Tx, invoiceID int, paidAmount float64) error
 	ListBySellerCompanyID(ctx context.Context, companyID int, req *invoicedto.GetCompanyInvoicesRequest) ([]*invoiceModel.Invoice, int, error)
 	ListByBuyerClientID(ctx context.Context, clientID int, req *invoicedto.GetCompanyInvoicesRequest) ([]*invoiceModel.Invoice, int, error)
+	ListActiveDraftsByBuyer(ctx context.Context, buyerClientID int, invoiceIDs []int) ([]*invoiceModel.Invoice, error)
 	GetActiveDraftByTenant(
 		ctx context.Context,
 		tenant *tenantHelper.TenantContext,
@@ -578,4 +579,64 @@ func (r *invoiceRepository) ListByBuyerClientID(
 	}
 
 	return invoices, total, rows.Err()
+}
+
+func (r *invoiceRepository) ListActiveDraftsByBuyer(ctx context.Context, buyerClientID int, invoiceIDs []int) ([]*invoiceModel.Invoice, error) {
+	query := `
+		SELECT
+			i.id,
+			i.buyer_client_id,
+			i.seller_company_id,
+			i.status_invoice,
+			i.subtotal,
+			i.taxes,
+			i.total_amount,
+			co.name AS seller_company_name
+		FROM invoice i
+		INNER JOIN company co ON co.id = i.seller_company_id
+		WHERE i.buyer_client_id = $1
+		  AND i.status_invoice = 'draft'
+		  AND i.status = 1
+	`
+
+	args := []interface{}{buyerClientID}
+	argPos := 2
+	if len(invoiceIDs) > 0 {
+		placeholders := make([]string, 0, len(invoiceIDs))
+		for _, id := range invoiceIDs {
+			placeholders = append(placeholders, fmt.Sprintf("$%d", argPos))
+			args = append(args, id)
+			argPos++
+		}
+		query += " AND i.id IN (" + strings.Join(placeholders, ",") + ")"
+	}
+	query += " ORDER BY co.name ASC, i.id ASC"
+
+	rows, err := r.DB.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	invoices := make([]*invoiceModel.Invoice, 0)
+	for rows.Next() {
+		var inv invoiceModel.Invoice
+		var sellerCompanyName sql.NullString
+		if err := rows.Scan(
+			&inv.ID,
+			&inv.BuyerClientID,
+			&inv.SellerCompanyID,
+			&inv.StatusInvoice,
+			&inv.Subtotal,
+			&inv.Taxes,
+			&inv.TotalAmount,
+			&sellerCompanyName,
+		); err != nil {
+			return nil, err
+		}
+		inv.SellerName = sellerCompanyName.String
+		invoices = append(invoices, &inv)
+	}
+
+	return invoices, rows.Err()
 }

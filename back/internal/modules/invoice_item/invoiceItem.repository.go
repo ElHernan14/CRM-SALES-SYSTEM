@@ -242,9 +242,10 @@ func (r *invoiceItemRepository) GetByInvoiceID(
 	var err error
 
 	baseQuery := `
-			 FROM invoice_item
-			WHERE invoice_id = $1
-			AND status = 1 `
+			 FROM invoice_item ii
+			 LEFT JOIN product p ON p.id = ii.product_id
+			WHERE ii.invoice_id = $1
+			AND ii.status = 1 `
 
 	countQuery := `SELECT COUNT(*) ` + baseQuery
 	var total int
@@ -254,9 +255,9 @@ func (r *invoiceItemRepository) GetByInvoiceID(
 	}
 
 	offset := (page - 1) * limit
-	dataQuery := `SELECT id, product_id, product_name, quantity, price, subtotal 
+	dataQuery := `SELECT ii.id, ii.product_id, ii.product_name, p.image_path, ii.quantity, ii.price, ii.subtotal 
 				` + baseQuery + `
-				ORDER BY id ASC
+				ORDER BY ii.id ASC
 				LIMIT $2 OFFSET $3`
 
 	rows, err := r.db.QueryContext(ctx, dataQuery, invoiceID, limit, offset)
@@ -273,6 +274,7 @@ func (r *invoiceItemRepository) GetByInvoiceID(
 			&item.ID,
 			&item.ProductID,
 			&item.ProductName,
+			&item.ProductImagePath,
 			&item.Quantity,
 			&item.Price,
 			&item.Subtotal,

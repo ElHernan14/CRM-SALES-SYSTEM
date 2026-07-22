@@ -4,8 +4,9 @@ type InvoiceItem struct {
 	ID        int
 	InvoiceID int
 
-	ProductID   int
-	ProductName string
+	ProductID        int
+	ProductName      string
+	ProductImagePath *string
 
 	Quantity int
 

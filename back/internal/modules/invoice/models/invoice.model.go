@@ -21,6 +21,6 @@ type Invoice struct {
 
 	Status int
 
-	BuyerName       string
-    SellerName      string
+	BuyerName  string
+	SellerName string
 }
