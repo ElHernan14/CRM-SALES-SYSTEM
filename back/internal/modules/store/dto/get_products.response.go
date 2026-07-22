@@ -35,3 +35,31 @@ type GetStoreProductsResponse struct {
 
 	Meta dto.Meta `json:"meta"`
 }
+
+type StoreProductDetailResponse struct {
+	ID int `json:"id" example:"1"`
+
+	CompanyID int `json:"company_id" example:"2"`
+
+	CompanyName string `json:"company_name" example:"TechNova"`
+
+	Name string `json:"name" example:"Notebook Lenovo"`
+
+	Description string `json:"description" example:"Business notebook"`
+
+	Kind string `json:"kind" example:"product"`
+
+	CategoryID int `json:"category_id" example:"1"`
+
+	Category string `json:"category" example:"Technology"`
+
+	TypeID int `json:"type_id" example:"3"`
+
+	Type string `json:"type" example:"Notebook"`
+
+	Price float64 `json:"price" example:"1200"`
+
+	AvailableStock int `json:"available_stock" example:"25"`
+
+	ImagePath *string `json:"image_path,omitempty" example:"/uploads/product/images/product_1.png"`
+}

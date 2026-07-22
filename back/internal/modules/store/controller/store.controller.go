@@ -10,6 +10,8 @@ import (
 	"crm-system-sales/internal/core/response"
 	storedto "crm-system-sales/internal/modules/store/dto"
 	service "crm-system-sales/internal/modules/store/service"
+
+	"github.com/gorilla/mux"
 )
 
 type StoreController struct {
@@ -26,6 +28,19 @@ func (c *StoreController) GetProducts(w http.ResponseWriter, r *http.Request) er
 		return err
 	}
 	res, err := c.Service.GetProducts(r.Context(), req)
+	if err != nil {
+		return err
+	}
+	return json.NewEncoder(w).Encode(response.Success(res))
+}
+
+func (c *StoreController) GetProductByID(w http.ResponseWriter, r *http.Request) error {
+	id, err := strconv.Atoi(mux.Vars(r)["id"])
+	if err != nil || id <= 0 {
+		return errorHandler.NewAppError(http.StatusBadRequest, "id invalido")
+	}
+
+	res, err := c.Service.GetProductByID(r.Context(), id)
 	if err != nil {
 		return err
 	}

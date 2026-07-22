@@ -20,6 +20,7 @@ import (
 
 type StoreService interface {
 	GetProducts(ctx context.Context, req *storedto.GetStoreProductsRequest) (*storedto.GetStoreProductsResponse, error)
+	GetProductByID(ctx context.Context, id int) (*storedto.StoreProductDetailResponse, error)
 	GetCart(ctx context.Context, sellerCompanyID int) (*storedto.CartResponse, error)
 	EnsureCart(ctx context.Context, req *storedto.EnsureCartRequest) (*storedto.EnsureCartResponse, error)
 	Checkout(ctx context.Context, req *storedto.CheckoutRequest) (*storedto.CheckoutResponse, error)
@@ -59,6 +60,37 @@ func (s *storeService) GetProducts(ctx context.Context, req *storedto.GetStorePr
 
 	meta := metadto.NewMeta(req.Page, req.Limit, total)
 	return &storedto.GetStoreProductsResponse{Items: items, Meta: meta}, nil
+}
+
+func (s *storeService) GetProductByID(ctx context.Context, id int) (*storedto.StoreProductDetailResponse, error) {
+	if id <= 0 {
+		return nil, errorHandler.NewAppError(http.StatusBadRequest, "product_id invalido")
+	}
+
+	product, err := s.ProductRepo.GetAvailableProductByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if product == nil {
+		return nil, errorHandler.NewAppError(http.StatusNotFound, "Producto no encontrado")
+	}
+
+	available := product.Stock - product.ReservedStock
+	return &storedto.StoreProductDetailResponse{
+		ID:             product.ID,
+		CompanyID:      product.CompanyID,
+		CompanyName:    product.CompanyName,
+		Name:           product.Name,
+		Description:    product.Description,
+		Kind:           product.Kind,
+		CategoryID:     product.CategoryID,
+		Category:       product.Category,
+		TypeID:         product.TypeID,
+		Type:           product.Type,
+		Price:          product.Price,
+		AvailableStock: available,
+		ImagePath:      product.ImagePath,
+	}, nil
 }
 
 func (s *storeService) GetCart(ctx context.Context, sellerCompanyID int) (*storedto.CartResponse, error) {

@@ -21,6 +21,7 @@ type ProductRepository interface {
 	GetByIDForUpdate(ctx context.Context, tx *sql.Tx, id int) (*models.Product, error)
 	ListByCompanyID(ctx context.Context, companyID int, req *productdto.GetCompanyProductsRequest) ([]*models.Product, int, error)
 	ListAvailableProducts(ctx context.Context, req *storedto.GetStoreProductsRequest) ([]*models.Product, int, error)
+	GetAvailableProductByID(ctx context.Context, id int) (*models.Product, error)
 }
 
 type productRepository struct {
@@ -394,4 +395,60 @@ func (r *productRepository) ListAvailableProducts(ctx context.Context, req *stor
 		products = append(products, &p)
 	}
 	return products, total, rows.Err()
+}
+
+func (r *productRepository) GetAvailableProductByID(ctx context.Context, id int) (*models.Product, error) {
+	query := `
+		SELECT
+			p.id,
+			p.company_id,
+			c.name AS company_name,
+			p.name,
+			p.description,
+			p.kind,
+			p.type_id,
+			pt.name AS type_name,
+			p.category_id,
+			cat.name AS category_name,
+			p.price,
+			p.stock,
+			p.reserved_stock,
+			p.image_path
+		FROM product p
+		INNER JOIN company c ON c.id = p.company_id
+		INNER JOIN category_product cat ON cat.id = p.category_id
+		INNER JOIN product_type pt ON pt.id = p.type_id
+		WHERE p.id = $1
+		  AND p.status = 1
+		  AND p.deleted_at IS NULL
+		  AND c.status = 1
+		  AND c.deleted_at IS NULL
+		  AND p.stock > p.reserved_stock
+	`
+
+	var p models.Product
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&p.ID,
+		&p.CompanyID,
+		&p.CompanyName,
+		&p.Name,
+		&p.Description,
+		&p.Kind,
+		&p.TypeID,
+		&p.Type,
+		&p.CategoryID,
+		&p.Category,
+		&p.Price,
+		&p.Stock,
+		&p.ReservedStock,
+		&p.ImagePath,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &p, nil
 }
