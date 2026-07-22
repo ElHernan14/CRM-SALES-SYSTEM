@@ -18,6 +18,7 @@ export const erpRoutes = [
     component: ERPLayout,
     meta: {
       requiresAuth: true,
+      requiresCompany: true,
     },
     children: [
       { path: 'dashboard', name: 'erp-dashboard', component: DashboardPage },

@@ -3,6 +3,15 @@ import { login as loginApi, me } from '@/modules/auth/api/auth.api';
 import { router } from '@/app/router';
 import type { LoginRequest, TenantContext } from '@/modules/auth/types/auth.types';
 import { queryClient } from '@/app/providers/query-client';
+import type { LocationQueryValue } from 'vue-router';
+
+function resolveRedirect(redirect: LocationQueryValue | LocationQueryValue[]) {
+  if (Array.isArray(redirect)) {
+    return redirect[0] ?? null;
+  }
+
+  return redirect ?? null;
+}
 
 export async function login(credentials: LoginRequest) {
   const auth = useAuthStore();
@@ -10,26 +19,37 @@ export async function login(credentials: LoginRequest) {
   try {
     await queryClient.cancelQueries();
     queryClient.clear();
-    // 1. POST /auth/login
+
     const response = await loginApi(credentials);
-    // 2. Guardar token
+
     auth.setToken(response.token);
 
-    // 3. GET /auth/me
     const user: TenantContext = await me();
 
-    // 4. Guardar user
     auth.setUser(user);
     auth.setInitialized(true);
 
-    // 5. Redirección según TenantContext
-    if (user.company_id) {
-      router.push('/erp/dashboard');
-    } else {
-      router.push('/store/dashboard');
+    const requestedRedirect = resolveRedirect(router.currentRoute.value.query.redirect);
+
+    /*
+     * Respetar el redirect sólo cuando coincide
+     * con el tipo de usuario autenticado.
+     */
+    if (requestedRedirect) {
+      const isErpDestination = requestedRedirect.startsWith('/erp');
+
+      const canUseRequestedDestination = !isErpDestination || Boolean(user.company_id);
+
+      if (canUseRequestedDestination) {
+        await router.replace(requestedRedirect);
+
+        return;
+      }
     }
-  } catch (error: any) {
-    console.error('Login error:', error.message);
+
+    await router.replace(user.company_id ? '/erp/dashboard' : '/store');
+  } catch (error: unknown) {
+    console.error('Login error:', error);
     throw error;
   }
 }

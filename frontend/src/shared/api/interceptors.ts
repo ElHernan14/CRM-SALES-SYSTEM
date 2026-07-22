@@ -1,33 +1,47 @@
 import { http } from './http';
-import { useAuthStore } from '@/modules/auth/stores/auth.store';
 import { router } from '@/app/router';
 import { clearSession } from '@/modules/auth/services/session.service';
 
+let handlingUnauthorized = false;
+
 export function setupInterceptors() {
-  http.interceptors.request.use((config) => {
-    const token = localStorage.getItem('access_token');
+  http.interceptors.request.use(
+    (config) => {
+      const token = localStorage.getItem('access_token');
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
 
-    return config;
-  });
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
 
   http.interceptors.response.use(
     (response) => response,
-    (error) => {
-      const auth = useAuthStore();
-      console.log(error);
 
-      if (error.response?.status === 401) {
-        // limpiar sesión
-        auth.logout();
-        clearSession();
+    async (error) => {
+      if (error.response?.status === 401 && !handlingUnauthorized) {
+        handlingUnauthorized = true;
 
-        // redirigir al login
-        if (router.currentRoute.value.path !== '/login') {
-          router.push('/login');
+        try {
+          await clearSession();
+
+          const currentRoute = router.currentRoute.value;
+
+          const publicAuthRoutes = ['/login', '/register'];
+
+          if (!publicAuthRoutes.some((path) => currentRoute.path.startsWith(path))) {
+            await router.replace({
+              path: '/login',
+              query: {
+                redirect: currentRoute.fullPath,
+              },
+            });
+          }
+        } finally {
+          handlingUnauthorized = false;
         }
       }
 

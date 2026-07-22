@@ -220,7 +220,7 @@ function favoriteProduct(product: StoreProduct) {
               class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary"
             >
               <Sparkles class="h-4 w-4" />
-              Curated commerce network
+              Discover products from trusted stores.
             </div>
 
             <h1 class="mt-5 text-4xl font-semibold tracking-[-0.035em] text-foreground sm:text-5xl">
@@ -480,11 +480,6 @@ function favoriteProduct(product: StoreProduct) {
             {{ data?.meta.total ?? 0 }}
             available results
           </p>
-        </div>
-
-        <div class="flex items-center gap-2 text-xs text-muted-foreground">
-          <Grid2X2 class="h-4 w-4" />
-          Curated grid view
         </div>
       </div>
 

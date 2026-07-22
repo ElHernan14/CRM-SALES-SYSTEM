@@ -1,12 +1,15 @@
+<script setup lang="ts">
+import { brand } from '@/shared/config/brand';
+</script>
+
 <template>
   <footer class="border-t border-border bg-muted/20">
     <div class="mx-auto grid max-w-[1500px] gap-10 px-6 py-12 md:grid-cols-4">
       <div class="md:col-span-2">
-        <p class="text-xl font-semibold tracking-tight">SYNER</p>
+        <p class="text-xl font-semibold tracking-tight">{{ brand.name }}</p>
 
         <p class="mt-3 max-w-md text-sm leading-6 text-muted-foreground">
-          Discover products and services from companies connected through one unified commerce
-          platform.
+          {{ brand.storeDescription }}
         </p>
       </div>
 
@@ -19,8 +22,6 @@
           </RouterLink>
 
           <button class="block transition hover:text-foreground">Categories</button>
-
-          <button class="block transition hover:text-foreground">Featured stores</button>
         </div>
       </div>
 
@@ -47,7 +48,7 @@
       <div
         class="mx-auto flex max-w-[1500px] flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between"
       >
-        <span> © 2026 SYNER Commerce Platform </span>
+        <span> {{ brand.copyright }} Multi-tenant commerce and operations platform </span>
 
         <span> Secure multi-tenant commerce </span>
       </div>

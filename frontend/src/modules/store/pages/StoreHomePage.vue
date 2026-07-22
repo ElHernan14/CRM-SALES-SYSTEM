@@ -17,13 +17,6 @@ import { Button } from '@/components/ui/button';
         class="mx-auto grid min-h-[620px] max-w-[1500px] items-center gap-12 px-6 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:px-8"
       >
         <div class="relative">
-          <div
-            class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary"
-          >
-            <Sparkles class="h-4 w-4" />
-            A smarter way to discover commerce
-          </div>
-
           <h1
             class="mt-6 max-w-3xl text-5xl font-semibold tracking-[-0.045em] text-foreground sm:text-6xl lg:text-7xl"
           >
@@ -57,11 +50,6 @@ import { Button } from '@/components/ui/button';
             <div class="flex items-center gap-2">
               <Truck class="h-4 w-4 text-primary" />
               Real inventory
-            </div>
-
-            <div class="flex items-center gap-2">
-              <Sparkles class="h-4 w-4 text-primary" />
-              Curated discovery
             </div>
           </div>
         </div>

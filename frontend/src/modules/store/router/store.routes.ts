@@ -40,16 +40,7 @@ export const storeRoutes: RouteRecordRaw[] = [
         name: 'store-checkout',
         component: StoreCheckoutPage,
         meta: {
-          authOnly: true,
-        },
-      },
-      {
-        path: 'order-success/:invoiceId',
-        name: 'store-order-success',
-        component: StoreOrderSuccessPage,
-        props: true,
-        meta: {
-          authOnly: true,
+          requiresAuth: true,
         },
       },
       {
@@ -57,7 +48,15 @@ export const storeRoutes: RouteRecordRaw[] = [
         name: 'store-purchases',
         component: StorePurchasesPage,
         meta: {
-          authOnly: true,
+          requiresAuth: true,
+        },
+      },
+      {
+        path: 'order-success/:invoiceId',
+        name: 'store-order-success',
+        component: StoreOrderSuccessPage,
+        meta: {
+          requiresAuth: true,
         },
       },
     ],
