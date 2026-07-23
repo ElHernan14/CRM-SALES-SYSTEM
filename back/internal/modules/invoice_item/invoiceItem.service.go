@@ -566,12 +566,13 @@ func (s *invoiceItemService) GetInvoiceItems(
 
 	for _, item := range items {
 		resp.Items = append(resp.Items, invoiceItemDTO.InvoiceItemResponse{
-			ID:          item.ID,
-			ProductID:   item.ProductID,
-			ProductName: item.ProductName,
-			Quantity:    item.Quantity,
-			Price:       item.Price,
-			Subtotal:    item.Subtotal,
+			ID:               item.ID,
+			ProductID:        item.ProductID,
+			ProductName:      item.ProductName,
+			ProductImagePath: item.ProductImagePath,
+			Quantity:         item.Quantity,
+			Price:            item.Price,
+			Subtotal:         item.Subtotal,
 		})
 	}
 

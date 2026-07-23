@@ -22,6 +22,7 @@ import (
 type StoreService interface {
 	GetProducts(ctx context.Context, req *storedto.GetStoreProductsRequest) (*storedto.GetStoreProductsResponse, error)
 	GetProductByID(ctx context.Context, id int) (*storedto.StoreProductDetailResponse, error)
+	GetPurchases(ctx context.Context, req *storedto.GetStorePurchasesRequest) (*storedto.GetStorePurchasesResponse, error)
 	GetCart(ctx context.Context, sellerCompanyID int) (*storedto.CartResponse, error)
 	GetCarts(ctx context.Context) (*storedto.GetCartsResponse, error)
 	EnsureCart(ctx context.Context, req *storedto.EnsureCartRequest) (*storedto.EnsureCartResponse, error)
@@ -94,6 +95,41 @@ func (s *storeService) GetProductByID(ctx context.Context, id int) (*storedto.St
 		AvailableStock: available,
 		ImagePath:      product.ImagePath,
 	}, nil
+}
+
+func (s *storeService) GetPurchases(ctx context.Context, req *storedto.GetStorePurchasesRequest) (*storedto.GetStorePurchasesResponse, error) {
+	tenant := tenantHelper.GetTenant(ctx)
+	if tenant == nil || tenant.ClientID == nil {
+		return nil, errorHandler.NewAppError(http.StatusForbidden, "Solo clientes compradores")
+	}
+
+	purchases, total, err := s.InvoiceRepo.ListStorePurchasesByBuyer(ctx, *tenant.ClientID, req)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]storedto.StorePurchaseResponse, 0, len(purchases))
+	for _, purchase := range purchases {
+		remaining := purchase.TotalAmount - purchase.PaidAmount
+		if remaining < 0 {
+			remaining = 0
+		}
+		items = append(items, storedto.StorePurchaseResponse{
+			ID:              purchase.ID,
+			SellerCompanyID: purchase.SellerCompanyID,
+			SellerCompany:   purchase.SellerName,
+			StatusInvoice:   purchase.StatusInvoice,
+			Subtotal:        purchase.Subtotal,
+			Taxes:           purchase.Taxes,
+			TotalAmount:     purchase.TotalAmount,
+			PaidAmount:      purchase.PaidAmount,
+			RemainingAmount: remaining,
+			ItemCount:       purchase.ItemCount,
+			CreatedAt:       purchase.CreatedAt,
+		})
+	}
+
+	return &storedto.GetStorePurchasesResponse{Items: items, Meta: metadto.NewMeta(req.Page, req.Limit, total)}, nil
 }
 
 func (s *storeService) GetCart(ctx context.Context, sellerCompanyID int) (*storedto.CartResponse, error) {

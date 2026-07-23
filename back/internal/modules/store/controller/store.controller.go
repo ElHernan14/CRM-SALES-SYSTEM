@@ -47,6 +47,18 @@ func (c *StoreController) GetProductByID(w http.ResponseWriter, r *http.Request)
 	return json.NewEncoder(w).Encode(response.Success(res))
 }
 
+func (c *StoreController) GetPurchases(w http.ResponseWriter, r *http.Request) error {
+	req, err := helper.ParseGetStorePurchasesRequest(r)
+	if err != nil {
+		return err
+	}
+	res, err := c.Service.GetPurchases(r.Context(), req)
+	if err != nil {
+		return err
+	}
+	return json.NewEncoder(w).Encode(response.Success(res))
+}
+
 func (c *StoreController) GetCart(w http.ResponseWriter, r *http.Request) error {
 	rawSellerID := r.URL.Query().Get("seller_company_id")
 	if rawSellerID == "" {

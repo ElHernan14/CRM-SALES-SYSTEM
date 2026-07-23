@@ -168,6 +168,28 @@ func ParseGetStoreProductsRequest(r *http.Request) (*storedto.GetStoreProductsRe
 	return validateRequest(req)
 }
 
+func ParseGetStorePurchasesRequest(r *http.Request) (*storedto.GetStorePurchasesRequest, error) {
+	q := r.URL.Query()
+	req := &storedto.GetStorePurchasesRequest{
+		Search:        q.Get("search"),
+		StatusInvoice: q.Get("status_invoice"),
+		SortColumn:    q.Get("sort_column"),
+		Order:         q.Get("order"),
+	}
+
+	if v := q.Get("seller_company_id"); v != "" {
+		sellerCompanyID, err := strconv.Atoi(v)
+		if err != nil {
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "seller_company_id invalido")
+		}
+		req.SellerCompanyID = &sellerCompanyID
+	}
+	if err := parsePagination(q.Get("page"), q.Get("limit"), &req.Page, &req.Limit); err != nil {
+		return nil, err
+	}
+	return validateRequest(req)
+}
+
 func ParseGetSuppliersRequest(r *http.Request) (*marketplacedto.GetSuppliersRequest, error) {
 	q := r.URL.Query()
 	req := &marketplacedto.GetSuppliersRequest{Search: q.Get("search"), Category: q.Get("category"), SortColumn: q.Get("sort_column"), Order: q.Get("order")}

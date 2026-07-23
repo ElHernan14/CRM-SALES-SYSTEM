@@ -5,8 +5,9 @@ type InvoiceItemResponse struct {
 
 	InvoiceID *int `json:"invoice_id,omitempty" example:"15"`
 
-	ProductID   int    `json:"product_id" example:"12"`
-	ProductName string `json:"product_name" example:"Notebook Lenovo ThinkPad"`
+	ProductID        int     `json:"product_id" example:"12"`
+	ProductName      string  `json:"product_name" example:"Notebook Lenovo ThinkPad"`
+	ProductImagePath *string `json:"product_image_path,omitempty" example:"/uploads/product/images/product_12.png"`
 
 	Quantity int `json:"quantity" example:"3"`
 

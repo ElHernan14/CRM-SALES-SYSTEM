@@ -5,6 +5,7 @@ import (
 	tenantHelper "crm-system-sales/internal/core/tenant"
 	invoicedto "crm-system-sales/internal/modules/invoice/dto"
 	invoiceModel "crm-system-sales/internal/modules/invoice/models"
+	storedto "crm-system-sales/internal/modules/store/dto"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -20,6 +21,7 @@ type InvoiceRepository interface {
 	ListBySellerCompanyID(ctx context.Context, companyID int, req *invoicedto.GetCompanyInvoicesRequest) ([]*invoiceModel.Invoice, int, error)
 	ListByBuyerClientID(ctx context.Context, clientID int, req *invoicedto.GetCompanyInvoicesRequest) ([]*invoiceModel.Invoice, int, error)
 	ListActiveDraftsByBuyer(ctx context.Context, buyerClientID int, invoiceIDs []int) ([]*invoiceModel.Invoice, error)
+	ListStorePurchasesByBuyer(ctx context.Context, buyerClientID int, req *storedto.GetStorePurchasesRequest) ([]*invoiceModel.Invoice, int, error)
 	GetActiveDraftByTenant(
 		ctx context.Context,
 		tenant *tenantHelper.TenantContext,
@@ -639,4 +641,123 @@ func (r *invoiceRepository) ListActiveDraftsByBuyer(ctx context.Context, buyerCl
 	}
 
 	return invoices, rows.Err()
+}
+
+func (r *invoiceRepository) ListStorePurchasesByBuyer(ctx context.Context, buyerClientID int, req *storedto.GetStorePurchasesRequest) ([]*invoiceModel.Invoice, int, error) {
+	allowedSortColumns := map[string]string{
+		"created_at":     "i.created_at",
+		"total_amount":   "i.total_amount",
+		"paid_amount":    "i.paid_amount",
+		"status_invoice": "i.status_invoice",
+	}
+	allowedOrders := map[string]string{"asc": "ASC", "desc": "DESC"}
+
+	selectQuery := `
+		SELECT
+			i.id,
+			i.seller_company_id,
+			co.name AS seller_company_name,
+			i.status_invoice,
+			i.subtotal,
+			i.taxes,
+			i.total_amount,
+			i.paid_amount,
+			COUNT(ii.id) AS item_count,
+			i.created_at
+	`
+	baseQuery := `
+		FROM invoice i
+		INNER JOIN company co ON co.id = i.seller_company_id
+		LEFT JOIN invoice_item ii ON ii.invoice_id = i.id AND ii.status = 1
+		WHERE i.buyer_client_id = $1
+		  AND i.status = 1
+		  AND i.status_invoice <> 'draft'
+	`
+	args := []interface{}{buyerClientID}
+	argPos := 2
+
+	if req.StatusInvoice != "" {
+		baseQuery += fmt.Sprintf(" AND i.status_invoice = $%d", argPos)
+		args = append(args, req.StatusInvoice)
+		argPos++
+	}
+	if req.SellerCompanyID != nil {
+		baseQuery += fmt.Sprintf(" AND i.seller_company_id = $%d", argPos)
+		args = append(args, *req.SellerCompanyID)
+		argPos++
+	}
+	if req.Search != "" {
+		baseQuery += fmt.Sprintf(` AND (
+			co.name ILIKE $%d
+			OR EXISTS (
+				SELECT 1
+				FROM invoice_item search_item
+				WHERE search_item.invoice_id = i.id
+				  AND search_item.status = 1
+				  AND search_item.product_name ILIKE $%d
+			)
+		)`, argPos, argPos)
+		args = append(args, "%"+req.Search+"%")
+		argPos++
+	}
+
+	groupBy := `
+		GROUP BY
+			i.id,
+			i.seller_company_id,
+			co.name,
+			i.status_invoice,
+			i.subtotal,
+			i.taxes,
+			i.total_amount,
+			i.paid_amount,
+			i.created_at
+	`
+
+	countQuery := "SELECT COUNT(*) FROM (SELECT i.id " + baseQuery + groupBy + ") AS purchases_count"
+	var total int
+	if err := r.DB.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	sortColumn := "i.created_at"
+	order := "DESC"
+	if v, ok := allowedSortColumns[req.SortColumn]; ok {
+		sortColumn = v
+	}
+	if v, ok := allowedOrders[strings.ToLower(req.Order)]; ok {
+		order = v
+	}
+
+	offset := (req.Page - 1) * req.Limit
+	dataQuery := selectQuery + baseQuery + groupBy + fmt.Sprintf(" ORDER BY %s %s LIMIT $%d OFFSET $%d", sortColumn, order, argPos, argPos+1)
+	args = append(args, req.Limit, offset)
+
+	rows, err := r.DB.QueryContext(ctx, dataQuery, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	invoices := make([]*invoiceModel.Invoice, 0)
+	for rows.Next() {
+		var inv invoiceModel.Invoice
+		if err := rows.Scan(
+			&inv.ID,
+			&inv.SellerCompanyID,
+			&inv.SellerName,
+			&inv.StatusInvoice,
+			&inv.Subtotal,
+			&inv.Taxes,
+			&inv.TotalAmount,
+			&inv.PaidAmount,
+			&inv.ItemCount,
+			&inv.CreatedAt,
+		); err != nil {
+			return nil, 0, err
+		}
+		invoices = append(invoices, &inv)
+	}
+
+	return invoices, total, rows.Err()
 }

@@ -23,4 +23,5 @@ type Invoice struct {
 
 	BuyerName  string
 	SellerName string
+	ItemCount  int
 }
