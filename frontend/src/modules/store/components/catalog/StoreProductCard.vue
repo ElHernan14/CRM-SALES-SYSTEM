@@ -10,6 +10,7 @@ import type { StoreProduct } from '../../types/store-product.types';
 defineProps<{
   product: StoreProduct;
   adding?: boolean;
+  actionsDisabled?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -136,7 +137,7 @@ function formatCurrency(value: number) {
         <Button
           type="button"
           class="rounded-full px-5"
-          :disabled="product.available_stock <= 0 || adding"
+          :disabled="product.available_stock <= 0 || actionsDisabled"
           @click="emit('add', product)"
         >
           <ShoppingBag v-if="!adding" class="mr-2 h-4 w-4" />

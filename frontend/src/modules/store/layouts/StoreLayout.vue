@@ -2,6 +2,7 @@
 import StoreHeader from '../components/layout/StoreHeader.vue';
 import StoreFooter from '../components/layout/StoreFooter.vue';
 import StoreMobileNavigation from '../components/layout/StoreMobileNavigation.vue';
+import StoreCartDrawer from '../components/cart/StoreCartDrawer.vue';
 </script>
 
 <template>
@@ -15,5 +16,7 @@ import StoreMobileNavigation from '../components/layout/StoreMobileNavigation.vu
     <StoreFooter />
 
     <StoreMobileNavigation />
+
+    <StoreCartDrawer />
   </div>
 </template>

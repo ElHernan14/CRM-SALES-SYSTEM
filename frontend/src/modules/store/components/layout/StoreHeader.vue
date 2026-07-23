@@ -179,6 +179,7 @@ function openAuthenticatedArea() {
         </DropdownMenu>
 
         <Button
+          v-if="isAuthenticated"
           variant="ghost"
           size="icon"
           class="relative rounded-full"

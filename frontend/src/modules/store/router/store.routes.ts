@@ -55,6 +55,7 @@ export const storeRoutes: RouteRecordRaw[] = [
         path: 'order-success/:invoiceId',
         name: 'store-order-success',
         component: StoreOrderSuccessPage,
+        props: true,
         meta: {
           requiresAuth: true,
         },

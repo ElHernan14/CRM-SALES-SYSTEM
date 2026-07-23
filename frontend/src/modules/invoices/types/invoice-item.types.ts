@@ -9,6 +9,7 @@ export const InvoiceItemSchema = z.object({
   quantity: z.number(),
   price: z.number(),
   subtotal: z.number(),
+  product_image_path: z.string().nullable().optional(),
 });
 
 export type InvoiceItem = z.infer<typeof InvoiceItemSchema>;

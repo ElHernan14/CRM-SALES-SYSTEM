@@ -28,6 +28,10 @@ export function usePayPurchase() {
         queryClient.invalidateQueries({
           queryKey: ['store-products'],
         }),
+
+        queryClient.invalidateQueries({
+          queryKey: ['store-purchases'],
+        }),
       ]);
     },
   });

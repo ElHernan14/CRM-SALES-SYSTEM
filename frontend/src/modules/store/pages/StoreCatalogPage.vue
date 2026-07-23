@@ -27,6 +27,7 @@ import DataPagination from '@/shared/components/erp/DataPagination.vue';
 import StoreProductCard from '../components/catalog/StoreProductCard.vue';
 
 import { useStoreCatalog } from '../composables/useStoreCatalog';
+import { useAddToStoreCart } from '../composables/useAddToStoreCart';
 
 import { useCategories } from '@/modules/categories/composables/useCategories';
 import { useProductTypes } from '@/modules/product-types/composables/useProductTypes';
@@ -73,6 +74,8 @@ watch(categoryId, () => {
 watch([debouncedSearch, categoryId, typeId, kind, minPrice, maxPrice, sortColumn, order], () => {
   page.value = 1;
 });
+
+const { addToCart, addingProductId, isAdding } = useAddToStoreCart();
 
 const selectedCategoryId = computed<number | null>(() => {
   return categoryId.value !== 'all' ? Number(categoryId.value) : null;
@@ -191,9 +194,7 @@ function openProduct(product: StoreProduct) {
 }
 
 function addProduct(product: StoreProduct) {
-  toast.success('Cart foundation ready', {
-    description: `${product.name} will be connected to the multi-seller cart next.`,
-  });
+  return addToCart(product, 1, true);
 }
 
 function favoriteProduct(product: StoreProduct) {
@@ -519,6 +520,8 @@ function favoriteProduct(product: StoreProduct) {
             v-for="product in products"
             :key="product.id"
             :product="product"
+            :adding="addingProductId === product.id"
+            :actions-disabled="isAdding"
             @view="openProduct"
             @add="addProduct"
             @favorite="favoriteProduct"

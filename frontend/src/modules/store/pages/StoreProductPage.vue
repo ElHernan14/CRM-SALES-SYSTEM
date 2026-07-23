@@ -27,6 +27,7 @@ import EmptyState from '@/shared/components/erp/EmptyState.vue';
 import { getProductImageUrl } from '@/shared/utils/assets';
 
 import { useStoreProduct } from '../composables/useStoreProduct';
+import { useAddToStoreCart } from '../composables/useAddToStoreCart';
 
 const route = useRoute();
 const router = useRouter();
@@ -40,7 +41,12 @@ const productId = computed<number | null>(() => {
 const { data: product, isLoading, isFetching, isError, refetch } = useStoreProduct(productId);
 
 const quantity = ref(1);
-const adding = ref(false);
+
+const { addToCart, addingProductId } = useAddToStoreCart();
+
+const adding = computed(() => {
+  return product.value !== undefined && addingProductId.value === product.value.id;
+});
 
 const isRefreshing = computed(() => {
   return isFetching.value && !isLoading.value;
@@ -84,36 +90,10 @@ function increaseQuantity() {
   quantity.value++;
 }
 
-async function addToCart() {
+async function handleAddToCart() {
   if (!product.value) return;
 
-  if (quantity.value < 1) {
-    toast.error('Select a valid quantity');
-    return;
-  }
-
-  if (quantity.value > availableStock.value) {
-    toast.error('Quantity exceeds available stock');
-    return;
-  }
-
-  try {
-    adding.value = true;
-
-    /*
-     * Temporal hasta conectar el carrito B2C
-     * multi-seller con backend.
-     */
-    await new Promise((resolve) => {
-      window.setTimeout(resolve, 450);
-    });
-
-    toast.success('Product ready for cart', {
-      description: `${quantity.value} × ${product.value.name}`,
-    });
-  } finally {
-    adding.value = false;
-  }
+  await addToCart(product.value, quantity.value, true);
 }
 
 function saveProduct() {
@@ -327,7 +307,7 @@ function saveProduct() {
             size="lg"
             class="mt-5 w-full rounded-full"
             :disabled="adding || availableStock <= 0"
-            @click="addToCart"
+            @click="handleAddToCart"
           >
             <Loader2 v-if="adding" class="mr-2 h-4 w-4 animate-spin" />
 

@@ -48,13 +48,22 @@ import { useCheckoutPurchase } from '../composables/useCheckoutPurchase';
 
 import type { PaymentMethod } from '../types/purchase-payment.types';
 import type { PurchaseListItem } from '../types/purchase.types';
+import type { StorePurchase } from '@/modules/store/types/store-purchase.types';
+
 import { toast } from 'vue-sonner';
 
-const props = defineProps<{
-  open: boolean;
-  purchase: PurchaseListItem | null;
-  initialAction?: 'overview' | 'checkout' | 'payment';
-}>();
+const props = withDefaults(
+  defineProps<{
+    open: boolean;
+    purchase: PurchaseListItem | StorePurchase | null;
+    initialAction?: 'overview' | 'checkout' | 'payment';
+    variant?: 'erp' | 'store';
+  }>(),
+  {
+    initialAction: 'overview',
+    variant: 'erp',
+  }
+);
 
 const emit = defineEmits<{
   'update:open': [value: boolean];
@@ -442,7 +451,10 @@ function validateNumberInput(event: KeyboardEvent) {
 
 <template>
   <Sheet :open="open" @update:open="emit('update:open', $event)">
-    <SheetContent class="w-full overflow-y-auto p-0 sm:max-w-2xl">
+    <SheetContent
+      class="flex w-full flex-col overflow-y-auto p-0"
+      :class="variant === 'store' ? 'sm:max-w-3xl' : 'sm:max-w-2xl'"
+    >
       <!-- HEADER -->
       <div class="border-b border-border bg-muted/20 px-6 py-5">
         <SheetHeader class="text-left">
@@ -455,10 +467,16 @@ function validateNumberInput(event: KeyboardEvent) {
               </div>
 
               <div class="min-w-0">
-                <SheetTitle> Purchase details </SheetTitle>
+                <SheetTitle>
+                  {{ variant === 'store' ? 'Order details' : 'Purchase details' }}
+                </SheetTitle>
 
-                <SheetDescription class="mt-1">
-                  Review the supplier order and its financial status.
+                <SheetDescription>
+                  {{
+                    variant === 'store'
+                      ? 'Review products, payments and the current order balance.'
+                      : 'Review buyer-side purchase information.'
+                  }}
                 </SheetDescription>
               </div>
             </div>
