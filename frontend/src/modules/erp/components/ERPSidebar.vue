@@ -12,6 +12,8 @@ import {
   BarChart3,
 } from 'lucide-vue-next';
 
+import NexoraBrand from '@/shared/components/brand/NexoraBrand.vue';
+
 const navItems = [
   {
     label: 'Dashboard',
@@ -70,8 +72,7 @@ const navItems = [
   <aside class="hidden w-64 border-r border-border bg-card/60 lg:flex lg:flex-col">
     <div class="flex h-16 items-center border-b border-border px-6">
       <div>
-        <p class="text-sm font-semibold text-foreground">CRM Commerce</p>
-        <p class="text-xs text-muted-foreground">ERP Workspace</p>
+        <NexoraBrand />
       </div>
     </div>
 

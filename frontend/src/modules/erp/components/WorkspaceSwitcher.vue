@@ -3,6 +3,12 @@ import { Building2, Check, ChevronsUpDown, Loader2, LogOut, ShoppingBag } from '
 
 import { useRoute, useRouter } from 'vue-router';
 
+import { computed } from 'vue';
+
+import { useCompanyMe } from '@/modules/company/composables/useCompanyMe';
+
+import { getCompanyLogoUrl } from '@/shared/utils/assets';
+
 import { Button } from '@/components/ui/button';
 
 import {
@@ -18,6 +24,12 @@ import { useLogout } from '@/modules/auth/composables/useLogout';
 
 const route = useRoute();
 const router = useRouter();
+
+const { data: company, isLoading: companyLoading } = useCompanyMe();
+
+const companyLogo = computed(() => {
+  return getCompanyLogoUrl(company.value?.logo);
+});
 
 const { logout, isLoggingOut } = useLogout();
 
@@ -35,28 +47,30 @@ function openStore() {
 <template>
   <DropdownMenu>
     <DropdownMenuTrigger as-child>
-      <Button
-        variant="ghost"
-        class="h-10 max-w-[240px] justify-between gap-2 rounded-xl border border-transparent px-2.5 hover:border-border hover:bg-muted/60 sm:px-3"
-      >
-        <div class="flex min-w-0 items-center gap-2.5">
-          <div
-            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/60"
-          >
-            <Building2 class="h-4 w-4 text-primary" />
-          </div>
+      <div class="flex min-w-0 items-center gap-2.5">
+        <div
+          class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/60"
+        >
+          <img
+            v-if="companyLogo"
+            :src="companyLogo"
+            :alt="company?.name ?? 'Company logo'"
+            class="h-full w-full object-contain p-1"
+          />
 
-          <div class="hidden min-w-0 text-left sm:block">
-            <p class="truncate text-sm font-semibold leading-none text-foreground">
-              Business workspace
-            </p>
-
-            <p class="mt-1 truncate text-[11px] text-muted-foreground">Nexora ERP</p>
-          </div>
+          <Building2 v-else class="h-4 w-4 text-primary" />
         </div>
 
-        <ChevronsUpDown class="h-4 w-4 shrink-0 text-muted-foreground" />
-      </Button>
+        <div class="hidden min-w-0 text-left sm:block">
+          <p class="truncate text-sm font-semibold leading-none text-foreground">
+            {{ companyLoading ? 'Loading workspace...' : (company?.name ?? 'Business workspace') }}
+          </p>
+
+          <p class="mt-1 truncate text-[11px] text-muted-foreground">
+            {{ company?.category ?? 'Nexora ERP' }}
+          </p>
+        </div>
+      </div>
     </DropdownMenuTrigger>
 
     <DropdownMenuContent align="start" class="w-72">
@@ -65,14 +79,27 @@ function openStore() {
       <DropdownMenuSeparator />
 
       <DropdownMenuItem class="gap-3 py-3" @click="openErp">
-        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-          <Building2 class="h-4 w-4 text-primary" />
+        <div
+          class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10"
+        >
+          <img
+            v-if="companyLogo"
+            :src="companyLogo"
+            :alt="company?.name ?? 'Company logo'"
+            class="h-full w-full object-contain p-1.5"
+          />
+
+          <Building2 v-else class="h-4 w-4 text-primary" />
         </div>
 
         <div class="min-w-0 flex-1">
-          <p class="text-sm font-medium">Business workspace</p>
+          <p class="truncate text-sm font-medium">
+            {{ company?.name ?? 'Business workspace' }}
+          </p>
 
-          <p class="mt-1 text-xs text-muted-foreground">Products, sales and operations</p>
+          <p class="mt-1 truncate text-xs text-muted-foreground">
+            {{ company?.category ?? 'Products, sales and operations' }}
+          </p>
         </div>
 
         <Check v-if="route.path.startsWith('/erp')" class="h-4 w-4 shrink-0 text-primary" />
