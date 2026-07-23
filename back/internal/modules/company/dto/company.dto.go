@@ -10,6 +10,12 @@ type CreateCompanyRequest struct {
 	Description *string `json:"description" validate:"omitempty,max=500"`
 }
 
+type UpdateMyCompanyRequest struct {
+	Name        *string `json:"name" validate:"omitempty,min=2,max=100"`
+	CategoryID  *int    `json:"category_id" validate:"omitempty,gt=0"`
+	Description *string `json:"description" validate:"omitempty,max=500"`
+}
+
 type CompanyResponse struct {
 	ID          int     `json:"id"`
 	Name        string  `json:"name"`

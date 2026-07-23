@@ -12,6 +12,7 @@ type CompanyRepository interface {
 	Create(tx *sql.Tx, c *company.Company) (*company.Company, error)
 	GetByID(ctx context.Context, id int) (*company.Company, error)
 	GetAll(ctx context.Context, search string, categoryID *int, category string, limit int, offset int) ([]company.Company, int, error)
+	UpdateMyCompany(ctx context.Context, companyID int, name *string, categoryID *int, category *string, description *string) (*company.Company, error)
 	UpdateLogo(ctx context.Context, companyID int, logoPath string) error
 	UpdateCoverImage(ctx context.Context, companyID int, coverImagePath string) error
 }
@@ -117,6 +118,35 @@ func (r *companyRepository) GetAll(ctx context.Context, search string, categoryI
 	}
 
 	return companies, total, rows.Err()
+}
+
+func (r *companyRepository) UpdateMyCompany(ctx context.Context, companyID int, name *string, categoryID *int, category *string, description *string) (*company.Company, error) {
+	query := `
+		UPDATE company
+		SET
+			name = COALESCE($1, name),
+			category_id = COALESCE($2, category_id),
+			category = COALESCE($3, category),
+			description = COALESCE($4, description)
+		WHERE id = $5
+		  AND deleted_at IS NULL
+		  AND status = 1
+	`
+
+	result, err := r.db.ExecContext(ctx, query, name, categoryID, category, description, companyID)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+	if rows == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	return r.GetByID(ctx, companyID)
 }
 
 func (r *companyRepository) UpdateLogo(ctx context.Context, companyID int, logoPath string) error {

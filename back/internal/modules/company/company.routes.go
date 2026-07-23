@@ -10,6 +10,7 @@ import (
 func RegisterCompanyRoutes(r *mux.Router, controller *CompanyController) {
 	companies := r.PathPrefix("/company").Subrouter()
 	companies.HandleFunc("/me", middleware.ErrorMiddleware(controller.GetMyCompany)).Methods("GET")
+	companies.HandleFunc("/me", middleware.RequirePermission(constants.CompanyUpdate)(middleware.ErrorMiddleware(controller.UpdateMyCompany))).Methods("PATCH")
 	companies.HandleFunc("/me/logo", middleware.RequirePermission(constants.CompanyUpdate)(middleware.ErrorMiddleware(controller.UploadLogo))).Methods("POST")
 	companies.HandleFunc("/me/cover-image", middleware.RequirePermission(constants.CompanyUpdate)(middleware.ErrorMiddleware(controller.UploadCoverImage))).Methods("POST")
 	companies.HandleFunc("/create", middleware.RequirePermission(constants.CompanyCreate)(middleware.ErrorMiddleware(controller.Create))).Methods("POST")

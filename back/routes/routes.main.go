@@ -72,7 +72,7 @@ func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 	imageStorage := files.NewLocalImageStorage(cfg.UploadDir)
 
 	// Services
-	authService := auth.NewAuthService(userRepository)
+	authService := auth.NewAuthService(db, userRepository, clientRepo, companyRepo, authRepo, categoryCompanyRepo)
 	userService := users.NewUserService(userRepository)
 	clientService := client.NewClientService(db, clientRepo, userRepository, authRepo)
 	companyService := company.NewCompanyService(db, companyRepo, clientRepo, authRepo, userRepository, categoryCompanyRepo, imageStorage)

@@ -48,6 +48,25 @@ func (c *CompanyController) GetMyCompany(w http.ResponseWriter, r *http.Request)
 	return json.NewEncoder(w).Encode(response.Success(res))
 }
 
+func (c *CompanyController) UpdateMyCompany(w http.ResponseWriter, r *http.Request) error {
+	var req companydto.UpdateMyCompanyRequest
+	if errDecode := json.NewDecoder(r.Body).Decode(&req); errDecode != nil {
+		return errorHandler.NewAppError(http.StatusBadRequest, "body invalido")
+	}
+
+	msg, invalid := validatorx.ValidateStruct(req)
+	if invalid {
+		return errorHandler.NewAppError(http.StatusBadRequest, msg)
+	}
+
+	res, err := c.service.UpdateMyCompany(r.Context(), &req)
+	if err != nil {
+		return err
+	}
+
+	return json.NewEncoder(w).Encode(response.Success(res))
+}
+
 func (c *CompanyController) GetCompanies(w http.ResponseWriter, r *http.Request) error {
 	q := r.URL.Query()
 	req := companydto.GetCompaniesRequest{Search: q.Get("search"), Category: q.Get("category"), Page: 1, Limit: 10}

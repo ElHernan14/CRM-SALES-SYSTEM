@@ -78,3 +78,43 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) error {
 	json.NewEncoder(w).Encode(response.Success(res))
 	return nil
 }
+
+func (c *AuthController) RegisterPersonal(w http.ResponseWriter, r *http.Request) error {
+	var req authdto.PersonalRegisterRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return errorHandler.NewAppError(http.StatusBadRequest, "Invalid request payload")
+	}
+
+	msg, invalid := validatorx.ValidateStruct(req)
+	if invalid {
+		return errorHandler.NewAppError(http.StatusBadRequest, msg)
+	}
+
+	res, err := c.AuthService.RegisterPersonal(r.Context(), &req)
+	if err != nil {
+		return err
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	return json.NewEncoder(w).Encode(response.Success(res))
+}
+
+func (c *AuthController) RegisterBusiness(w http.ResponseWriter, r *http.Request) error {
+	var req authdto.BusinessRegisterRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return errorHandler.NewAppError(http.StatusBadRequest, "Invalid request payload")
+	}
+
+	msg, invalid := validatorx.ValidateStruct(req)
+	if invalid {
+		return errorHandler.NewAppError(http.StatusBadRequest, msg)
+	}
+
+	res, err := c.AuthService.RegisterBusiness(r.Context(), &req)
+	if err != nil {
+		return err
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	return json.NewEncoder(w).Encode(response.Success(res))
+}

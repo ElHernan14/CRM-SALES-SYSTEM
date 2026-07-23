@@ -28,6 +28,7 @@ import (
 type CompanyService interface {
 	CreateCompany(ctx context.Context, req *companydto.CreateCompanyRequest) (*companydto.CompanyResponse, error)
 	GetMyCompany(ctx context.Context) (*companydto.CompanyResponse, error)
+	UpdateMyCompany(ctx context.Context, req *companydto.UpdateMyCompanyRequest) (*companydto.CompanyResponse, error)
 	GetCompanies(ctx context.Context, req *companydto.GetCompaniesRequest) (*companydto.GetCompaniesResponse, error)
 	GetByID(ctx context.Context, id int) (*companydto.CompanyResponse, error)
 	UploadLogo(ctx context.Context, file multipart.File, header *multipart.FileHeader) (*companydto.UploadCompanyLogoResponse, error)
@@ -138,6 +139,35 @@ func (s *companyService) GetMyCompany(ctx context.Context) (*companydto.CompanyR
 	}
 	if company == nil {
 		return nil, errorHandler.NewAppError(http.StatusNotFound, "empresa no encontrada")
+	}
+
+	return mapCompanyResponse(company), nil
+}
+
+func (s *companyService) UpdateMyCompany(ctx context.Context, req *companydto.UpdateMyCompanyRequest) (*companydto.CompanyResponse, error) {
+	tenant := tenant.GetTenant(ctx)
+	if tenant == nil || tenant.CompanyID == nil {
+		return nil, errorHandler.NewAppError(http.StatusForbidden, "usuario no pertenece a una empresa")
+	}
+
+	var categoryName *string
+	if req.CategoryID != nil {
+		category, err := s.categoryRepo.GetByID(ctx, *req.CategoryID)
+		if err != nil {
+			return nil, err
+		}
+		if category == nil {
+			return nil, errorHandler.NewAppError(http.StatusBadRequest, "categoria de empresa no encontrada")
+		}
+		categoryName = &category.Name
+	}
+
+	company, err := s.repo.UpdateMyCompany(ctx, *tenant.CompanyID, req.Name, req.CategoryID, categoryName, req.Description)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errorHandler.NewAppError(http.StatusNotFound, "empresa no encontrada")
+		}
+		return nil, err
 	}
 
 	return mapCompanyResponse(company), nil
