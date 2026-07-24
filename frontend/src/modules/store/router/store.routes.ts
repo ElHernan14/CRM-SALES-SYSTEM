@@ -14,6 +14,8 @@ const StoreOrderSuccessPage = () => import('@/modules/store/pages/StoreOrderSucc
 
 const StorePurchasesPage = () => import('@/modules/store/pages/StorePurchasesPage.vue');
 
+const StoreBusinessesPage = () => import('@/modules/store/pages/StoreBusinessesPage.vue');
+
 export const storeRoutes: RouteRecordRaw[] = [
   {
     path: '/store',
@@ -23,17 +25,29 @@ export const storeRoutes: RouteRecordRaw[] = [
         path: '',
         name: 'store-home',
         component: StoreHomePage,
+        meta: {
+          surface: 'store',
+          title: 'Nexora Store',
+        },
       },
       {
         path: 'catalog',
         name: 'store-catalog',
         component: StoreCatalogPage,
+        meta: {
+          surface: 'store',
+          title: 'Catalog',
+        },
       },
       {
         path: 'products/:productId',
         name: 'store-product',
         component: StoreProductPage,
         props: true,
+        meta: {
+          surface: 'store',
+          title: 'Product',
+        },
       },
       {
         path: 'checkout',
@@ -58,6 +72,23 @@ export const storeRoutes: RouteRecordRaw[] = [
         props: true,
         meta: {
           requiresAuth: true,
+        },
+      },
+      {
+        path: 'account',
+        name: 'store-account',
+        component: () => import('@/modules/account/pages/StoreAccountPage.vue'),
+        meta: {
+          requiresAuth: true,
+        },
+      },
+      {
+        path: 'businesses',
+        name: 'store-businesses',
+        component: StoreBusinessesPage,
+        meta: {
+          surface: 'store',
+          title: 'Businesses',
         },
       },
     ],

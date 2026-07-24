@@ -1,20 +1,18 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 
-import { useRouter } from 'vue-router';
-
 import {
-  ArrowDownUp,
   ChevronDown,
   Grid2X2,
   Loader2,
+  PackageSearch,
   RotateCcw,
   Search,
   SlidersHorizontal,
-  Sparkles,
+  X,
 } from 'lucide-vue-next';
 
-import { toast } from 'vue-sonner';
+import { useRoute, useRouter } from 'vue-router';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,26 +32,65 @@ import { useProductTypes } from '@/modules/product-types/composables/useProductT
 
 import type { StoreProduct } from '../types/store-product.types';
 
+const route = useRoute();
 const router = useRouter();
 
-const search = ref('');
-const debouncedSearch = ref('');
+const search = ref(getQueryString(route.query.search));
 
-const categoryId = ref('all');
-const typeId = ref('all');
-const kind = ref('all');
+const debouncedSearch = ref(getQueryString(route.query.search).trim());
 
-const minPrice = ref('');
-const maxPrice = ref('');
+const categoryId = ref(getQueryString(route.query.category_id) || 'all');
 
-const sortColumn = ref<'name' | 'created_at' | 'type' | 'price' | 'stock'>('created_at');
+const typeId = ref(getQueryString(route.query.type_id) || 'all');
 
-const order = ref<'asc' | 'desc'>('desc');
+const queryKind = getQueryString(route.query.kind);
+
+const kind = ref(queryKind === 'product' || queryKind === 'service' ? queryKind : 'all');
 
 const filtersOpen = ref(false);
 
-const page = ref(1);
+const page = ref(Number(route.query.page) > 0 ? Number(route.query.page) : 1);
+
+const minPrice = ref(getQueryString(route.query.min_price));
+
+const maxPrice = ref(getQueryString(route.query.max_price));
+
+const companyId = ref(getQueryString(route.query.company_id));
+
+const querySort = getQueryString(route.query.sort);
+
+const sortColumn = ref<'name' | 'created_at' | 'type' | 'price' | 'stock'>(
+  ['name', 'created_at', 'type', 'price', 'stock'].includes(querySort)
+    ? (querySort as 'name' | 'created_at' | 'type' | 'price' | 'stock')
+    : 'created_at'
+);
+
+const queryOrder = getQueryString(route.query.order);
+
+const order = ref<'asc' | 'desc'>(queryOrder === 'asc' ? 'asc' : 'desc');
 const limit = ref(12);
+
+function getQueryString(value: unknown) {
+  return typeof value === 'string' ? value : '';
+}
+
+const initialSearch = getQueryString(route.query.search);
+
+const initialCategoryId = getQueryString(route.query.category_id);
+
+const initialTypeId = getQueryString(route.query.type_id);
+
+const initialKind = getQueryString(route.query.kind);
+
+search.value = initialSearch;
+
+debouncedSearch.value = initialSearch.trim();
+
+categoryId.value = initialCategoryId || 'all';
+
+typeId.value = initialTypeId || 'all';
+
+kind.value = initialKind === 'product' || initialKind === 'service' ? initialKind : 'all';
 
 let searchTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -67,13 +104,72 @@ watch(search, (value) => {
   }, 300);
 });
 
-watch(categoryId, () => {
-  typeId.value = 'all';
+watch(categoryId, (newValue, oldValue) => {
+  if (oldValue && newValue !== oldValue) {
+    typeId.value = 'all';
+  }
 });
 
-watch([debouncedSearch, categoryId, typeId, kind, minPrice, maxPrice, sortColumn, order], () => {
-  page.value = 1;
+watch(
+  [debouncedSearch, categoryId, typeId, kind, minPrice, maxPrice, sortColumn, order, page],
+  () => {
+    const query: Record<string, string> = {};
+
+    if (debouncedSearch.value.length >= 2) {
+      query.search = debouncedSearch.value;
+    }
+
+    if (categoryId.value !== 'all') {
+      query.category_id = categoryId.value;
+    }
+
+    if (typeId.value !== 'all') {
+      query.type_id = typeId.value;
+    }
+
+    if (kind.value !== 'all') {
+      query.kind = kind.value;
+    }
+
+    if (minPrice.value !== '') {
+      query.min_price = minPrice.value;
+    }
+
+    if (maxPrice.value !== '') {
+      query.max_price = maxPrice.value;
+    }
+
+    if (sortColumn.value !== 'created_at') {
+      query.sort = sortColumn.value;
+    }
+
+    if (order.value !== 'desc') {
+      query.order = order.value;
+    }
+
+    if (page.value > 1) {
+      query.page = String(page.value);
+    }
+
+    if (companyId.value !== '') {
+      query.company_id = companyId.value;
+    }
+
+    router.replace({
+      name: 'store-catalog',
+      query,
+    });
+  }
+);
+
+const featuredCategories = computed(() => {
+  return productCategories.value.slice(0, 7);
 });
+
+function selectCategory(value: string) {
+  categoryId.value = value;
+  typeId.value = 'all';
+}
 
 const { addToCart, addingProductId, isAdding } = useAddToStoreCart();
 
@@ -128,6 +224,14 @@ const typeLabel = computed(() => {
   return selectedProductType.value?.name ?? 'All product types';
 });
 
+const hasInvalidPriceRange = computed(() => {
+  if (minPrice.value === '' || maxPrice.value === '') {
+    return false;
+  }
+
+  return Number(minPrice.value) > Number(maxPrice.value);
+});
+
 const productParams = computed(() => ({
   page: page.value,
   limit: limit.value,
@@ -138,11 +242,15 @@ const productParams = computed(() => ({
 
   category_id: categoryId.value !== 'all' ? Number(categoryId.value) : undefined,
 
+  company_id: companyId.value !== '' ? Number(companyId.value) : undefined,
+
   type_id: typeId.value !== 'all' ? Number(typeId.value) : undefined,
 
-  min_price: minPrice.value !== '' ? Number(minPrice.value) : undefined,
+  min_price:
+    !hasInvalidPriceRange.value && minPrice.value !== '' ? Number(minPrice.value) : undefined,
 
-  max_price: maxPrice.value !== '' ? Number(maxPrice.value) : undefined,
+  max_price:
+    !hasInvalidPriceRange.value && maxPrice.value !== '' ? Number(maxPrice.value) : undefined,
 
   sort_column: sortColumn.value,
   order: order.value,
@@ -171,6 +279,7 @@ function clearFilters() {
   search.value = '';
   debouncedSearch.value = '';
 
+  companyId.value = '';
   categoryId.value = 'all';
   typeId.value = 'all';
   kind.value = 'all';
@@ -197,11 +306,29 @@ function addProduct(product: StoreProduct) {
   return addToCart(product, 1, true);
 }
 
-function favoriteProduct(product: StoreProduct) {
-  toast.success('Saved for later', {
-    description: product.name,
-  });
-}
+const activeDiscoveryLabel = computed(() => {
+  if (debouncedSearch.value) {
+    return `Results for “${debouncedSearch.value}”`;
+  }
+
+  if (selectedProductType.value) {
+    return selectedProductType.value.name;
+  }
+
+  if (selectedCategory.value) {
+    return selectedCategory.value.name;
+  }
+
+  if (kind.value === 'product') {
+    return 'Products';
+  }
+
+  if (kind.value === 'service') {
+    return 'Services';
+  }
+
+  return 'All available resources';
+});
 </script>
 
 <template>
@@ -217,20 +344,16 @@ function favoriteProduct(product: StoreProduct) {
       <div class="relative mx-auto max-w-[1500px] px-6 py-14 lg:px-8">
         <div class="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
           <div class="max-w-3xl">
-            <div
-              class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary"
-            >
-              <Sparkles class="h-4 w-4" />
-              Discover products from trusted stores.
-            </div>
+            <p class="text-sm font-semibold text-primary">Nexora catalog</p>
 
-            <h1 class="mt-5 text-4xl font-semibold tracking-[-0.035em] text-foreground sm:text-5xl">
-              Discover products built for
-              <span class="text-muted-foreground"> everyday life. </span>
+            <h1 class="mt-4 text-4xl font-semibold tracking-[-0.045em] text-foreground sm:text-5xl">
+              Products and services from
+              <span class="text-muted-foreground"> connected businesses. </span>
             </h1>
 
             <p class="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
-              Browse verified stores, compare categories and find products backed by real inventory.
+              Search real inventory, explore business categories and buy from companies operating
+              throughout Nexora.
             </p>
           </div>
 
@@ -250,6 +373,66 @@ function favoriteProduct(product: StoreProduct) {
     </section>
 
     <div class="mx-auto max-w-[1500px] space-y-8 px-6 py-8 lg:px-8">
+      <!-- CATEGORY DISCOVERY -->
+      <section v-if="categoriesLoading || featuredCategories.length > 0" class="space-y-4">
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Categories</p>
+
+            <h2 class="mt-2 text-xl font-semibold tracking-tight">Explore by what you need</h2>
+          </div>
+
+          <Button
+            v-if="categoryId !== 'all'"
+            variant="ghost"
+            size="sm"
+            class="rounded-full"
+            @click="selectCategory('all')"
+          >
+            <X class="mr-2 h-4 w-4" />
+            Clear category
+          </Button>
+        </div>
+
+        <div v-if="categoriesLoading" class="flex gap-3 overflow-hidden">
+          <div
+            v-for="index in 6"
+            :key="index"
+            class="h-12 w-40 shrink-0 animate-pulse rounded-full bg-muted"
+          />
+        </div>
+
+        <div v-else class="flex gap-3 overflow-x-auto pb-2">
+          <button
+            type="button"
+            class="inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition"
+            :class="
+              categoryId === 'all'
+                ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                : 'border-border bg-card text-muted-foreground hover:border-primary/30 hover:text-foreground'
+            "
+            @click="selectCategory('all')"
+          >
+            <Grid2X2 class="h-4 w-4" />
+            All products
+          </button>
+
+          <button
+            v-for="category in featuredCategories"
+            :key="category.id"
+            type="button"
+            class="inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition"
+            :class="
+              categoryId === String(category.id)
+                ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                : 'border-border bg-card text-muted-foreground hover:border-primary/30 hover:text-foreground'
+            "
+            @click="selectCategory(String(category.id))"
+          >
+            {{ category.name }}
+          </button>
+        </div>
+      </section>
       <!-- PRIMARY FILTERS -->
       <section class="rounded-[1.75rem] border border-border bg-card p-5 shadow-sm">
         <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_240px_auto]">
@@ -401,12 +584,24 @@ function favoriteProduct(product: StoreProduct) {
                 <label class="text-xs font-medium text-muted-foreground"> Minimum price </label>
 
                 <Input v-model="minPrice" inputmode="decimal" placeholder="0.00" />
+                <p
+                  v-if="hasInvalidPriceRange"
+                  class="md:col-span-2 xl:col-span-6 text-xs text-destructive"
+                >
+                  Minimum price cannot be greater than maximum price.
+                </p>
               </div>
 
               <div class="space-y-2">
                 <label class="text-xs font-medium text-muted-foreground"> Maximum price </label>
 
                 <Input v-model="maxPrice" inputmode="decimal" placeholder="0.00" />
+                <p
+                  v-if="hasInvalidPriceRange"
+                  class="md:col-span-2 xl:col-span-6 text-xs text-destructive"
+                >
+                  Minimum price cannot be greater than maximum price.
+                </p>
               </div>
 
               <div class="space-y-2">
@@ -458,12 +653,7 @@ function favoriteProduct(product: StoreProduct) {
               </div>
             </div>
 
-            <div class="flex items-center justify-between border-t border-border px-5 py-4">
-              <div class="flex items-center gap-2 text-xs text-muted-foreground">
-                <ArrowDownUp class="h-3.5 w-3.5" />
-                Refine your discovery experience
-              </div>
-
+            <div class="flex justify-end border-t border-border px-5 py-4">
               <Button variant="ghost" size="sm" @click="clearFilters">
                 <RotateCcw class="mr-2 h-4 w-4" />
                 Reset filters
@@ -473,14 +663,28 @@ function favoriteProduct(product: StoreProduct) {
         </Transition>
       </section>
 
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 class="text-xl font-semibold tracking-tight text-foreground">Explore the catalog</h2>
-
-          <p class="mt-1 text-sm text-muted-foreground">
-            {{ data?.meta.total ?? 0 }}
-            available results
+          <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+            Catalog results
           </p>
+
+          <h2 class="mt-2 text-2xl font-semibold tracking-tight text-foreground">
+            {{ activeDiscoveryLabel }}
+          </h2>
+
+          <p class="mt-2 text-sm text-muted-foreground">
+            {{ data?.meta.total ?? 0 }}
+            {{ data?.meta.total === 1 ? 'result available' : 'results available' }}
+          </p>
+        </div>
+
+        <div
+          v-if="isRefreshing"
+          class="inline-flex items-center gap-2 self-start rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground sm:self-auto"
+        >
+          <Loader2 class="h-3.5 w-3.5 animate-spin" />
+          Updating catalog
         </div>
       </div>
 
@@ -524,7 +728,6 @@ function favoriteProduct(product: StoreProduct) {
             :actions-disabled="isAdding"
             @view="openProduct"
             @add="addProduct"
-            @favorite="favoriteProduct"
           />
         </div>
 

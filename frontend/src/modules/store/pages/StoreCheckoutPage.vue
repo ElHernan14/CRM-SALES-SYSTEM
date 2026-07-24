@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 
 import {
   ArrowLeft,
+  BadgeCheck,
   Building2,
   CheckCircle2,
   ImageIcon,
@@ -12,7 +13,6 @@ import {
   PackageCheck,
   ShieldCheck,
   ShoppingBag,
-  Sparkles,
 } from 'lucide-vue-next';
 
 import { toast } from 'vue-sonner';
@@ -146,22 +146,34 @@ async function completeCheckout() {
         </Button>
 
         <div class="mt-8 max-w-3xl">
-          <div
-            class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary"
-          >
-            <LockKeyhole class="h-4 w-4" />
-            Secure checkout
-          </div>
+          <p class="text-sm font-semibold text-primary">Nexora checkout</p>
 
-          <h1 class="mt-5 text-4xl font-semibold tracking-[-0.04em] text-foreground sm:text-5xl">
-            Review and complete
-            <span class="text-muted-foreground"> your purchase. </span>
+          <h1 class="mt-4 text-4xl font-semibold tracking-[-0.045em] text-foreground sm:text-5xl">
+            Review your orders before
+            <span class="text-muted-foreground"> submitting the purchase. </span>
           </h1>
 
           <p class="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
-            Nexora organizes your products into one order per seller while completing the entire
-            checkout as a single protected operation.
+            Products remain grouped by seller, while Nexora validates and submits every order in one
+            transactional operation.
           </p>
+
+          <div class="mt-6 flex flex-wrap gap-5 text-sm text-muted-foreground">
+            <span class="flex items-center gap-2">
+              <BadgeCheck class="h-4 w-4 text-primary" />
+              Verified sellers
+            </span>
+
+            <span class="flex items-center gap-2">
+              <PackageCheck class="h-4 w-4 text-primary" />
+              Inventory validation
+            </span>
+
+            <span class="flex items-center gap-2">
+              <LockKeyhole class="h-4 w-4 text-primary" />
+              Atomic submission
+            </span>
+          </div>
         </div>
       </div>
     </section>
@@ -257,7 +269,11 @@ async function completeCheckout() {
                   {{ cart.seller_company }}
                 </p>
 
-                <p class="mt-1 text-xs text-muted-foreground">Independent seller order</p>
+                <div class="mt-1 flex items-center gap-2">
+                  <p class="text-xs text-muted-foreground">Independent seller order</p>
+
+                  <BadgeCheck class="h-3.5 w-3.5 text-primary" />
+                </div>
               </div>
             </div>
 
@@ -288,20 +304,29 @@ async function completeCheckout() {
 
               <div class="min-w-0 flex-1">
                 <div class="flex items-start justify-between gap-4">
-                  <div>
+                  <div class="min-w-0">
                     <p class="line-clamp-2 text-sm font-semibold">
                       {{ item.product_name }}
                     </p>
 
                     <p class="mt-1 text-xs text-muted-foreground">
-                      {{ item.quantity }} ×
+                      {{ item.quantity }}
+                      {{ item.quantity === 1 ? 'unit' : 'units' }}
+                      ·
                       {{ formatCurrency(item.price) }}
+                      each
                     </p>
                   </div>
 
-                  <p class="shrink-0 text-sm font-semibold">
-                    {{ formatCurrency(item.subtotal) }}
-                  </p>
+                  <div class="shrink-0 text-right">
+                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      Subtotal
+                    </p>
+
+                    <p class="mt-1 text-sm font-semibold">
+                      {{ formatCurrency(item.subtotal) }}
+                    </p>
+                  </div>
                 </div>
               </div>
             </article>
@@ -322,11 +347,12 @@ async function completeCheckout() {
               </span>
             </div>
 
-            <div class="flex justify-between border-t border-border pt-3 font-semibold">
-              <span>Seller total</span>
-              <span>
+            <div class="shrink-0 text-right">
+              <p class="text-[10px] uppercase tracking-wide text-muted-foreground">Order total</p>
+
+              <p class="mt-1 text-base font-semibold tracking-tight">
                 {{ formatCurrency(cart.total_amount) }}
-              </span>
+              </p>
             </div>
           </div>
         </section>
@@ -346,9 +372,12 @@ async function completeCheckout() {
               </div>
 
               <div>
-                <p class="text-sm font-semibold">Order summary</p>
+                <p class="text-sm font-semibold">Purchase summary</p>
 
-                <p class="mt-1 text-xs text-muted-foreground">Multi-seller checkout</p>
+                <p class="mt-1 text-xs text-muted-foreground">
+                  {{ summary.seller_count }}
+                  {{ summary.seller_count === 1 ? 'seller order' : 'seller orders' }}
+                </p>
               </div>
             </div>
           </div>
@@ -387,15 +416,17 @@ async function completeCheckout() {
                 </span>
               </div>
 
-              <div class="flex items-end justify-between border-t border-border pt-4">
-                <div>
-                  <p class="font-semibold">Total</p>
+              <div class="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                <p class="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                  Purchase total
+                </p>
 
-                  <p class="mt-1 text-xs text-muted-foreground">All seller orders included</p>
-                </div>
-
-                <p class="text-2xl font-semibold tracking-tight">
+                <p class="mt-2 text-3xl font-semibold tracking-[-0.04em]">
                   {{ formatCurrency(summary.total_amount) }}
+                </p>
+
+                <p class="mt-2 text-xs leading-5 text-muted-foreground">
+                  Includes all seller orders and calculated taxes.
                 </p>
               </div>
             </div>
@@ -405,11 +436,11 @@ async function completeCheckout() {
                 <ShieldCheck class="mt-0.5 h-4 w-4 shrink-0 text-primary" />
 
                 <div>
-                  <p class="text-sm font-medium">Transactional checkout</p>
+                  <p class="text-sm font-medium">Transactional order submission</p>
 
                   <p class="mt-1 text-xs leading-5 text-muted-foreground">
-                    Every seller order is confirmed together. If one validation fails, no order is
-                    submitted.
+                    Nexora validates every order together. If one seller order fails validation,
+                    none of the orders are submitted.
                   </p>
                 </div>
               </div>
@@ -425,35 +456,35 @@ async function completeCheckout() {
 
               <LockKeyhole v-else class="mr-2 h-4 w-4" />
 
-              {{ isCheckingOut ? 'Completing purchase...' : 'Complete purchase' }}
+              {{
+                isCheckingOut
+                  ? 'Submitting seller orders...'
+                  : `Submit ${summary.seller_count} ${
+                      summary.seller_count === 1 ? 'order' : 'orders'
+                    }`
+              }}
             </Button>
 
             <div class="flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <CheckCircle2 class="h-3.5 w-3.5 text-primary" />
-              Secure multi-tenant processing
+
+              Orders will move from cart to purchase history.
             </div>
           </div>
         </div>
 
-        <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-          <div class="rounded-2xl border border-border bg-card p-4">
-            <ShieldCheck class="h-5 w-5 text-primary" />
+        <div class="mt-4 rounded-2xl border border-border bg-muted/15 p-4">
+          <div class="flex items-start gap-3">
+            <ShieldCheck class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
 
-            <p class="mt-3 text-sm font-semibold">Protected purchase</p>
+            <div>
+              <p class="text-sm font-semibold">What happens next?</p>
 
-            <p class="mt-1 text-xs leading-5 text-muted-foreground">
-              Inventory and ownership are validated before submission.
-            </p>
-          </div>
-
-          <div class="rounded-2xl border border-border bg-card p-4">
-            <Sparkles class="h-5 w-5 text-primary" />
-
-            <p class="mt-3 text-sm font-semibold">One checkout</p>
-
-            <p class="mt-1 text-xs leading-5 text-muted-foreground">
-              Nexora creates the correct independent order for every seller.
-            </p>
+              <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                Each seller receives an independent pending order. You can track their status and
+                payments from My Purchases.
+              </p>
+            </div>
           </div>
         </div>
       </aside>

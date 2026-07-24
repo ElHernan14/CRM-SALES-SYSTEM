@@ -27,7 +27,7 @@ const navItems = [
   },
   {
     label: 'Sales',
-    to: '/erp/invoices',
+    to: '/erp/sales',
     icon: FileText,
   },
   {

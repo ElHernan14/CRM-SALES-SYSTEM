@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+
+import { toast } from 'vue-sonner';
+
+import CompanyProfileDrawer from '../components/CompanyProfileDrawer.vue';
+import CompanyAssetUploadDrawer from '../components/CompanyAssetUploadDrawer.vue';
+
+import { useUploadCompanyLogo } from '../composables/useUploadCompanyLogo';
+import { useUploadCompanyCover } from '../composables/useUploadCompanyCover';
 
 import {
   BadgeCheck,
@@ -23,6 +31,23 @@ import EmptyState from '@/shared/components/erp/EmptyState.vue';
 import { useCompanyMe } from '@/modules/company/composables/useCompanyMe';
 
 import { getCompanyCoverUrl, getCompanyLogoUrl } from '@/shared/utils/assets';
+
+const props = withDefaults(
+  defineProps<{
+    embedded?: boolean;
+  }>(),
+  {
+    embedded: false,
+  }
+);
+
+const profileOpen = ref(false);
+const logoOpen = ref(false);
+const coverOpen = ref(false);
+
+const logoMutation = useUploadCompanyLogo();
+
+const coverMutation = useUploadCompanyCover();
 
 const { data: company, isLoading, isFetching, isError, refetch } = useCompanyMe();
 
@@ -58,32 +83,58 @@ function formatDate(value?: string | null) {
 }
 
 function requestCompanyEdit() {
-  /*
-   * Próximo incremento:
-   * abrir CompanyProfileDrawer.
-   */
-  console.log('Open company editor');
+  profileOpen.value = true;
 }
 
 function requestLogoUpload() {
-  /*
-   * Próximo incremento:
-   * abrir CompanyLogoDrawer.
-   */
-  console.log('Open logo upload');
+  logoOpen.value = true;
 }
 
 function requestCoverUpload() {
-  /*
-   * Próximo incremento:
-   * abrir CompanyCoverDrawer.
-   */
-  console.log('Open cover upload');
+  coverOpen.value = true;
+}
+
+async function uploadLogo(file: File) {
+  try {
+    await logoMutation.mutateAsync(file);
+
+    toast.success('Company logo updated', {
+      description: 'Your new logo is now visible across Nexora.',
+    });
+
+    logoOpen.value = false;
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.errorMessage ??
+      error?.response?.data?.message ??
+      'Unable to upload company logo';
+
+    toast.error(message);
+  }
+}
+
+async function uploadCover(file: File) {
+  try {
+    await coverMutation.mutateAsync(file);
+
+    toast.success('Company cover updated', {
+      description: 'Your workspace identity was refreshed.',
+    });
+
+    coverOpen.value = false;
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.errorMessage ??
+      error?.response?.data?.message ??
+      'Unable to upload company cover';
+
+    toast.error(message);
+  }
 }
 </script>
 
 <template>
-  <PageContainer>
+  <component :is="embedded ? 'div' : PageContainer" class="space-y-6">
     <!-- LOADING -->
     <div v-if="isLoading" class="space-y-6">
       <div class="h-[360px] animate-pulse rounded-[2rem] bg-muted" />
@@ -458,5 +509,27 @@ function requestCoverUpload() {
         </article>
       </section>
     </div>
-  </PageContainer>
+
+    <CompanyProfileDrawer v-model:open="profileOpen" :company="company ?? null" />
+
+    <CompanyAssetUploadDrawer
+      v-model:open="logoOpen"
+      title="Company logo"
+      description="Upload or replace the visual mark used across your Nexora workspace."
+      asset-type="logo"
+      :current-image-url="companyLogo"
+      :uploading="logoMutation.isPending.value"
+      @upload="uploadLogo"
+    />
+
+    <CompanyAssetUploadDrawer
+      v-model:open="coverOpen"
+      title="Workspace cover"
+      description="Create a more distinctive company presence with a wide cover image."
+      asset-type="cover"
+      :current-image-url="companyCover"
+      :uploading="coverMutation.isPending.value"
+      @upload="uploadCover"
+    />
+  </component>
 </template>

@@ -15,7 +15,7 @@ const isAuthenticated = computed(() => {
 const storeUi = useStoreUiStore();
 
 function openAccount() {
-  router.push(isAuthenticated.value ? '/store/purchases' : '/login');
+  router.push(isAuthenticated.value ? '/store/account' : '/login');
 }
 </script>
 
@@ -47,6 +47,15 @@ function openAccount() {
       >
         <ShoppingBag class="h-5 w-5" />
         Cart
+      </button>
+
+      <button
+        type="button"
+        class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium transition hover:bg-muted"
+        @click="router.push('/store/businesses')"
+      >
+        <Building2 class="h-4 w-4 text-primary" />
+        Businesses
       </button>
 
       <button

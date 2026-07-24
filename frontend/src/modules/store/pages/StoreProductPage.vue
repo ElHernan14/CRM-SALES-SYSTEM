@@ -1,24 +1,24 @@
 <script setup lang="ts">
-import { computed, ref, toRef } from 'vue';
+import { computed, ref } from 'vue';
 
 import { useRoute, useRouter } from 'vue-router';
 
 import {
   ArrowLeft,
+  ArrowRight,
+  BadgeCheck,
   Building2,
   Check,
-  Heart,
   ImageIcon,
+  Layers3,
   Loader2,
   Minus,
   PackageCheck,
   Plus,
   ShieldCheck,
   ShoppingBag,
-  Sparkles,
+  Store,
 } from 'lucide-vue-next';
-
-import { toast } from 'vue-sonner';
 
 import { Button } from '@/components/ui/button';
 
@@ -56,18 +56,94 @@ const availableStock = computed(() => {
   return product.value?.available_stock ?? 0;
 });
 
+const isService = computed(() => {
+  return product.value?.kind === 'service';
+});
+
 const canDecrease = computed(() => {
   return quantity.value > 1 && !adding.value;
 });
 
 const canIncrease = computed(() => {
-  return !adding.value && quantity.value < availableStock.value;
+  if (adding.value) {
+    return false;
+  }
+
+  if (isService.value) {
+    return quantity.value < 999;
+  }
+
+  return quantity.value < availableStock.value;
 });
 
 const totalPrice = computed(() => {
   if (!product.value) return 0;
 
   return product.value.price * quantity.value;
+});
+
+const availabilityLabel = computed(() => {
+  if (isService.value) {
+    return 'Available to request';
+  }
+
+  if (availableStock.value <= 0) {
+    return 'Currently unavailable';
+  }
+
+  if (availableStock.value <= 10) {
+    return 'Limited availability';
+  }
+
+  return 'Available now';
+});
+
+const availabilityDescription = computed(() => {
+  if (isService.value) {
+    return 'This service can be included in your Nexora purchase.';
+  }
+
+  if (availableStock.value <= 0) {
+    return 'There are no units currently available for purchase.';
+  }
+
+  return `${availableStock.value} units ready to purchase`;
+});
+
+const availabilityClass = computed(() => {
+  if (isService.value) {
+    return 'text-primary';
+  }
+
+  if (availableStock.value <= 0) {
+    return 'text-destructive';
+  }
+
+  if (availableStock.value <= 10) {
+    return 'text-amber-600 dark:text-amber-400';
+  }
+
+  return 'text-emerald-600 dark:text-emerald-400';
+});
+
+const canAddToCart = computed(() => {
+  if (adding.value) {
+    return false;
+  }
+
+  if (isService.value) {
+    return true;
+  }
+
+  return availableStock.value > 0;
+});
+
+const addButtonLabel = computed(() => {
+  if (adding.value) {
+    return 'Adding to cart...';
+  }
+
+  return isService.value ? 'Add service to cart' : 'Add to cart';
 });
 
 function formatCurrency(value: number) {
@@ -96,22 +172,47 @@ async function handleAddToCart() {
   await addToCart(product.value, quantity.value, true);
 }
 
-function saveProduct() {
+function openSellerCatalog() {
   if (!product.value) return;
 
-  toast.success('Saved for later', {
-    description: product.value.name,
+  router.push({
+    name: 'store-catalog',
+    query: {
+      company_id: String(product.value.company_id),
+    },
+  });
+}
+
+function openCategory() {
+  if (!product.value) return;
+
+  router.push({
+    name: 'store-catalog',
+    query: {
+      category_id: String(product.value.category_id),
+    },
   });
 }
 </script>
 
 <template>
   <div class="pb-20">
-    <div class="mx-auto max-w-[1500px] px-5 py-6 sm:px-6 lg:px-8">
+    <!-- TOP NAVIGATION -->
+    <div
+      class="mx-auto flex max-w-[1500px] items-center justify-between gap-4 px-5 py-6 sm:px-6 lg:px-8"
+    >
       <Button type="button" variant="ghost" class="-ml-3 rounded-full" @click="router.back()">
         <ArrowLeft class="mr-2 h-4 w-4" />
         Back to catalog
       </Button>
+
+      <div
+        v-if="isRefreshing"
+        class="hidden items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground sm:flex"
+      >
+        <Loader2 class="h-3.5 w-3.5 animate-spin" />
+        Updating product
+      </div>
     </div>
 
     <!-- LOADING -->
@@ -123,11 +224,16 @@ function saveProduct() {
 
       <div class="space-y-5 py-4">
         <div class="h-5 w-32 animate-pulse rounded bg-muted" />
+
         <div class="h-14 w-4/5 animate-pulse rounded bg-muted" />
+
         <div class="h-5 w-full animate-pulse rounded bg-muted" />
+
         <div class="h-5 w-3/4 animate-pulse rounded bg-muted" />
-        <div class="h-28 animate-pulse rounded-2xl bg-muted" />
-        <div class="h-14 animate-pulse rounded-full bg-muted" />
+
+        <div class="h-24 animate-pulse rounded-2xl bg-muted" />
+
+        <div class="h-56 animate-pulse rounded-[1.75rem] bg-muted" />
       </div>
     </div>
 
@@ -149,10 +255,10 @@ function saveProduct() {
     <!-- PRODUCT -->
     <main
       v-else-if="product"
-      class="mx-auto grid max-w-[1500px] gap-10 px-6 pb-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:px-8"
+      class="mx-auto grid max-w-[1500px] items-start gap-10 px-6 pb-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:px-8"
     >
-      <!-- IMAGE -->
-      <section>
+      <!-- PRODUCT VISUAL -->
+      <section class="lg:sticky lg:top-24">
         <div
           class="group relative aspect-square overflow-hidden rounded-[2rem] border border-border bg-muted/30 shadow-sm"
         >
@@ -170,155 +276,260 @@ function saveProduct() {
             <ImageIcon class="h-16 w-16 text-muted-foreground/40" />
           </div>
 
-          <div class="absolute left-5 top-5 flex flex-wrap gap-2">
-            <span
-              class="rounded-full border border-white/15 bg-background/85 px-3 py-1.5 text-xs font-semibold shadow-sm backdrop-blur"
+          <div
+            class="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-background/70 to-transparent"
+          />
+
+          <button
+            type="button"
+            class="absolute left-5 top-5 max-w-[70%] truncate rounded-full border border-white/10 bg-background/85 px-3 py-1.5 text-xs font-semibold shadow-sm backdrop-blur transition hover:bg-background"
+            @click="openCategory"
+          >
+            {{ product.category }}
+          </button>
+
+          <span
+            class="absolute right-5 top-5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm"
+          >
+            {{ isService ? 'Service' : 'Product' }}
+          </span>
+
+          <div class="absolute bottom-5 left-5 right-5 flex items-end justify-between gap-4">
+            <div
+              class="inline-flex min-w-0 items-center gap-3 rounded-2xl border border-white/10 bg-background/85 px-4 py-3 shadow-md backdrop-blur"
+            >
+              <div
+                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10"
+              >
+                <Building2 class="h-4 w-4 text-primary" />
+              </div>
+
+              <div class="min-w-0">
+                <p class="truncate text-xs text-muted-foreground">Sold by</p>
+
+                <p class="truncate text-sm font-semibold">
+                  {{ product.company_name }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRODUCT INFORMATION -->
+      <section class="flex flex-col py-2 lg:py-5">
+        <!-- SELLER -->
+        <button
+          type="button"
+          class="group flex w-full items-center justify-between gap-4 rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition hover:border-primary/25 hover:shadow-md"
+          @click="openSellerCatalog"
+        >
+          <div class="flex min-w-0 items-center gap-3">
+            <div
+              class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10"
+            >
+              <Store class="h-5 w-5 text-primary" />
+            </div>
+
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <p class="truncate text-sm font-semibold">
+                  {{ product.company_name }}
+                </p>
+
+                <BadgeCheck class="h-4 w-4 shrink-0 text-primary" />
+              </div>
+
+              <p class="mt-1 text-xs text-muted-foreground">Business connected to Nexora</p>
+            </div>
+          </div>
+
+          <ArrowRight
+            class="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary"
+          />
+        </button>
+
+        <!-- IDENTITY -->
+        <div class="mt-8">
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              class="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
+              @click="openCategory"
             >
               {{ product.category }}
-            </span>
+            </button>
 
             <span
-              class="rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm"
+              class="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground"
             >
+              <Layers3 class="h-3.5 w-3.5" />
               {{ product.type }}
             </span>
           </div>
 
-          <Button
-            type="button"
-            variant="secondary"
-            size="icon"
-            class="absolute right-5 top-5 rounded-full bg-background/85 shadow-md backdrop-blur"
-            @click="saveProduct"
-          >
-            <Heart class="h-5 w-5" />
-          </Button>
-        </div>
-      </section>
-
-      <!-- INFORMATION -->
-      <section class="flex flex-col py-2 lg:py-8">
-        <div>
-          <RouterLink
-            :to="{
-              name: 'store-catalog',
-              query: {
-                company_id: product.company_id,
-              },
-            }"
-            class="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-foreground"
-          >
-            <Building2 class="h-4 w-4" />
-            {{ product.company_name }}
-          </RouterLink>
-
-          <h1 class="mt-5 text-4xl font-semibold tracking-[-0.045em] text-foreground sm:text-5xl">
+          <h1 class="mt-5 text-4xl font-semibold tracking-[-0.05em] text-foreground sm:text-5xl">
             {{ product.name }}
           </h1>
 
           <p class="mt-5 max-w-xl text-base leading-7 text-muted-foreground">
-            {{ product.description || 'Discover this product from a verified Nexora store.' }}
+            {{
+              product.description ||
+              'Available from a company operating throughout the Nexora commerce network.'
+            }}
           </p>
         </div>
 
+        <!-- PRICE -->
         <div class="mt-8">
-          <p class="text-sm text-muted-foreground">Current price</p>
+          <p class="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+            Current price
+          </p>
 
-          <p class="mt-2 text-4xl font-semibold tracking-[-0.035em] text-foreground">
+          <p class="mt-2 text-4xl font-semibold tracking-[-0.04em] text-foreground">
             {{ formatCurrency(product.price) }}
           </p>
+
+          <p class="mt-2 text-sm text-muted-foreground">
+            Price per
+            {{ isService ? 'service unit' : 'unit' }}.
+          </p>
         </div>
 
-        <!-- TRUST -->
-        <div class="mt-8 grid gap-3 sm:grid-cols-3">
-          <div class="rounded-2xl border border-border bg-card p-4">
-            <PackageCheck class="h-5 w-5 text-primary" />
+        <!-- COMMERCE CONFIDENCE -->
+        <div class="mt-8 overflow-hidden rounded-[1.5rem] border border-border bg-muted/15">
+          <div class="grid divide-y divide-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+            <div class="flex items-start gap-3 p-4">
+              <PackageCheck class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
 
-            <p class="mt-3 text-sm font-semibold">Real availability</p>
+              <div>
+                <p class="text-sm font-semibold">
+                  {{ availabilityLabel }}
+                </p>
 
-            <p class="mt-1 text-xs text-muted-foreground">{{ availableStock }} units ready</p>
-          </div>
+                <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                  {{ availabilityDescription }}
+                </p>
+              </div>
+            </div>
 
-          <div class="rounded-2xl border border-border bg-card p-4">
-            <ShieldCheck class="h-5 w-5 text-primary" />
+            <div class="flex items-start gap-3 p-4">
+              <ShieldCheck class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
 
-            <p class="mt-3 text-sm font-semibold">Verified seller</p>
+              <div>
+                <p class="text-sm font-semibold">Verified business</p>
 
-            <p class="mt-1 text-xs text-muted-foreground">Connected business</p>
-          </div>
+                <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                  Seller identity connected to Nexora ERP.
+                </p>
+              </div>
+            </div>
 
-          <div class="rounded-2xl border border-border bg-card p-4">
-            <Sparkles class="h-5 w-5 text-primary" />
+            <div class="flex items-start gap-3 p-4">
+              <ShoppingBag class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
 
-            <p class="mt-3 text-sm font-semibold">Secure checkout</p>
+              <div>
+                <p class="text-sm font-semibold">Unified checkout</p>
 
-            <p class="mt-1 text-xs text-muted-foreground">Protected purchase flow</p>
+                <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                  Orders remain organized by seller.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- BUY BOX -->
-        <div class="mt-8 rounded-[1.75rem] border border-border bg-card p-5 shadow-lg">
-          <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p class="text-sm font-medium text-foreground">Quantity</p>
+        <div class="mt-8 overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-lg">
+          <div class="border-b border-border bg-muted/15 px-5 py-4">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <p class="text-sm font-semibold">Build your order</p>
 
-              <div
-                class="mt-3 inline-flex items-center rounded-full border border-border bg-muted/30 p-1"
-              >
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  class="h-9 w-9 rounded-full"
-                  :disabled="!canDecrease"
-                  @click="decreaseQuantity"
-                >
-                  <Minus class="h-4 w-4" />
-                </Button>
-
-                <span class="min-w-12 text-center text-sm font-semibold">
-                  {{ quantity }}
-                </span>
-
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  class="h-9 w-9 rounded-full"
-                  :disabled="!canIncrease"
-                  @click="increaseQuantity"
-                >
-                  <Plus class="h-4 w-4" />
-                </Button>
+                <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                  Select the quantity before adding this
+                  {{ isService ? 'service' : 'product' }}
+                  to your cart.
+                </p>
               </div>
-            </div>
 
-            <div class="text-left sm:text-right">
-              <p class="text-xs text-muted-foreground">Order subtotal</p>
+              <div class="text-right">
+                <p class="text-xs text-muted-foreground">Availability</p>
 
-              <p class="mt-1 text-2xl font-semibold">
-                {{ formatCurrency(totalPrice) }}
-              </p>
+                <p class="mt-1 text-sm font-semibold" :class="availabilityClass">
+                  {{ availabilityLabel }}
+                </p>
+              </div>
             </div>
           </div>
 
-          <Button
-            type="button"
-            size="lg"
-            class="mt-5 w-full rounded-full"
-            :disabled="adding || availableStock <= 0"
-            @click="handleAddToCart"
-          >
-            <Loader2 v-if="adding" class="mr-2 h-4 w-4 animate-spin" />
+          <div class="p-5">
+            <div class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p class="text-sm font-medium text-foreground">Quantity</p>
 
-            <ShoppingBag v-else class="mr-2 h-4 w-4" />
+                <div
+                  class="mt-3 inline-flex items-center rounded-full border border-border bg-muted/30 p-1"
+                >
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    class="h-9 w-9 rounded-full"
+                    :disabled="!canDecrease"
+                    @click="decreaseQuantity"
+                  >
+                    <Minus class="h-4 w-4" />
+                  </Button>
 
-            {{ adding ? 'Adding to cart...' : 'Add to cart' }}
-          </Button>
+                  <span class="min-w-12 text-center text-sm font-semibold">
+                    {{ quantity }}
+                  </span>
 
-          <div class="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-            <Check class="h-3.5 w-3.5 text-primary" />
-            Available from {{ product.company_name }}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    class="h-9 w-9 rounded-full"
+                    :disabled="!canIncrease"
+                    @click="increaseQuantity"
+                  >
+                    <Plus class="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div class="text-left sm:text-right">
+                <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Order subtotal
+                </p>
+
+                <p class="mt-1 text-3xl font-semibold tracking-[-0.035em]">
+                  {{ formatCurrency(totalPrice) }}
+                </p>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              size="lg"
+              class="mt-6 w-full rounded-full"
+              :disabled="!canAddToCart"
+              @click="handleAddToCart"
+            >
+              <Loader2 v-if="adding" class="mr-2 h-4 w-4 animate-spin" />
+
+              <ShoppingBag v-else class="mr-2 h-4 w-4" />
+
+              {{ addButtonLabel }}
+            </Button>
+
+            <div class="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <Check class="h-3.5 w-3.5 text-primary" />
+
+              Your order will be connected to
+              {{ product.company_name }}.
+            </div>
           </div>
         </div>
       </section>

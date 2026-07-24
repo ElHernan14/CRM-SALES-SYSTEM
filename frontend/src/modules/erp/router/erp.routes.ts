@@ -1,5 +1,5 @@
 import ERPLayout from '@/modules/erp/layouts/ERPLayout.vue';
-import DashboardPage from '@/modules/erp/pages/DashboardPage.vue';
+import DashboardPage from '@/modules/dashboard/pages/DashboardPage.vue';
 
 const ProductsPage = () => import('@/modules/products/pages/ProductsPage.vue');
 const InvoicesPage = () => import('@/modules/invoices/pages/InvoicesPage.vue');
@@ -23,9 +23,40 @@ export const erpRoutes = [
     children: [
       { path: 'dashboard', name: 'erp-dashboard', component: DashboardPage },
       { path: 'products', name: 'erp-products', component: ProductsPage },
-      { path: 'invoices', name: 'erp-invoices', component: InvoicesPage },
+      { path: 'sales', name: 'erp-sales', component: InvoicesPage },
       { path: 'payments', name: 'erp-payments', component: PaymentsPage },
-      { path: 'settings', name: 'erp-settings', component: SettingsPage },
+      {
+        path: 'settings',
+        component: () => import('@/modules/settings/pages/ERPSettingsPage.vue'),
+        meta: {
+          requiresAuth: true,
+        },
+        children: [
+          {
+            path: '',
+            redirect: {
+              name: 'erp-settings-company',
+            },
+          },
+          {
+            path: 'company',
+            name: 'erp-settings-company',
+            component: SettingsPage,
+            props: {
+              embedded: true,
+            },
+          },
+          {
+            path: 'profile',
+            name: 'erp-settings-profile',
+            component: () => import('@/modules/account/pages/StoreAccountPage.vue'),
+            props: {
+              embedded: true,
+              surface: 'erp',
+            },
+          },
+        ],
+      },
       { path: 'marketplace', name: 'erp-marketplace', component: MarketplacePage },
       {
         path: 'marketplace/suppliers/:supplierId',

@@ -6,6 +6,8 @@ import { useQueryClient } from '@tanstack/vue-query';
 import { toast } from 'vue-sonner';
 
 import {
+  ArrowRight,
+  BadgeCheck,
   Building2,
   ImageIcon,
   Loader2,
@@ -182,27 +184,44 @@ function goToCheckout() {
 
   router.push('/store/checkout');
 }
+
+const isCartBusy = computed(() => {
+  return isRefreshing.value || isChangingCart.value;
+});
+
+function openSellerCatalog(sellerCompanyId: number) {
+  storeUi.closeCart();
+
+  router.push({
+    name: 'store-catalog',
+    query: {
+      company_id: String(sellerCompanyId),
+    },
+  });
+}
 </script>
 
 <template>
   <Sheet :open="storeUi.cartOpen" @update:open="$event ? storeUi.openCart() : storeUi.closeCart()">
     <SheetContent class="flex w-full flex-col overflow-hidden p-0 sm:max-w-2xl">
       <!-- HEADER -->
-      <div class="border-b border-border bg-muted/20 px-6 py-5">
+      <div
+        class="border-b border-border bg-gradient-to-r from-primary/5 via-muted/15 to-transparent px-6 py-5"
+      >
         <SheetHeader class="text-left">
           <div class="flex items-start justify-between gap-4">
             <div class="flex items-center gap-3">
               <div
-                class="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-background shadow-sm"
+                class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm"
               >
-                <ShoppingBag class="h-5 w-5 text-primary" />
+                <ShoppingBag class="h-5 w-5" />
               </div>
 
               <div>
-                <SheetTitle> Your cart </SheetTitle>
+                <SheetTitle> Nexora cart </SheetTitle>
 
                 <SheetDescription class="mt-1">
-                  Purchases are organized by seller.
+                  One checkout, organized into independent seller orders.
                 </SheetDescription>
               </div>
             </div>
@@ -212,13 +231,14 @@ function goToCheckout() {
               type="button"
               variant="ghost"
               size="icon"
-              :disabled="isRefreshing || isChangingCart"
-              @click="refetch()"
+              class="rounded-full"
+              :disabled="isCartBusy"
+              @click="synchronizeStoreCart"
             >
               <RefreshCw
                 class="h-4 w-4"
                 :class="{
-                  'animate-spin': isRefreshing,
+                  'animate-spin': isCartBusy,
                 }"
               />
             </Button>
@@ -260,7 +280,7 @@ function goToCheckout() {
           <h3 class="mt-5 text-lg font-semibold">Your cart is empty</h3>
 
           <p class="mt-2 text-sm leading-6 text-muted-foreground">
-            Explore Nexora and add products from your favorite stores.
+            Browse products from connected businesses and start building your next purchase.
           </p>
 
           <Button class="mt-6 rounded-full" @click="continueShopping"> Explore products </Button>
@@ -272,11 +292,19 @@ function goToCheckout() {
         <div class="relative min-h-0 flex-1 overflow-y-auto px-6 py-5">
           <div
             v-if="isRefreshing || isSynchronizing"
-            class="sticky top-0 z-20 mb-4 flex items-center gap-3 rounded-xl border border-border bg-background/90 p-3 shadow-sm backdrop-blur"
+            class="sticky top-0 z-20 mb-4 overflow-hidden rounded-xl border border-primary/20 bg-background/95 shadow-md backdrop-blur"
           >
-            <Loader2 class="h-4 w-4 animate-spin text-muted-foreground" />
+            <div class="flex items-center gap-3 p-4">
+              <Loader2 class="h-4 w-4 animate-spin text-primary" />
 
-            <p class="text-xs text-muted-foreground">Synchronizing cart and availability...</p>
+              <div>
+                <p class="text-sm font-medium">Updating your cart</p>
+
+                <p class="mt-0.5 text-xs text-muted-foreground">
+                  Synchronizing quantities, totals and current availability.
+                </p>
+              </div>
+            </div>
           </div>
 
           <div class="space-y-5">
@@ -287,27 +315,43 @@ function goToCheckout() {
             >
               <!-- SELLER -->
               <div
-                class="flex items-center justify-between gap-4 border-b border-border bg-muted/20 px-4 py-3"
+                class="flex items-center justify-between gap-4 border-b border-border bg-muted/15 px-4 py-4"
               >
-                <div class="flex min-w-0 items-center gap-3">
+                <button
+                  type="button"
+                  class="group flex min-w-0 items-center gap-3 text-left"
+                  @click="openSellerCatalog(cart.seller_company_id)"
+                >
                   <div
-                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10"
+                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10"
                   >
-                    <Building2 class="h-4 w-4 text-primary" />
+                    <Building2 class="h-5 w-5 text-primary" />
                   </div>
 
                   <div class="min-w-0">
-                    <p class="truncate text-sm font-semibold">
-                      {{ cart.seller_company }}
+                    <div class="flex items-center gap-2">
+                      <p class="truncate text-sm font-semibold">
+                        {{ cart.seller_company }}
+                      </p>
+
+                      <BadgeCheck class="h-4 w-4 shrink-0 text-primary" />
+                    </div>
+
+                    <p class="mt-1 text-xs text-muted-foreground">
+                      Independent order · View seller
                     </p>
-
-                    <p class="mt-0.5 text-xs text-muted-foreground">Separate seller order</p>
                   </div>
-                </div>
+                </button>
 
-                <p class="shrink-0 text-sm font-semibold">
-                  {{ formatCurrency(cart.total_amount) }}
-                </p>
+                <div class="shrink-0 text-right">
+                  <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Seller total
+                  </p>
+
+                  <p class="mt-1 text-base font-semibold tracking-tight">
+                    {{ formatCurrency(cart.total_amount) }}
+                  </p>
+                </div>
               </div>
 
               <!-- ITEMS -->
@@ -333,8 +377,14 @@ function goToCheckout() {
 
                     <div class="min-w-0 flex-1">
                       <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                          <p class="line-clamp-2 text-sm font-semibold">
+                        <button
+                          type="button"
+                          class="min-w-0 text-left"
+                          @click="router.push(`/store/products/${item.product_id}`)"
+                        >
+                          <p
+                            class="line-clamp-2 text-sm font-semibold transition hover:text-primary"
+                          >
                             {{ item.product_name }}
                           </p>
 
@@ -342,12 +392,12 @@ function goToCheckout() {
                             {{ formatCurrency(item.price) }}
                             per unit
                           </p>
-                        </div>
+                        </button>
 
                         <Button
                           variant="ghost"
                           size="icon"
-                          class="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                          class="h-8 w-8 shrink-0 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                           :disabled="isChangingCart"
                           @click="deleteItem(cart, item)"
                         >
@@ -360,7 +410,7 @@ function goToCheckout() {
                         </Button>
                       </div>
 
-                      <div class="mt-4 flex items-center justify-between gap-3">
+                      <div class="mt-4 flex items-end justify-between gap-3">
                         <div
                           class="inline-flex items-center rounded-full border border-border bg-muted/30 p-1"
                         >
@@ -371,7 +421,12 @@ function goToCheckout() {
                             :disabled="item.quantity <= 1 || isChangingCart"
                             @click="updateQuantity(cart, item, item.quantity - 1)"
                           >
-                            <Minus class="h-3.5 w-3.5" />
+                            <Loader2
+                              v-if="processingItemId === item.id && updateMutation.isPending.value"
+                              class="h-3.5 w-3.5 animate-spin"
+                            />
+
+                            <Minus v-else class="h-3.5 w-3.5" />
                           </Button>
 
                           <span class="min-w-9 text-center text-sm font-semibold">
@@ -385,13 +440,26 @@ function goToCheckout() {
                             :disabled="isChangingCart"
                             @click="updateQuantity(cart, item, item.quantity + 1)"
                           >
-                            <Plus class="h-3.5 w-3.5" />
+                            <Loader2
+                              v-if="processingItemId === item.id && updateMutation.isPending.value"
+                              class="h-3.5 w-3.5 animate-spin"
+                            />
+
+                            <Plus v-else class="h-3.5 w-3.5" />
                           </Button>
                         </div>
 
-                        <p class="text-sm font-semibold">
-                          {{ formatCurrency(item.subtotal) }}
-                        </p>
+                        <div class="text-right">
+                          <p
+                            class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
+                          >
+                            Line subtotal
+                          </p>
+
+                          <p class="mt-1 text-base font-semibold">
+                            {{ formatCurrency(item.subtotal) }}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -399,19 +467,31 @@ function goToCheckout() {
               </div>
 
               <!-- SELLER SUMMARY -->
-              <div class="space-y-2 border-t border-border bg-muted/10 px-4 py-3 text-xs">
-                <div class="flex justify-between text-muted-foreground">
-                  <span>Seller subtotal</span>
-                  <span>
-                    {{ formatCurrency(cart.subtotal) }}
-                  </span>
-                </div>
+              <div class="border-t border-border bg-muted/10 px-4 py-4">
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between text-muted-foreground">
+                    <span>Subtotal</span>
 
-                <div class="flex justify-between text-muted-foreground">
-                  <span>Taxes</span>
-                  <span>
-                    {{ formatCurrency(cart.taxes) }}
-                  </span>
+                    <span>
+                      {{ formatCurrency(cart.subtotal) }}
+                    </span>
+                  </div>
+
+                  <div class="flex justify-between text-muted-foreground">
+                    <span>Taxes</span>
+
+                    <span>
+                      {{ formatCurrency(cart.taxes) }}
+                    </span>
+                  </div>
+
+                  <div class="flex items-end justify-between border-t border-border pt-3">
+                    <span class="font-semibold"> Seller order </span>
+
+                    <span class="text-lg font-semibold tracking-tight">
+                      {{ formatCurrency(cart.total_amount) }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </section>
@@ -420,58 +500,41 @@ function goToCheckout() {
 
         <!-- GLOBAL SUMMARY -->
         <div class="border-t border-border bg-background px-6 py-5">
-          <div class="rounded-2xl border border-border bg-muted/20 p-5">
-            <div class="space-y-3">
-              <div class="flex justify-between text-sm">
-                <span class="text-muted-foreground">
-                  {{ summary.seller_count }}
-                  {{ summary.seller_count === 1 ? 'seller' : 'sellers' }}
-                </span>
+          <div class="rounded-[1.5rem] border border-border bg-muted/15 p-5">
+            <div class="mb-5 flex items-center justify-between gap-4">
+              <div>
+                <p class="text-sm font-semibold">Complete purchase</p>
 
-                <span class="font-medium">
-                  {{ summary.item_count }}
-                  {{ summary.item_count === 1 ? 'item' : 'items' }}
-                </span>
-              </div>
-
-              <div class="flex justify-between text-sm">
-                <span class="text-muted-foreground"> Subtotal </span>
-
-                <span>
-                  {{ formatCurrency(summary.subtotal) }}
-                </span>
-              </div>
-
-              <div class="flex justify-between text-sm">
-                <span class="text-muted-foreground"> Taxes </span>
-
-                <span>
-                  {{ formatCurrency(summary.taxes) }}
-                </span>
-              </div>
-
-              <div class="flex items-end justify-between border-t border-border pt-4">
-                <div>
-                  <p class="text-sm font-semibold">Cart total</p>
-
-                  <p class="mt-1 text-xs text-muted-foreground">
-                    Checkout creates one order per seller.
-                  </p>
-                </div>
-
-                <p class="text-2xl font-semibold tracking-tight">
-                  {{ formatCurrency(summary.total_amount) }}
+                <p class="mt-1 text-xs text-muted-foreground">
+                  Nexora will create one independent order per seller.
                 </p>
               </div>
+
+              <ShoppingBag class="h-5 w-5 text-primary" />
             </div>
+
+            <!-- tus filas actuales de summary -->
           </div>
 
           <div class="mt-4 grid gap-2 sm:grid-cols-[auto_1fr]">
-            <Button variant="outline" @click="continueShopping"> Continue shopping </Button>
+            <Button
+              variant="outline"
+              class="rounded-full"
+              :disabled="isCartBusy"
+              @click="continueShopping"
+            >
+              Continue shopping
+            </Button>
 
-            <Button class="w-full" :disabled="isChangingCart" @click="goToCheckout">
-              <ShoppingBag class="mr-2 h-4 w-4" />
+            <Button
+              size="lg"
+              class="w-full rounded-full"
+              :disabled="isCartBusy"
+              @click="goToCheckout"
+            >
               Continue to checkout
+
+              <ArrowRight class="ml-2 h-4 w-4" />
             </Button>
           </div>
         </div>
