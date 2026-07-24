@@ -108,6 +108,7 @@ func (s *invoiceService) CreateDraft(
 		ctx,
 		req.BuyerClientID,
 		req.SellerCompanyID,
+		invoiceConstants.InvoiceSourceERP,
 	)
 
 	if err != nil {
@@ -124,6 +125,7 @@ func (s *invoiceService) CreateDraft(
 			BuyerClientID:   existingDraft.BuyerClientID,
 			SellerCompanyID: existingDraft.SellerCompanyID,
 			StatusInvoice:   existingDraft.StatusInvoice,
+			Source:          existingDraft.Source,
 			TotalAmount:     existingDraft.TotalAmount,
 			CreatedAt:       existingDraft.CreatedAt,
 			CreatedByUserID: existingDraft.CreatedByUserID,
@@ -158,6 +160,7 @@ func (s *invoiceService) CreateDraft(
 		SellerCompanyID: req.SellerCompanyID,
 		CreatedByUserID: tenant.UserID,
 		StatusInvoice:   invoiceConstants.InvoiceDraft,
+		Source:          invoiceConstants.InvoiceSourceERP,
 		TotalAmount:     0,
 	}
 
@@ -177,6 +180,7 @@ func (s *invoiceService) CreateDraft(
 		SellerCompanyID: invoice.SellerCompanyID,
 		CreatedByUserID: invoice.CreatedByUserID,
 		StatusInvoice:   invoice.StatusInvoice,
+		Source:          invoice.Source,
 		TotalAmount:     invoice.TotalAmount,
 		CreatedAt:       invoice.CreatedAt,
 	}, nil
@@ -358,6 +362,7 @@ func (s *invoiceService) GetByID(
 		SellerCompanyID: invoice.SellerCompanyID,
 		CreatedByUserID: invoice.CreatedByUserID,
 		StatusInvoice:   invoice.StatusInvoice,
+		Source:          invoice.Source,
 		TotalAmount:     invoice.TotalAmount,
 		PaidAmount:      invoice.PaidAmount,
 		Status:          invoice.Status,
@@ -470,6 +475,7 @@ func (s *invoiceService) GetCompanyInvoices(
 			BuyerClientID:   inv.BuyerClientID,
 			SellerCompanyID: inv.SellerCompanyID,
 			StatusInvoice:   inv.StatusInvoice,
+			Source:          inv.Source,
 			TotalAmount:     inv.TotalAmount,
 			PaidAmount:      inv.PaidAmount,
 			CreatedAt:       inv.CreatedAt,
@@ -491,14 +497,14 @@ func (s *invoiceService) GetCompanyPurchases(
 	req *invoicedto.GetCompanyInvoicesRequest,
 ) (*invoicedto.GetCompanyInvoicesResponse, error) {
 	tenant := tenantHelper.GetTenant(ctx)
-	if tenant == nil || tenant.ClientID == nil {
+	if tenant == nil || tenant.CompanyID == nil {
 		return nil, errorHandler.NewAppError(
 			http.StatusForbidden,
-			"Solo clientes compradores",
+			"Solo empresas",
 		)
 	}
 
-	invoices, total, err := s.Repo.ListByBuyerClientID(ctx, *tenant.ClientID, req)
+	invoices, total, err := s.Repo.ListByBuyerCompanyID(ctx, *tenant.CompanyID, req)
 	if err != nil {
 		return nil, err
 	}
@@ -510,6 +516,7 @@ func (s *invoiceService) GetCompanyPurchases(
 			BuyerClientID:   inv.BuyerClientID,
 			SellerCompanyID: inv.SellerCompanyID,
 			StatusInvoice:   inv.StatusInvoice,
+			Source:          inv.Source,
 			TotalAmount:     inv.TotalAmount,
 			PaidAmount:      inv.PaidAmount,
 			CreatedAt:       inv.CreatedAt,

@@ -157,7 +157,8 @@ CREATE TABLE invoice (
     seller_company_id INT NOT NULL,
     created_by_user_id INT NOT NULL,
     total_amount NUMERIC(10,2) NOT NULL,
-    status_invoice VARCHAR(50) NOT NULL, -- pending, paid, cancelled
+    status_invoice VARCHAR(50) NOT NULL, -- draft, pending, paid, cancelled
+    source VARCHAR(20) NOT NULL DEFAULT 'erp', -- erp | store
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
     status INT DEFAULT 1, -- 1 activo, 0 inactivo
@@ -172,7 +173,10 @@ CREATE TABLE invoice (
 
     CONSTRAINT fk_invoice_created_by
         FOREIGN KEY (created_by_user_id)
-        REFERENCES users(id)
+        REFERENCES users(id),
+
+    CONSTRAINT chk_invoice_source
+        CHECK (source IN ('erp', 'store'))
 );
 
 CREATE TABLE invoice_item (

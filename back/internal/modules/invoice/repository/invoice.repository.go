@@ -15,11 +15,11 @@ type InvoiceRepository interface {
 	Create(ctx context.Context, tx *sql.Tx, invoice *invoiceModel.Invoice) error
 	GetByID(ctx context.Context, id int) (*invoiceModel.Invoice, error)
 	RecalculateInvoiceTotals(ctx context.Context, tx *sql.Tx, invoiceID int) error
-	GetActiveDraft(ctx context.Context, buyerClientID int, sellerCompanyID int) (*invoiceModel.Invoice, error)
+	GetActiveDraft(ctx context.Context, buyerClientID int, sellerCompanyID int, source string) (*invoiceModel.Invoice, error)
 	UpdateStatus(ctx context.Context, tx *sql.Tx, invoiceID int, status string) error
 	SetPaidAmount(ctx context.Context, tx *sql.Tx, invoiceID int, paidAmount float64) error
 	ListBySellerCompanyID(ctx context.Context, companyID int, req *invoicedto.GetCompanyInvoicesRequest) ([]*invoiceModel.Invoice, int, error)
-	ListByBuyerClientID(ctx context.Context, clientID int, req *invoicedto.GetCompanyInvoicesRequest) ([]*invoiceModel.Invoice, int, error)
+	ListByBuyerCompanyID(ctx context.Context, companyID int, req *invoicedto.GetCompanyInvoicesRequest) ([]*invoiceModel.Invoice, int, error)
 	ListActiveDraftsByBuyer(ctx context.Context, buyerClientID int, invoiceIDs []int) ([]*invoiceModel.Invoice, error)
 	ListStorePurchasesByBuyer(ctx context.Context, buyerClientID int, req *storedto.GetStorePurchasesRequest) ([]*invoiceModel.Invoice, int, error)
 	GetActiveDraftByTenant(
@@ -50,11 +50,15 @@ func (r *invoiceRepository) Create(
 			seller_company_id,
 			created_by_user_id,
 			total_amount,
-			status_invoice
+			status_invoice,
+			source
 		)
-		VALUES ($1,$2,$3,$4,$5)
+		VALUES ($1,$2,$3,$4,$5,$6)
 		RETURNING id, created_at
 	`
+	if invoice.Source == "" {
+		invoice.Source = "erp"
+	}
 	if tx != nil {
 		return tx.QueryRowContext(
 			ctx,
@@ -64,6 +68,7 @@ func (r *invoiceRepository) Create(
 			invoice.CreatedByUserID,
 			invoice.TotalAmount,
 			invoice.StatusInvoice,
+			invoice.Source,
 		).Scan(
 			&invoice.ID,
 			&invoice.CreatedAt,
@@ -77,6 +82,7 @@ func (r *invoiceRepository) Create(
 			invoice.CreatedByUserID,
 			invoice.TotalAmount,
 			invoice.StatusInvoice,
+			invoice.Source,
 		).Scan(
 			&invoice.ID,
 			&invoice.CreatedAt,
@@ -89,7 +95,7 @@ func (r *invoiceRepository) GetByID(ctx context.Context, id int) (*invoiceModel.
 
 	query := `
         SELECT id, buyer_client_id, seller_company_id, created_by_user_id,
-               total_amount, subtotal, paid_amount, status_invoice, status, taxes, created_at, updated_at, deleted_at
+               total_amount, subtotal, paid_amount, status_invoice, source, status, taxes, created_at, updated_at, deleted_at
         FROM invoice
         WHERE id = $1
     `
@@ -105,6 +111,7 @@ func (r *invoiceRepository) GetByID(ctx context.Context, id int) (*invoiceModel.
 		&inv.Subtotal,
 		&inv.PaidAmount,
 		&inv.StatusInvoice,
+		&inv.Source,
 		&inv.Status,
 		&inv.Taxes,
 		&inv.CreatedAt,
@@ -180,6 +187,7 @@ func (r *invoiceRepository) GetActiveDraft(
 	ctx context.Context,
 	buyerClientID int,
 	sellerCompanyID int,
+	source string,
 ) (*invoiceModel.Invoice, error) {
 
 	query := `
@@ -188,6 +196,7 @@ func (r *invoiceRepository) GetActiveDraft(
 			buyer_client_id,
 			seller_company_id,
 			status_invoice,
+			source,
 			created_at,
 			created_by_user_id,
 			total_amount,
@@ -197,6 +206,7 @@ func (r *invoiceRepository) GetActiveDraft(
 		WHERE
 			buyer_client_id = $1
 			AND seller_company_id = $2
+			AND source = $3
 			AND status_invoice = 'draft'
 			AND status = 1
 		ORDER BY created_at DESC
@@ -210,11 +220,13 @@ func (r *invoiceRepository) GetActiveDraft(
 		query,
 		buyerClientID,
 		sellerCompanyID,
+		source,
 	).Scan(
 		&invoice.ID,
 		&invoice.BuyerClientID,
 		&invoice.SellerCompanyID,
 		&invoice.StatusInvoice,
+		&invoice.Source,
 		&invoice.CreatedAt,
 		&invoice.CreatedByUserID,
 		&invoice.TotalAmount,
@@ -308,6 +320,7 @@ func (r *invoiceRepository) ListBySellerCompanyID(
 			i.buyer_client_id,
 			i.seller_company_id,
 			i.status_invoice,
+			i.source,
 			i.total_amount,
 			i.paid_amount,
 			i.created_at,
@@ -396,6 +409,7 @@ func (r *invoiceRepository) ListBySellerCompanyID(
 			&inv.BuyerClientID,
 			&inv.SellerCompanyID,
 			&inv.StatusInvoice,
+			&inv.Source,
 			&inv.TotalAmount,
 			&inv.PaidAmount,
 			&inv.CreatedAt,
@@ -431,12 +445,14 @@ func (r *invoiceRepository) GetActiveDraftByTenant(
             buyer_client_id,
             seller_company_id,
             status_invoice,
+			source,
             created_at,
             created_by_user_id,
             total_amount
         FROM invoice
         WHERE
             buyer_client_id = $1
+			AND source = 'store'
             AND status_invoice = 'draft'
             AND status = 1
         ORDER BY created_at DESC
@@ -454,6 +470,7 @@ func (r *invoiceRepository) GetActiveDraftByTenant(
 		&invoice.BuyerClientID,
 		&invoice.SellerCompanyID,
 		&invoice.StatusInvoice,
+		&invoice.Source,
 		&invoice.CreatedAt,
 		&invoice.CreatedByUserID,
 		&invoice.TotalAmount,
@@ -465,9 +482,9 @@ func (r *invoiceRepository) GetActiveDraftByTenant(
 
 	return invoice, nil
 }
-func (r *invoiceRepository) ListByBuyerClientID(
+func (r *invoiceRepository) ListByBuyerCompanyID(
 	ctx context.Context,
-	clientID int,
+	companyID int,
 	req *invoicedto.GetCompanyInvoicesRequest,
 ) ([]*invoiceModel.Invoice, int, error) {
 	allowedSortColumns := map[string]string{
@@ -488,6 +505,7 @@ func (r *invoiceRepository) ListByBuyerClientID(
 			i.buyer_client_id,
 			i.seller_company_id,
 			i.status_invoice,
+			i.source,
 			i.total_amount,
 			i.paid_amount,
 			i.created_at,
@@ -500,10 +518,11 @@ func (r *invoiceRepository) ListByBuyerClientID(
 		LEFT JOIN client cb ON cb.id = i.buyer_client_id
 		LEFT JOIN company bco ON bco.id = cb.company_id
 		LEFT JOIN company co ON co.id = i.seller_company_id
-		WHERE i.buyer_client_id = $1
+		WHERE cb.company_id = $1
+		  AND i.source = 'erp'
 	`
 
-	args := []interface{}{clientID}
+	args := []interface{}{companyID}
 	argPos := 2
 
 	if req.StatusInvoice != "" {
@@ -566,6 +585,7 @@ func (r *invoiceRepository) ListByBuyerClientID(
 			&inv.BuyerClientID,
 			&inv.SellerCompanyID,
 			&inv.StatusInvoice,
+			&inv.Source,
 			&inv.TotalAmount,
 			&inv.PaidAmount,
 			&inv.CreatedAt,
@@ -590,6 +610,7 @@ func (r *invoiceRepository) ListActiveDraftsByBuyer(ctx context.Context, buyerCl
 			i.buyer_client_id,
 			i.seller_company_id,
 			i.status_invoice,
+			i.source,
 			i.subtotal,
 			i.taxes,
 			i.total_amount,
@@ -598,6 +619,7 @@ func (r *invoiceRepository) ListActiveDraftsByBuyer(ctx context.Context, buyerCl
 		INNER JOIN company co ON co.id = i.seller_company_id
 		WHERE i.buyer_client_id = $1
 		  AND i.status_invoice = 'draft'
+		  AND i.source = 'store'
 		  AND i.status = 1
 	`
 
@@ -629,6 +651,7 @@ func (r *invoiceRepository) ListActiveDraftsByBuyer(ctx context.Context, buyerCl
 			&inv.BuyerClientID,
 			&inv.SellerCompanyID,
 			&inv.StatusInvoice,
+			&inv.Source,
 			&inv.Subtotal,
 			&inv.Taxes,
 			&inv.TotalAmount,
@@ -658,6 +681,7 @@ func (r *invoiceRepository) ListStorePurchasesByBuyer(ctx context.Context, buyer
 			i.seller_company_id,
 			co.name AS seller_company_name,
 			i.status_invoice,
+			i.source,
 			i.subtotal,
 			i.taxes,
 			i.total_amount,
@@ -671,6 +695,7 @@ func (r *invoiceRepository) ListStorePurchasesByBuyer(ctx context.Context, buyer
 		LEFT JOIN invoice_item ii ON ii.invoice_id = i.id AND ii.status = 1
 		WHERE i.buyer_client_id = $1
 		  AND i.status = 1
+		  AND i.source = 'store'
 		  AND i.status_invoice <> 'draft'
 	`
 	args := []interface{}{buyerClientID}
@@ -707,6 +732,7 @@ func (r *invoiceRepository) ListStorePurchasesByBuyer(ctx context.Context, buyer
 			i.seller_company_id,
 			co.name,
 			i.status_invoice,
+			i.source,
 			i.subtotal,
 			i.taxes,
 			i.total_amount,
@@ -747,6 +773,7 @@ func (r *invoiceRepository) ListStorePurchasesByBuyer(ctx context.Context, buyer
 			&inv.SellerCompanyID,
 			&inv.SellerName,
 			&inv.StatusInvoice,
+			&inv.Source,
 			&inv.Subtotal,
 			&inv.Taxes,
 			&inv.TotalAmount,

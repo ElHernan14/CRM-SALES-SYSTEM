@@ -9,6 +9,7 @@ type EnsureCartResponse struct {
 	BuyerClientID   int    `json:"buyer_client_id"`
 	SellerCompanyID int    `json:"seller_company_id"`
 	StatusInvoice   string `json:"status_invoice"`
+	Source          string `json:"source"`
 }
 
 type CartItemResponse struct {
@@ -28,6 +29,7 @@ type CartResponse struct {
 	SellerCompanyID int                `json:"seller_company_id"`
 	SellerCompany   string             `json:"seller_company"`
 	StatusInvoice   string             `json:"status_invoice"`
+	Source          string             `json:"source"`
 	Subtotal        float64            `json:"subtotal"`
 	Taxes           float64            `json:"taxes"`
 	TotalAmount     float64            `json:"total_amount"`

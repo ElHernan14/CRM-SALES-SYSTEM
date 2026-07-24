@@ -6,3 +6,8 @@ const (
 	InvoicePaid     = "paid"
 	InvoiceCanceled = "cancelled"
 )
+
+const (
+	InvoiceSourceERP   = "erp"
+	InvoiceSourceStore = "store"
+)

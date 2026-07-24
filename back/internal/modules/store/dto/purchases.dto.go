@@ -24,6 +24,7 @@ type StorePurchaseResponse struct {
 	SellerCompany   string `json:"seller_company"`
 
 	StatusInvoice string `json:"status_invoice"`
+	Source        string `json:"source"`
 
 	Subtotal        float64 `json:"subtotal"`
 	Taxes           float64 `json:"taxes"`

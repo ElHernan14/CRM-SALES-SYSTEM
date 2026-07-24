@@ -12,6 +12,7 @@ import (
 	categoryproduct "crm-system-sales/internal/modules/category_product"
 	"crm-system-sales/internal/modules/client"
 	"crm-system-sales/internal/modules/company"
+	"crm-system-sales/internal/modules/dashboard"
 	"crm-system-sales/internal/modules/inventory"
 	invoiceController "crm-system-sales/internal/modules/invoice/controller"
 	invoiceRepository "crm-system-sales/internal/modules/invoice/repository"
@@ -27,6 +28,7 @@ import (
 	storeroutes "crm-system-sales/internal/modules/store/routes"
 	storeservice "crm-system-sales/internal/modules/store/service"
 	"crm-system-sales/internal/modules/users"
+	dashboardoverview "crm-system-sales/internal/services/dashboard_overview/service"
 	paymentworkflow "crm-system-sales/internal/services/invoice_workflow/service"
 	submitInvoiceWorkflow "crm-system-sales/internal/services/invoice_workflow/service"
 
@@ -46,6 +48,7 @@ type AppContainer struct {
 	StoreController          *storecontroller.StoreController
 	MarketplaceController    *marketplace.MarketplaceController
 	CategoriesController     *categories.CategoriesController
+	DashboardController      *dashboard.DashboardController
 }
 
 func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
@@ -67,6 +70,7 @@ func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 	invoiceItemRepo := invoiceitem.NewInvoiceItemRepository(db)
 	invoicePaymentRepo := invoicepaymentrepo.NewInvoicePaymentRepository(db)
 	marketplaceRepo := marketplace.NewMarketplaceRepository(db)
+	dashboardRepo := dashboard.NewDashboardRepository(db)
 
 	// Shared services
 	imageStorage := files.NewLocalImageStorage(cfg.UploadDir)
@@ -86,6 +90,7 @@ func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 	storeService := storeservice.NewStoreService(db, productRepo, invoiceRepo, invoiceItemRepo, companyRepo, submitWorkflow)
 	marketplaceService := marketplace.NewMarketplaceService(marketplaceRepo)
 	categoriesService := categories.NewCategoriesService(categoryProductRepo, categoryCompanyRepo, productTypeRepo)
+	dashboardService := dashboardoverview.NewDashboardOverviewService(dashboardRepo)
 
 	// Controllers
 	authController := auth.NewAuthController(authService)
@@ -99,6 +104,7 @@ func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 	storeController := storecontroller.NewStoreController(storeService)
 	marketplaceController := marketplace.NewMarketplaceController(marketplaceService)
 	categoriesController := categories.NewCategoriesController(categoriesService)
+	dashboardController := dashboard.NewDashboardController(dashboardService)
 
 	container := &AppContainer{
 		UserController:           userController,
@@ -112,6 +118,7 @@ func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 		StoreController:          storeController,
 		MarketplaceController:    marketplaceController,
 		CategoriesController:     categoriesController,
+		DashboardController:      dashboardController,
 	}
 
 	auth.RegisterAuthRoutes(authRouter, container.AuthController)
@@ -127,4 +134,5 @@ func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 	invoicepayment.RegisterInvoicePaymentRoutes(protected, container.InvoicePaymentController)
 	storeroutes.RegisterInvoiceItemRoutes(protected, container.StoreController)
 	marketplace.RegisterMarketplaceRoutes(protected, container.MarketplaceController)
+	dashboard.RegisterDashboardRoutes(protected, container.DashboardController)
 }

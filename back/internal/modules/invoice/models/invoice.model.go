@@ -9,6 +9,7 @@ type Invoice struct {
 	CreatedByUserID int
 
 	StatusInvoice string
+	Source        string
 
 	Subtotal    float64
 	Taxes       float64

@@ -10,7 +10,7 @@ import (
 	tenantHelper "crm-system-sales/internal/core/tenant"
 	"crm-system-sales/internal/core/transaction"
 	"crm-system-sales/internal/modules/company"
-	"crm-system-sales/internal/modules/invoice/constants"
+	invoiceconstants "crm-system-sales/internal/modules/invoice/constants"
 	invoicemodel "crm-system-sales/internal/modules/invoice/models"
 	invoicerepo "crm-system-sales/internal/modules/invoice/repository"
 	invoiceitemrepo "crm-system-sales/internal/modules/invoice_item"
@@ -119,6 +119,7 @@ func (s *storeService) GetPurchases(ctx context.Context, req *storedto.GetStoreP
 			SellerCompanyID: purchase.SellerCompanyID,
 			SellerCompany:   purchase.SellerName,
 			StatusInvoice:   purchase.StatusInvoice,
+			Source:          purchase.Source,
 			Subtotal:        purchase.Subtotal,
 			Taxes:           purchase.Taxes,
 			TotalAmount:     purchase.TotalAmount,
@@ -142,7 +143,7 @@ func (s *storeService) GetCart(ctx context.Context, sellerCompanyID int) (*store
 		return nil, err
 	}
 
-	draft, err := s.InvoiceRepo.GetActiveDraft(ctx, *tenant.ClientID, sellerCompanyID)
+	draft, err := s.InvoiceRepo.GetActiveDraft(ctx, *tenant.ClientID, sellerCompanyID, invoiceconstants.InvoiceSourceStore)
 	if err != nil {
 		return nil, err
 	}
@@ -193,18 +194,18 @@ func (s *storeService) EnsureCart(ctx context.Context, req *storedto.EnsureCartR
 		return nil, err
 	}
 
-	draft, err := s.InvoiceRepo.GetActiveDraft(ctx, *tenant.ClientID, req.SellerCompanyID)
+	draft, err := s.InvoiceRepo.GetActiveDraft(ctx, *tenant.ClientID, req.SellerCompanyID, invoiceconstants.InvoiceSourceStore)
 	if err != nil {
 		return nil, err
 	}
 	if draft == nil {
-		draft = &invoicemodel.Invoice{BuyerClientID: *tenant.ClientID, SellerCompanyID: req.SellerCompanyID, CreatedByUserID: tenant.UserID, StatusInvoice: constants.InvoiceDraft, TotalAmount: 0}
+		draft = &invoicemodel.Invoice{BuyerClientID: *tenant.ClientID, SellerCompanyID: req.SellerCompanyID, CreatedByUserID: tenant.UserID, StatusInvoice: invoiceconstants.InvoiceDraft, Source: invoiceconstants.InvoiceSourceStore, TotalAmount: 0}
 		if err := s.InvoiceRepo.Create(ctx, nil, draft); err != nil {
 			return nil, errorHandler.NewAppError(http.StatusInternalServerError, "Error creando carrito")
 		}
 	}
 
-	return &storedto.EnsureCartResponse{InvoiceID: draft.ID, BuyerClientID: draft.BuyerClientID, SellerCompanyID: draft.SellerCompanyID, StatusInvoice: draft.StatusInvoice}, nil
+	return &storedto.EnsureCartResponse{InvoiceID: draft.ID, BuyerClientID: draft.BuyerClientID, SellerCompanyID: draft.SellerCompanyID, StatusInvoice: draft.StatusInvoice, Source: draft.Source}, nil
 }
 
 func (s *storeService) Checkout(ctx context.Context, req *storedto.CheckoutRequest) (*storedto.CheckoutResponse, error) {
@@ -220,7 +221,7 @@ func (s *storeService) Checkout(ctx context.Context, req *storedto.CheckoutReque
 		if tenant.ClientID == nil {
 			return nil, errorHandler.NewAppError(http.StatusForbidden, "Solo clientes compradores")
 		}
-		draft, err := s.InvoiceRepo.GetActiveDraft(ctx, *tenant.ClientID, *req.SellerCompanyID)
+		draft, err := s.InvoiceRepo.GetActiveDraft(ctx, *tenant.ClientID, *req.SellerCompanyID, invoiceconstants.InvoiceSourceStore)
 		if err != nil {
 			return nil, err
 		}
@@ -243,7 +244,7 @@ func (s *storeService) Checkout(ctx context.Context, req *storedto.CheckoutReque
 		return nil, err
 	}
 
-	return &storedto.CheckoutResponse{InvoiceID: invoiceID, Status: constants.InvoicePending}, nil
+	return &storedto.CheckoutResponse{InvoiceID: invoiceID, Status: invoiceconstants.InvoicePending}, nil
 }
 
 func (s *storeService) CheckoutAll(ctx context.Context, req *storedto.CheckoutAllRequest) (*storedto.CheckoutAllResponse, error) {
@@ -284,14 +285,14 @@ func (s *storeService) CheckoutAll(ctx context.Context, req *storedto.CheckoutAl
 	res := &storedto.CheckoutAllResponse{Orders: make([]storedto.CheckoutAllOrderResponse, 0, len(drafts))}
 	err = transaction.RunInTransaction(ctx, s.db, func(tx *sql.Tx) error {
 		for _, draft := range drafts {
-			if err := s.InvoiceRepo.UpdateStatus(ctx, tx, draft.ID, constants.InvoicePending); err != nil {
+			if err := s.InvoiceRepo.UpdateStatus(ctx, tx, draft.ID, invoiceconstants.InvoicePending); err != nil {
 				return err
 			}
 			res.Orders = append(res.Orders, storedto.CheckoutAllOrderResponse{
 				InvoiceID:       draft.ID,
 				SellerCompanyID: draft.SellerCompanyID,
 				SellerCompany:   draft.SellerName,
-				Status:          constants.InvoicePending,
+				Status:          invoiceconstants.InvoicePending,
 			})
 			res.TotalAmount += draft.TotalAmount
 		}
@@ -336,7 +337,7 @@ func (s *storeService) buildCartResponse(ctx context.Context, draft *invoicemode
 		return nil, err
 	}
 
-	res := &storedto.CartResponse{InvoiceID: draft.ID, BuyerClientID: draft.BuyerClientID, SellerCompanyID: draft.SellerCompanyID, SellerCompany: seller.Name, StatusInvoice: draft.StatusInvoice, Subtotal: draft.Subtotal, Taxes: draft.Taxes, TotalAmount: draft.TotalAmount, Items: make([]storedto.CartItemResponse, 0, len(items))}
+	res := &storedto.CartResponse{InvoiceID: draft.ID, BuyerClientID: draft.BuyerClientID, SellerCompanyID: draft.SellerCompanyID, SellerCompany: seller.Name, StatusInvoice: draft.StatusInvoice, Source: draft.Source, Subtotal: draft.Subtotal, Taxes: draft.Taxes, TotalAmount: draft.TotalAmount, Items: make([]storedto.CartItemResponse, 0, len(items))}
 	for _, item := range items {
 		res.Items = append(res.Items, storedto.CartItemResponse{ID: item.ID, InvoiceID: draft.ID, ProductID: item.ProductID, ProductName: item.ProductName, ProductImagePath: item.ProductImagePath, Quantity: item.Quantity, Price: item.Price, Subtotal: item.Subtotal})
 	}

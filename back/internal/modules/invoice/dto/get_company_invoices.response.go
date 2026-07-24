@@ -13,6 +13,7 @@ type CompanyInvoiceResponse struct {
 	SellerCompanyID int `json:"seller_company_id"`
 
 	StatusInvoice string `json:"status_invoice"`
+	Source        string `json:"source"`
 
 	TotalAmount float64 `json:"total_amount"`
 
@@ -20,8 +21,8 @@ type CompanyInvoiceResponse struct {
 
 	CreatedAt time.Time `json:"created_at"`
 
-	BuyerName       string    `json:"buyer_name"`
-    SellerCompany   string    `json:"seller_company"`
+	BuyerName     string `json:"buyer_name"`
+	SellerCompany string `json:"seller_company"`
 }
 
 type GetCompanyInvoicesResponse struct {
