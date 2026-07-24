@@ -9,6 +9,11 @@ import {
   RotateCcw,
   Search,
   SlidersHorizontal,
+  ArrowRight,
+  BadgeCheck,
+  Building2,
+  ImageIcon,
+  Store,
   X,
 } from 'lucide-vue-next';
 
@@ -31,6 +36,10 @@ import { useCategories } from '@/modules/categories/composables/useCategories';
 import { useProductTypes } from '@/modules/product-types/composables/useProductTypes';
 
 import type { StoreProduct } from '../types/store-product.types';
+
+import { getCompanyCoverUrl, getCompanyLogoUrl } from '@/shared/utils/assets';
+
+import { useStoreBusiness } from '../composables/useStoreBusiness';
 
 const route = useRoute();
 const router = useRouter();
@@ -111,7 +120,18 @@ watch(categoryId, (newValue, oldValue) => {
 });
 
 watch(
-  [debouncedSearch, categoryId, typeId, kind, minPrice, maxPrice, sortColumn, order, page],
+  [
+    debouncedSearch,
+    companyId,
+    categoryId,
+    typeId,
+    kind,
+    minPrice,
+    maxPrice,
+    sortColumn,
+    order,
+    page,
+  ],
   () => {
     const query: Record<string, string> = {};
 
@@ -161,6 +181,35 @@ watch(
     });
   }
 );
+
+const selectedBusinessId = computed<number | null>(() => {
+  if (companyId.value === '') {
+    return null;
+  }
+
+  const id = Number(companyId.value);
+
+  return Number.isFinite(id) && id > 0 ? id : null;
+});
+
+const {
+  data: selectedBusiness,
+  isLoading: selectedBusinessLoading,
+  isError: selectedBusinessError,
+} = useStoreBusiness(selectedBusinessId);
+
+const selectedBusinessLogo = computed(() => {
+  return getCompanyLogoUrl(selectedBusiness.value?.logo);
+});
+
+const selectedBusinessCover = computed(() => {
+  return getCompanyCoverUrl(selectedBusiness.value?.cover_image);
+});
+
+function clearBusinessFilter() {
+  companyId.value = '';
+  page.value = 1;
+}
 
 const featuredCategories = computed(() => {
   return productCategories.value.slice(0, 7);
@@ -242,7 +291,7 @@ const productParams = computed(() => ({
 
   category_id: categoryId.value !== 'all' ? Number(categoryId.value) : undefined,
 
-  company_id: companyId.value !== '' ? Number(companyId.value) : undefined,
+  company_id: selectedBusinessId.value ?? undefined,
 
   type_id: typeId.value !== 'all' ? Number(typeId.value) : undefined,
 
@@ -373,6 +422,129 @@ const activeDiscoveryLabel = computed(() => {
     </section>
 
     <div class="mx-auto max-w-[1500px] space-y-8 px-6 py-8 lg:px-8">
+      <!-- ACTIVE BUSINESS CONTEXT -->
+      <section
+        v-if="selectedBusinessId"
+        class="relative overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm"
+      >
+        <div v-if="selectedBusinessLoading" class="flex min-h-48 items-center justify-center">
+          <div class="text-center">
+            <Loader2 class="mx-auto h-6 w-6 animate-spin text-primary" />
+
+            <p class="mt-3 text-sm text-muted-foreground">Loading business catalog...</p>
+          </div>
+        </div>
+
+        <div
+          v-else-if="selectedBusinessError"
+          class="flex flex-col items-center justify-center px-6 py-10 text-center"
+        >
+          <Building2 class="h-7 w-7 text-muted-foreground" />
+
+          <p class="mt-4 text-sm font-semibold">Business information unavailable</p>
+
+          <p class="mt-2 text-sm text-muted-foreground">
+            Products are still filtered by the selected seller.
+          </p>
+
+          <Button variant="ghost" size="sm" class="mt-4 rounded-full" @click="clearBusinessFilter">
+            <X class="mr-2 h-4 w-4" />
+            Browse all businesses
+          </Button>
+        </div>
+
+        <template v-else-if="selectedBusiness">
+          <img
+            v-if="selectedBusinessCover"
+            :src="selectedBusinessCover"
+            :alt="`${selectedBusiness.name} cover`"
+            class="absolute inset-0 h-full w-full object-cover"
+          />
+
+          <div
+            v-else
+            class="absolute inset-0 bg-gradient-to-br from-primary/15 via-muted/40 to-background"
+          />
+
+          <div
+            class="absolute inset-0 bg-gradient-to-r from-background/95 via-background/85 to-background/45"
+          />
+
+          <div
+            class="relative flex min-h-52 flex-col justify-between gap-7 p-6 md:flex-row md:items-end"
+          >
+            <div class="flex min-w-0 items-start gap-4">
+              <div
+                class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[1.5rem] border border-border bg-background shadow-xl"
+              >
+                <img
+                  v-if="selectedBusinessLogo"
+                  :src="selectedBusinessLogo"
+                  :alt="`${selectedBusiness.name} logo`"
+                  class="h-full w-full object-contain p-2"
+                />
+
+                <Building2 v-else class="h-7 w-7 text-primary" />
+              </div>
+
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span
+                    class="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
+                  >
+                    {{ selectedBusiness.category }}
+                  </span>
+
+                  <span
+                    class="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/70 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur"
+                  >
+                    <BadgeCheck class="h-3.5 w-3.5 text-primary" />
+                    Connected business
+                  </span>
+                </div>
+
+                <p class="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+                  Business catalog
+                </p>
+
+                <h2 class="mt-2 truncate text-3xl font-semibold tracking-[-0.04em]">
+                  {{ selectedBusiness.name }}
+                </h2>
+
+                <p class="mt-3 line-clamp-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                  {{
+                    selectedBusiness.description ||
+                    'Explore products and services published by this Nexora business.'
+                  }}
+                </p>
+              </div>
+            </div>
+
+            <div class="flex shrink-0 flex-col gap-3 sm:flex-row md:flex-col">
+              <div
+                class="rounded-2xl border border-border bg-background/75 px-4 py-3 shadow-sm backdrop-blur"
+              >
+                <p class="text-xs text-muted-foreground">Available catalog</p>
+
+                <p class="mt-1 text-xl font-semibold">
+                  {{ selectedBusiness.total_products }}
+                  resources
+                </p>
+              </div>
+
+              <Button
+                variant="outline"
+                class="rounded-full bg-background/80 backdrop-blur"
+                @click="clearBusinessFilter"
+              >
+                <X class="mr-2 h-4 w-4" />
+                View all sellers
+              </Button>
+            </div>
+          </div>
+        </template>
+      </section>
+
       <!-- CATEGORY DISCOVERY -->
       <section v-if="categoriesLoading || featuredCategories.length > 0" class="space-y-4">
         <div class="flex items-center justify-between gap-4">

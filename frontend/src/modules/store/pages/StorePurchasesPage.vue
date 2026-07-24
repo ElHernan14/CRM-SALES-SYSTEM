@@ -33,19 +33,34 @@ import type { StorePurchase } from '../types/store-purchase.types';
 
 import type { InvoiceStatus } from '@/modules/invoices/types/invoice.types';
 
-const page = ref(1);
+import { useRoute, useRouter } from 'vue-router';
+
+const route = useRoute();
+const router = useRouter();
+
+function queryString(value: unknown) {
+  return typeof value === 'string' ? value : '';
+}
+
 const limit = ref(8);
 
-const search = ref('');
-const debouncedSearch = ref('');
+const search = ref(queryString(route.query.search));
 
-const statusInvoice = ref('all');
+const debouncedSearch = ref(queryString(route.query.search).trim());
+
+const statusInvoice = ref(queryString(route.query.status) || 'all');
+
+const page = ref(Number(route.query.page) > 0 ? Number(route.query.page) : 1);
+
+const querySort = queryString(route.query.sort);
 
 const sortColumn = ref<'created_at' | 'total_amount' | 'paid_amount' | 'status_invoice'>(
-  'created_at'
+  ['created_at', 'total_amount', 'paid_amount', 'status_invoice'].includes(querySort)
+    ? (querySort as 'created_at' | 'total_amount' | 'paid_amount' | 'status_invoice')
+    : 'created_at'
 );
 
-const order = ref<'asc' | 'desc'>('desc');
+const order = ref<'asc' | 'desc'>(queryString(route.query.order) === 'asc' ? 'asc' : 'desc');
 
 let searchTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -59,8 +74,33 @@ watch(search, (value) => {
   }, 300);
 });
 
-watch([debouncedSearch, statusInvoice, sortColumn, order], () => {
-  page.value = 1;
+watch([debouncedSearch, statusInvoice, sortColumn, order, page], () => {
+  const query: Record<string, string> = {};
+
+  if (debouncedSearch.value.length >= 2) {
+    query.search = debouncedSearch.value;
+  }
+
+  if (statusInvoice.value !== 'all') {
+    query.status = statusInvoice.value;
+  }
+
+  if (sortColumn.value !== 'created_at') {
+    query.sort = sortColumn.value;
+  }
+
+  if (order.value !== 'desc') {
+    query.order = order.value;
+  }
+
+  if (page.value > 1) {
+    query.page = String(page.value);
+  }
+
+  router.replace({
+    name: 'store-purchases',
+    query,
+  });
 });
 
 const params = computed(() => ({
@@ -181,6 +221,14 @@ function getStatusClass(status: InvoiceStatus) {
 
   return classes[status];
 }
+
+function getPaymentProgress(purchase: StorePurchase) {
+  if (purchase.total_amount <= 0) {
+    return 0;
+  }
+
+  return Math.min(Math.max((purchase.paid_amount / purchase.total_amount) * 100, 0), 100);
+}
 </script>
 
 <template>
@@ -226,78 +274,75 @@ function getStatusClass(status: InvoiceStatus) {
 
     <main class="mx-auto max-w-[1400px] space-y-8 px-6 py-8 lg:px-8">
       <!-- METRICS -->
-      <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <article class="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <div class="flex items-start justify-between">
-            <div>
-              <p class="text-sm text-muted-foreground">Awaiting payment</p>
+      <!-- CURRENT RESULTS SNAPSHOT -->
+      <section class="overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm">
+        <div
+          class="flex flex-col gap-3 border-b border-border bg-muted/15 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div>
+            <p class="text-sm font-semibold">Current results snapshot</p>
 
-              <p class="mt-2 text-3xl font-semibold">
-                {{ pageMetrics.awaitingPayment }}
-              </p>
-            </div>
-
-            <div class="rounded-xl bg-amber-500/10 p-3">
-              <Clock3 class="h-5 w-5 text-amber-600 dark:text-amber-400" />
-            </div>
+            <p class="mt-1 text-xs text-muted-foreground">
+              Values calculated from the purchases visible on this page.
+            </p>
           </div>
 
-          <p class="mt-4 text-xs text-muted-foreground">On this results page</p>
-        </article>
+          <span
+            class="self-start rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground sm:self-auto"
+          >
+            Page {{ page }} of {{ totalPages }}
+          </span>
+        </div>
 
-        <article class="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <div class="flex items-start justify-between">
-            <div>
-              <p class="text-sm text-muted-foreground">Paid orders</p>
+        <div class="grid grid-cols-2 gap-px bg-border lg:grid-cols-4">
+          <div class="bg-card p-5">
+            <div class="flex items-center gap-2">
+              <Clock3 class="h-4 w-4 text-amber-600 dark:text-amber-400" />
 
-              <p class="mt-2 text-3xl font-semibold">
-                {{ pageMetrics.paid }}
-              </p>
+              <p class="text-xs text-muted-foreground">Awaiting payment</p>
             </div>
 
-            <div class="rounded-xl bg-emerald-500/10 p-3">
-              <CheckCircle2 class="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-            </div>
+            <p class="mt-3 text-2xl font-semibold">
+              {{ pageMetrics.awaitingPayment }}
+            </p>
           </div>
 
-          <p class="mt-4 text-xs text-muted-foreground">Completed on this page</p>
-        </article>
+          <div class="bg-card p-5">
+            <div class="flex items-center gap-2">
+              <CheckCircle2 class="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
 
-        <article class="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <div class="flex items-start justify-between gap-4">
-            <div class="min-w-0">
-              <p class="text-sm text-muted-foreground">Outstanding</p>
-
-              <p class="mt-2 truncate text-2xl font-semibold">
-                {{ formatCurrency(pageMetrics.outstanding) }}
-              </p>
+              <p class="text-xs text-muted-foreground">Paid orders</p>
             </div>
 
-            <div class="rounded-xl bg-primary/10 p-3">
-              <WalletCards class="h-5 w-5 text-primary" />
-            </div>
+            <p class="mt-3 text-2xl font-semibold">
+              {{ pageMetrics.paid }}
+            </p>
           </div>
 
-          <p class="mt-4 text-xs text-muted-foreground">Remaining on visible orders</p>
-        </article>
+          <div class="bg-card p-5">
+            <div class="flex items-center gap-2">
+              <WalletCards class="h-4 w-4 text-primary" />
 
-        <article class="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <div class="flex items-start justify-between gap-4">
-            <div class="min-w-0">
-              <p class="text-sm text-muted-foreground">Amount paid</p>
-
-              <p class="mt-2 truncate text-2xl font-semibold">
-                {{ formatCurrency(pageMetrics.spent) }}
-              </p>
+              <p class="text-xs text-muted-foreground">Outstanding</p>
             </div>
 
-            <div class="rounded-xl bg-blue-500/10 p-3">
-              <CreditCard class="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            </div>
+            <p class="mt-3 truncate text-xl font-semibold text-amber-600 dark:text-amber-400">
+              {{ formatCurrency(pageMetrics.outstanding) }}
+            </p>
           </div>
 
-          <p class="mt-4 text-xs text-muted-foreground">Across visible purchases</p>
-        </article>
+          <div class="bg-card p-5">
+            <div class="flex items-center gap-2">
+              <CreditCard class="h-4 w-4 text-blue-600 dark:text-blue-400" />
+
+              <p class="text-xs text-muted-foreground">Amount paid</p>
+            </div>
+
+            <p class="mt-3 truncate text-xl font-semibold text-emerald-600 dark:text-emerald-400">
+              {{ formatCurrency(pageMetrics.spent) }}
+            </p>
+          </div>
+        </div>
       </section>
 
       <!-- FILTERS -->
@@ -387,16 +432,11 @@ function getStatusClass(status: InvoiceStatus) {
           </Button>
         </div>
 
-        <div class="mt-4 flex items-center justify-between border-t border-border pt-4">
+        <div class="mt-4 border-t border-border pt-4">
           <p class="text-sm text-muted-foreground">
             {{ data?.meta.total ?? 0 }}
-            purchase records
+            {{ data?.meta.total === 1 ? 'purchase record' : 'purchase records' }}
           </p>
-
-          <div class="flex items-center gap-2 text-xs text-muted-foreground">
-            <ArrowDownUp class="h-3.5 w-3.5" />
-            Personal order history
-          </div>
         </div>
       </section>
 
@@ -432,8 +472,9 @@ function getStatusClass(status: InvoiceStatus) {
             class="group overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm transition hover:border-primary/25 hover:shadow-lg"
           >
             <div
-              class="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_180px_180px_auto] lg:items-center"
+              class="grid gap-6 p-5 lg:grid-cols-[minmax(0,1fr)_160px_160px_auto] lg:items-center"
             >
+              <!-- ORDER IDENTITY -->
               <div class="flex min-w-0 gap-4">
                 <div
                   class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10"
@@ -455,38 +496,51 @@ function getStatusClass(status: InvoiceStatus) {
                     </span>
                   </div>
 
-                  <div
-                    class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground"
-                  >
-                    <span class="flex items-center gap-1.5">
+                  <div class="mt-2 flex flex-wrap items-center gap-2">
+                    <span class="text-sm font-semibold"> #NX-{{ purchase.id }} </span>
+
+                    <span class="h-1 w-1 rounded-full bg-muted-foreground/50" />
+
+                    <span class="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <CalendarDays class="h-3.5 w-3.5" />
 
                       {{ formatDate(purchase.created_at) }}
                     </span>
-
-                    <span>
-                      {{ purchase.item_count }}
-                      {{ purchase.item_count === 1 ? 'item' : 'items' }}
-                    </span>
-
-                    <span> Order #NX-{{ purchase.id }} </span>
                   </div>
+
+                  <p class="mt-2 text-xs text-muted-foreground">
+                    {{ purchase.item_count }}
+                    {{
+                      purchase.item_count === 1 ? 'item from this seller' : 'items from this seller'
+                    }}
+                  </p>
                 </div>
               </div>
 
+              <!-- FINANCIAL TOTAL -->
               <div>
-                <p class="text-xs text-muted-foreground">Order total</p>
+                <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Order total
+                </p>
 
-                <p class="mt-1 text-lg font-semibold">
+                <p class="mt-1 text-lg font-semibold tracking-tight">
                   {{ formatCurrency(purchase.total_amount) }}
+                </p>
+
+                <p class="mt-1 text-xs text-muted-foreground">
+                  Paid:
+                  {{ formatCurrency(purchase.paid_amount) }}
                 </p>
               </div>
 
+              <!-- REMAINING -->
               <div>
-                <p class="text-xs text-muted-foreground">Remaining</p>
+                <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Outstanding
+                </p>
 
                 <p
-                  class="mt-1 text-lg font-semibold"
+                  class="mt-1 text-lg font-semibold tracking-tight"
                   :class="
                     purchase.remaining_amount > 0
                       ? 'text-amber-600 dark:text-amber-400'
@@ -495,12 +549,19 @@ function getStatusClass(status: InvoiceStatus) {
                 >
                   {{ formatCurrency(purchase.remaining_amount) }}
                 </p>
+
+                <p class="mt-1 text-xs text-muted-foreground">
+                  {{
+                    purchase.remaining_amount > 0 ? 'Payment still required' : 'Order fully paid'
+                  }}
+                </p>
               </div>
 
+              <!-- ACTIONS -->
               <div class="flex flex-wrap gap-2 lg:justify-end">
                 <Button variant="outline" class="rounded-full" @click="openPurchase(purchase)">
                   <Eye class="mr-2 h-4 w-4" />
-                  View order
+                  Details
                 </Button>
 
                 <Button
@@ -514,17 +575,22 @@ function getStatusClass(status: InvoiceStatus) {
               </div>
             </div>
 
-            <div class="h-1 bg-muted">
-              <div
-                class="h-full bg-primary transition-all"
-                :style="{
-                  width: `${
-                    purchase.total_amount > 0
-                      ? Math.min((purchase.paid_amount / purchase.total_amount) * 100, 100)
-                      : 0
-                  }%`,
-                }"
-              />
+            <div class="border-t border-border bg-muted/10 px-5 py-3">
+              <div class="flex items-center justify-between gap-4 text-xs">
+                <span class="text-muted-foreground"> Payment progress </span>
+
+                <span class="font-semibold"> {{ Math.round(getPaymentProgress(purchase)) }}% </span>
+              </div>
+
+              <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                <div
+                  class="h-full rounded-full transition-all duration-500"
+                  :class="purchase.remaining_amount <= 0 ? 'bg-emerald-500' : 'bg-primary'"
+                  :style="{
+                    width: `${getPaymentProgress(purchase)}%`,
+                  }"
+                />
+              </div>
             </div>
           </article>
         </div>

@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router';
 
 import {
   ArrowRight,
+  BadgeCheck,
   Building2,
   Check,
   CheckCircle2,
@@ -12,7 +13,7 @@ import {
   ReceiptText,
   ShieldCheck,
   ShoppingBag,
-  Sparkles,
+  WalletCards,
 } from 'lucide-vue-next';
 
 import { Button } from '@/components/ui/button';
@@ -20,12 +21,14 @@ import { Button } from '@/components/ui/button';
 import { getCheckoutResult } from '../utils/checkout-session';
 
 import type { CheckoutAllResponse } from '../types/store-cart.types';
+
 import { useStoreUiStore } from '../stores/store-ui.store';
 
 const route = useRoute();
 const router = useRouter();
 
 const storeUi = useStoreUiStore();
+
 const checkoutResult = ref<CheckoutAllResponse | null>(null);
 
 onMounted(() => {
@@ -77,6 +80,20 @@ function getStatusLabel(status: string) {
   return labels[status] ?? status;
 }
 
+function getStatusClass(status: string) {
+  const classes: Record<string, string> = {
+    pending: 'border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400',
+
+    paid: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+
+    draft: 'border-border bg-muted text-muted-foreground',
+
+    cancelled: 'border-destructive/20 bg-destructive/10 text-destructive',
+  };
+
+  return classes[status] ?? 'border-border bg-muted text-muted-foreground';
+}
+
 function openPurchases() {
   router.push('/store/purchases');
 }
@@ -106,24 +123,40 @@ function continueShopping() {
           <CheckCircle2 class="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
         </div>
 
-        <div
-          class="mt-7 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400"
-        >
-          <Check class="h-4 w-4" />
-          Checkout completed successfully
-        </div>
+        <p class="mt-7 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+          Purchase orders submitted
+        </p>
 
         <h1
-          class="mx-auto mt-6 max-w-3xl text-4xl font-semibold tracking-[-0.045em] text-foreground sm:text-5xl lg:text-6xl"
+          class="mx-auto mt-4 max-w-3xl text-4xl font-semibold tracking-[-0.05em] text-foreground sm:text-5xl lg:text-6xl"
         >
-          Your purchase is
-          <span class="text-muted-foreground"> now being processed. </span>
+          Your orders are ready for
+          <span class="text-muted-foreground"> the next step. </span>
         </h1>
 
         <p class="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
-          Nexora created an independent order for every seller while processing your checkout as a
-          single protected transaction.
+          Nexora created one independent purchase order for every seller and moved them into your
+          personal purchase history.
         </p>
+
+        <div
+          class="mx-auto mt-7 flex max-w-2xl flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-muted-foreground"
+        >
+          <span class="flex items-center gap-2">
+            <BadgeCheck class="h-4 w-4 text-primary" />
+            Seller orders confirmed
+          </span>
+
+          <span class="flex items-center gap-2">
+            <PackageCheck class="h-4 w-4 text-primary" />
+            Inventory validated
+          </span>
+
+          <span class="flex items-center gap-2">
+            <WalletCards class="h-4 w-4 text-primary" />
+            Ready for payment
+          </span>
+        </div>
       </section>
 
       <!-- SUMMARY -->
@@ -133,28 +166,30 @@ function continueShopping() {
         <div
           class="border-b border-border bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6"
         >
-          <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div class="flex items-center gap-4">
               <div
                 class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm"
               >
-                <PackageCheck class="h-6 w-6" />
+                <ReceiptText class="h-6 w-6" />
               </div>
 
               <div>
-                <p class="text-sm font-semibold text-foreground">Purchase summary</p>
+                <p class="text-sm font-semibold text-foreground">Submitted purchase</p>
 
                 <p class="mt-1 text-xs text-muted-foreground">
                   {{ orderCount }}
-                  {{ orderCount === 1 ? 'seller order created' : 'seller orders created' }}
+                  {{ orderCount === 1 ? 'independent seller order' : 'independent seller orders' }}
                 </p>
               </div>
             </div>
 
             <div class="sm:text-right">
-              <p class="text-xs text-muted-foreground">Checkout total</p>
+              <p class="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                Purchase total
+              </p>
 
-              <p class="mt-1 text-3xl font-semibold tracking-tight text-foreground">
+              <p class="mt-2 text-3xl font-semibold tracking-[-0.04em] text-foreground">
                 {{ formatCurrency(totalAmount) }}
               </p>
             </div>
@@ -166,37 +201,44 @@ function continueShopping() {
           <article
             v-for="order in orders"
             :key="order.invoice_id"
-            class="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between"
+            class="flex flex-col gap-5 p-5 transition hover:bg-muted/15 sm:flex-row sm:items-center sm:justify-between"
           >
             <div class="flex min-w-0 items-center gap-4">
               <div
-                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-muted/30"
+                class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10"
               >
-                <Building2 class="h-5 w-5 text-muted-foreground" />
+                <Building2 class="h-5 w-5 text-primary" />
               </div>
 
               <div class="min-w-0">
-                <p class="truncate text-sm font-semibold text-foreground">
-                  {{ order.seller_company }}
-                </p>
+                <div class="flex items-center gap-2">
+                  <p class="truncate text-base font-semibold text-foreground">
+                    {{ order.seller_company }}
+                  </p>
 
-                <p class="mt-1 text-xs text-muted-foreground">Seller order confirmed</p>
+                  <BadgeCheck class="h-4 w-4 shrink-0 text-primary" />
+                </div>
+
+                <p class="mt-1 text-xs text-muted-foreground">Independent seller order</p>
               </div>
             </div>
 
-            <div class="flex items-center justify-between gap-4 sm:justify-end">
+            <div class="flex items-end justify-between gap-5 sm:justify-end">
               <span
-                class="rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400"
+                class="rounded-full border px-3 py-1 text-xs font-semibold"
+                :class="getStatusClass(order.status)"
               >
                 {{ getStatusLabel(order.status) }}
               </span>
 
               <div class="text-right">
-                <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                   Order reference
                 </p>
 
-                <p class="mt-1 text-sm font-semibold text-foreground">#NX-{{ order.invoice_id }}</p>
+                <p class="mt-1 text-base font-semibold tracking-tight text-foreground">
+                  #NX-{{ order.invoice_id }}
+                </p>
               </div>
             </div>
           </article>
@@ -210,62 +252,104 @@ function continueShopping() {
             <ReceiptText class="h-5 w-5 text-muted-foreground" />
           </div>
 
-          <p class="mt-4 text-sm font-semibold text-foreground">Purchase completed</p>
+          <p class="mt-4 text-sm font-semibold text-foreground">Purchase successfully submitted</p>
 
           <p class="mt-2 text-sm text-muted-foreground">
-            Open your purchase history to review the newly created orders.
+            Open your purchase history to review the newly created seller orders.
           </p>
 
-          <p v-if="primaryInvoiceId" class="mt-3 text-xs text-muted-foreground">
-            Primary order reference: #{{ primaryInvoiceId }}
+          <p v-if="primaryInvoiceId" class="mt-4 text-sm font-semibold text-foreground">
+            Primary reference: #NX-{{ primaryInvoiceId }}
           </p>
+        </div>
+
+        <!-- NEXT STEP -->
+        <div class="border-t border-border bg-muted/15 p-5">
+          <div class="flex items-start gap-4">
+            <div
+              class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/10"
+            >
+              <WalletCards class="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            </div>
+
+            <div>
+              <p class="text-sm font-semibold">What happens next?</p>
+
+              <p class="mt-1 text-sm leading-6 text-muted-foreground">
+                Orders awaiting payment can be reviewed and paid from My Purchases. Their status
+                will update as payments are recorded.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
-      <!-- PROCESS INFORMATION -->
-      <section class="mx-auto mt-6 grid max-w-4xl gap-4 md:grid-cols-3">
-        <article class="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-            <ReceiptText class="h-5 w-5 text-primary" />
-          </div>
+      <!-- PROCESS FLOW -->
+      <section
+        class="mx-auto mt-6 max-w-4xl rounded-[1.75rem] border border-border bg-card p-6 shadow-sm"
+      >
+        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+          Nexora order flow
+        </p>
 
-          <h2 class="mt-4 text-sm font-semibold text-foreground">Separate orders</h2>
+        <div class="mt-5 grid gap-4 md:grid-cols-3">
+          <article class="flex items-start gap-3">
+            <div
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10"
+            >
+              <Check class="h-5 w-5 text-primary" />
+            </div>
 
-          <p class="mt-2 text-xs leading-5 text-muted-foreground">
-            Every seller receives an independent invoice and purchase record.
-          </p>
-        </article>
+            <div>
+              <p class="text-sm font-semibold">1. Orders created</p>
 
-        <article class="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10">
-            <ShieldCheck class="h-5 w-5 text-blue-600 dark:text-blue-400" />
-          </div>
+              <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                One purchase record was generated for each seller.
+              </p>
+            </div>
+          </article>
 
-          <h2 class="mt-4 text-sm font-semibold text-foreground">Inventory secured</h2>
+          <article class="flex items-start gap-3">
+            <div
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10"
+            >
+              <ShieldCheck class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
 
-          <p class="mt-2 text-xs leading-5 text-muted-foreground">
-            Product availability was validated before confirming the checkout.
-          </p>
-        </article>
+            <div>
+              <p class="text-sm font-semibold">2. Inventory confirmed</p>
 
-        <article class="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
-            <Sparkles class="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-          </div>
+              <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                Availability was validated before submission.
+              </p>
+            </div>
+          </article>
 
-          <h2 class="mt-4 text-sm font-semibold text-foreground">Ready for payment</h2>
+          <article class="flex items-start gap-3">
+            <div
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10"
+            >
+              <WalletCards class="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
 
-          <p class="mt-2 text-xs leading-5 text-muted-foreground">
-            Pending orders can now be reviewed and paid from your purchases.
-          </p>
-        </article>
+            <div>
+              <p class="text-sm font-semibold">3. Payment tracking</p>
+
+              <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                Pay and follow each seller order independently.
+              </p>
+            </div>
+          </article>
+        </div>
       </section>
 
       <!-- ACTIONS -->
       <section class="mx-auto mt-8 flex max-w-4xl flex-col gap-3 sm:flex-row sm:justify-center">
         <Button type="button" size="lg" class="rounded-full px-8" @click="openPurchases">
           <ReceiptText class="mr-2 h-4 w-4" />
+
           View my purchases
+
           <ArrowRight class="ml-2 h-4 w-4" />
         </Button>
 
