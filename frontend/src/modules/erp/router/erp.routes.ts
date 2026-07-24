@@ -10,7 +10,7 @@ const PurchasesPage = () => import('@/modules/purchases/pages/PurchasesPage.vue'
 const InventoryPage = () => import('@/modules/erp/pages/InventoryPage.vue');
 const CustomersPage = () => import('@/modules/erp/pages/CustomersPage.vue');
 const AnalyticsPage = () => import('@/modules/erp/pages/AnalyticsPage.vue');
-const SettingsPage = () => import('@/modules/erp/pages/SettingsPage.vue');
+const SettingsPage = () => import('@/modules/company/pages/CompanySettingsPage.vue');
 
 export const erpRoutes = [
   {

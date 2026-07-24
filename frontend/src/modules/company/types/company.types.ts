@@ -6,6 +6,7 @@ export const CompanyMeSchema = z.object({
   name: z.string(),
 
   category_id: z.number(),
+
   category: z.string(),
 
   description: z.string().nullable().optional(),
@@ -14,7 +15,7 @@ export const CompanyMeSchema = z.object({
 
   cover_image: z.string().nullable().optional(),
 
-  created_at: z.string(),
+  created_at: z.string().nullable().optional(),
 
   deleted_at: z.string().nullable().optional(),
 

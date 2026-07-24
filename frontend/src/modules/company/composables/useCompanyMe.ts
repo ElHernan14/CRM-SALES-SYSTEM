@@ -1,7 +1,5 @@
 import { computed } from 'vue';
-
 import { storeToRefs } from 'pinia';
-
 import { useQuery } from '@tanstack/vue-query';
 
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
