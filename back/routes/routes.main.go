@@ -124,6 +124,7 @@ func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 	auth.RegisterAuthRoutes(authRouter, container.AuthController)
 	storeroutes.RegisterPublicStoreRoutes(r, container.StoreController)
 	categories.RegisterCategoriesRoutes(r, container.CategoriesController)
+	marketplace.RegisterMarketplaceRoutes(r, container.MarketplaceController)
 
 	users.RegisterUserRoutes(protected, container.UserController)
 	client.RegisterClientRoutes(protected, container.ClientController)
@@ -133,6 +134,5 @@ func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 	invoiceitem.RegisterInvoiceItemRoutes(protected, container.InvoiceItemController)
 	invoicepayment.RegisterInvoicePaymentRoutes(protected, container.InvoicePaymentController)
 	storeroutes.RegisterInvoiceItemRoutes(protected, container.StoreController)
-	marketplace.RegisterMarketplaceRoutes(protected, container.MarketplaceController)
 	dashboard.RegisterDashboardRoutes(protected, container.DashboardController)
 }

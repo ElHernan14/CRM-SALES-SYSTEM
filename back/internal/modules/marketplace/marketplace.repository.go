@@ -11,6 +11,7 @@ import (
 
 type MarketplaceRepository interface {
 	ListSuppliers(ctx context.Context, req *marketplacedto.GetSuppliersRequest, excludedCompanyID *int) ([]marketplacedto.SupplierResponse, int, error)
+	GetSupplierByID(ctx context.Context, supplierID int, excludedCompanyID *int) (*marketplacedto.SupplierResponse, error)
 }
 
 type marketplaceRepository struct {
@@ -150,4 +151,72 @@ func (r *marketplaceRepository) ListSuppliers(ctx context.Context, req *marketpl
 	}
 
 	return items, total, rows.Err()
+}
+
+func (r *marketplaceRepository) GetSupplierByID(ctx context.Context, supplierID int, excludedCompanyID *int) (*marketplacedto.SupplierResponse, error) {
+	query := `
+		SELECT
+			c.id,
+			c.name,
+			c.category_id,
+			cc.name,
+			MIN(cl.email) AS email,
+			c.logo_path,
+			c.cover_image_path,
+			c.description,
+			COUNT(p.id) AS total_products
+		FROM company c
+		INNER JOIN category_company cc ON cc.id = c.category_id
+		LEFT JOIN client cl ON cl.company_id = c.id AND cl.status = 1 AND cl.deleted_at IS NULL
+		LEFT JOIN product p ON p.company_id = c.id AND p.status = 1 AND p.deleted_at IS NULL AND p.stock > p.reserved_stock
+		WHERE c.id = $1
+		  AND c.status = 1
+		  AND c.deleted_at IS NULL
+	`
+
+	args := []interface{}{supplierID}
+	if excludedCompanyID != nil {
+		query += " AND c.id <> $2"
+		args = append(args, *excludedCompanyID)
+	}
+
+	query += `
+		GROUP BY c.id, c.name, c.category_id, cc.name, c.logo_path, c.cover_image_path, c.description
+	`
+
+	var item marketplacedto.SupplierResponse
+	var email, logo, coverImage, description sql.NullString
+
+	err := r.db.QueryRowContext(ctx, query, args...).Scan(
+		&item.ID,
+		&item.Name,
+		&item.CategoryID,
+		&item.Category,
+		&email,
+		&logo,
+		&coverImage,
+		&description,
+		&item.TotalProducts,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if email.Valid {
+		item.Email = &email.String
+	}
+	if logo.Valid {
+		item.Logo = &logo.String
+	}
+	if coverImage.Valid {
+		item.CoverImage = &coverImage.String
+	}
+	if description.Valid {
+		item.Description = &description.String
+	}
+
+	return &item, nil
 }
