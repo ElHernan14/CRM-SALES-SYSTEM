@@ -2,7 +2,7 @@ import type { RouteRecordRaw } from 'vue-router';
 
 import PublicLayout from '@/app/layouts/PublicLayout.vue';
 
-const LandingPage = () => import('@/modules/public/pages/LandingPage.vue');
+const LandingPage = () => import('@/modules/landing/pages/LandingPage.vue');
 
 const LoginPage = () => import('@/modules/auth/pages/LoginPage.vue');
 
