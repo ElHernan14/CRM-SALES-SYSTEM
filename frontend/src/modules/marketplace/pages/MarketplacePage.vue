@@ -97,7 +97,7 @@ const companyCategoryTriggerLabel = computed(() => {
       description="Discover suppliers, browse their catalogs and create purchase flows for your company."
     />
 
-    <section class="rounded-2xl border border-border bg-card p-6 shadow-sm">
+    <section class="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h2 class="text-lg font-semibold tracking-tight text-foreground">Verified suppliers</h2>
@@ -115,7 +115,7 @@ const companyCategoryTriggerLabel = computed(() => {
         </div>
       </div>
 
-      <div class="mt-6 grid gap-3 lg:grid-cols-[1fr_220px_220px_160px]">
+      <div class="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_220px_220px_160px]">
         <div class="relative">
           <Search
             class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -205,7 +205,7 @@ const companyCategoryTriggerLabel = computed(() => {
     />
 
     <template v-else>
-      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <article
           v-for="supplier in suppliers"
           :key="supplier.id"
@@ -259,7 +259,9 @@ const companyCategoryTriggerLabel = computed(() => {
               </p>
             </div>
 
-            <div class="mt-5 flex items-center justify-between border-t border-border pt-4">
+            <div
+              class="mt-5 flex flex-col gap-4 border-t border-border pt-4 min-[390px]:flex-row min-[390px]:items-center min-[390px]:justify-between"
+            >
               <div>
                 <p class="text-xs text-muted-foreground">Available products</p>
 
@@ -270,7 +272,7 @@ const companyCategoryTriggerLabel = computed(() => {
 
               <Button
                 size="sm"
-                class="rounded-full px-4"
+                class="w-full rounded-full px-4 min-[390px]:w-auto"
                 @click="$router.push(`/erp/marketplace/suppliers/${supplier.id}`)"
               >
                 Browse catalog

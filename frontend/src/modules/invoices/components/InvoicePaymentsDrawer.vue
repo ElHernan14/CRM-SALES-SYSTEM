@@ -149,7 +149,7 @@ function getPaymentMethodClass(value: unknown) {
       </SheetHeader>
 
       <div class="mt-6 space-y-5">
-        <div class="grid gap-3 sm:grid-cols-3">
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Select v-model="paymentMethod">
             <SelectTrigger>
               <SelectValue placeholder="Payment method" />
@@ -228,6 +228,7 @@ function getPaymentMethodClass(value: unknown) {
 
         <template v-else>
           <DataTable
+            table-min-width="720px"
             :columns="columns"
             :rows="rows"
             :sortable-columns="['created_at', 'amount']"

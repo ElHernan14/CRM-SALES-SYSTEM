@@ -115,12 +115,14 @@ function openAccount() {
           N
         </div>
 
-        <div class="hidden sm:block">
+        <div class="hidden min-[390px]:block">
           <p class="text-lg font-semibold leading-none tracking-[-0.03em]">
             {{ brand.name }}
           </p>
 
-          <p class="mt-1 text-[11px] font-medium text-muted-foreground">Commerce & operations</p>
+          <p class="mt-1 hidden text-[11px] font-medium text-muted-foreground sm:block">
+            Commerce & operations
+          </p>
         </div>
       </RouterLink>
 

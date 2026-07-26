@@ -102,26 +102,6 @@ const updateMutation = useUpdateProduct();
 
 const isSubmitting = computed(() => updateMutation.isPending.value);
 
-watch(
-  () => props.product,
-  (product) => {
-    if (!product) return;
-
-    form.name = product.name;
-    form.description = product.description;
-
-    form.kind = product.kind;
-
-    form.category_id = String(product.category_id);
-    form.type_id = String(product.type_id);
-
-    form.price = String(product.price);
-    form.stock = String(product.stock);
-    form.status = String(product.status);
-  },
-  { immediate: true }
-);
-
 let hydratingProduct = false;
 
 watch(
@@ -132,10 +112,12 @@ watch(
     hydratingProduct = true;
 
     form.name = product.name;
-    form.description = product.description;
+    form.description = product.description ?? '';
     form.kind = product.kind;
+
     form.category_id = String(product.category_id);
     form.type_id = String(product.type_id);
+
     form.price = String(product.price);
     form.stock = String(product.stock);
     form.status = String(product.status);
@@ -144,7 +126,9 @@ watch(
       hydratingProduct = false;
     });
   },
-  { immediate: true }
+  {
+    immediate: true,
+  }
 );
 
 watch(
@@ -158,6 +142,14 @@ watch(
 
 async function onSubmit() {
   if (!props.product) return;
+
+  const name = form.name.trim();
+  const description = form.description.trim();
+
+  if (name.length < 2) {
+    toast.error('Enter a valid product name');
+    return;
+  }
 
   if (form.category_id === 'all') {
     toast.error('Select a product category');
@@ -187,8 +179,8 @@ async function onSubmit() {
       id: props.product.id,
 
       payload: {
-        name: form.name,
-        description: form.description,
+        name,
+        description: description || undefined,
 
         kind: form.kind,
 
@@ -204,20 +196,61 @@ async function onSubmit() {
 
     toast.success('Product updated');
     emit('update:open', false);
-  } catch {
-    toast.error('Failed to update product');
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.errorMessage ??
+      error?.response?.data?.message ??
+      'Failed to update product';
+
+    toast.error(message);
   }
 }
 
-// Validate number input for minPrice and maxPrice
-function validateNumberInput(event: KeyboardEvent) {
-  const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'];
+function validateDecimalInput(event: KeyboardEvent) {
+  const allowedKeys = [
+    'Backspace',
+    'Delete',
+    'ArrowLeft',
+    'ArrowRight',
+    'Home',
+    'End',
+    'Tab',
+    'Enter',
+  ];
 
-  // Permitir números y punto decimal
-  const isNumber = /^[0-9]$/.test(event.key);
-  const isDot = event.key === '.';
+  if (allowedKeys.includes(event.key) || event.ctrlKey || event.metaKey) {
+    return;
+  }
 
-  if (!isNumber && !isDot && !allowedKeys.includes(event.key)) {
+  if (!/^[0-9.]$/.test(event.key)) {
+    event.preventDefault();
+    return;
+  }
+
+  const input = event.currentTarget as HTMLInputElement;
+
+  if (event.key === '.' && input.value.includes('.')) {
+    event.preventDefault();
+  }
+}
+
+function validateIntegerInput(event: KeyboardEvent) {
+  const allowedKeys = [
+    'Backspace',
+    'Delete',
+    'ArrowLeft',
+    'ArrowRight',
+    'Home',
+    'End',
+    'Tab',
+    'Enter',
+  ];
+
+  if (allowedKeys.includes(event.key) || event.ctrlKey || event.metaKey) {
+    return;
+  }
+
+  if (!/^[0-9]$/.test(event.key)) {
     event.preventDefault();
   }
 }
@@ -225,7 +258,7 @@ function validateNumberInput(event: KeyboardEvent) {
 
 <template>
   <Sheet :open="open" @update:open="emit('update:open', $event)">
-    <SheetContent class="w-full sm:max-w-xl">
+    <SheetContent class="w-full overflow-y-auto sm:max-w-xl">
       <SheetHeader>
         <SheetTitle>Edit product</SheetTitle>
 
@@ -242,7 +275,16 @@ function validateNumberInput(event: KeyboardEvent) {
         <div class="space-y-2">
           <label class="text-sm font-medium text-foreground"> Description </label>
 
-          <Input v-model="form.description" placeholder="Short description" />
+          <textarea
+            v-model="form.description"
+            rows="4"
+            maxlength="500"
+            placeholder="Describe the product..."
+            class="flex w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="isSubmitting"
+          />
+
+          <p class="text-right text-xs text-muted-foreground">{{ form.description.length }}/500</p>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
@@ -287,7 +329,7 @@ function validateNumberInput(event: KeyboardEvent) {
           <div class="space-y-2">
             <label class="text-sm font-medium text-foreground"> Category </label>
 
-            <Select v-model="form.category_id">
+            <Select v-model="form.category_id" :disabled="isSubmitting || categoriesLoading">
               <SelectTrigger>
                 <span class="truncate">
                   {{ categoryTriggerLabel }}
@@ -319,7 +361,7 @@ function validateNumberInput(event: KeyboardEvent) {
 
             <Select
               v-model="form.type_id"
-              :disabled="form.category_id === 'all' || productTypesLoading"
+              :disabled="isSubmitting || form.category_id === 'all' || productTypesLoading"
             >
               <SelectTrigger>
                 <span class="truncate">
@@ -374,11 +416,12 @@ function validateNumberInput(event: KeyboardEvent) {
             <label class="text-sm font-medium text-foreground"> Price </label>
 
             <Input
-              @keydown="validateNumberInput"
               v-model="form.price"
               type="text"
               inputmode="decimal"
               placeholder="0.00"
+              :disabled="isSubmitting"
+              @keydown="validateDecimalInput"
             />
           </div>
 
@@ -387,20 +430,27 @@ function validateNumberInput(event: KeyboardEvent) {
 
             <Input
               v-model="form.stock"
-              @keydown="validateNumberInput"
               type="text"
               inputmode="numeric"
               placeholder="0"
+              :disabled="isSubmitting"
+              @keydown="validateIntegerInput"
             />
           </div>
         </div>
 
-        <div class="flex justify-end gap-2 pt-4">
-          <Button type="button" variant="outline" @click="emit('update:open', false)">
+        <div class="grid grid-cols-2 gap-2 pt-4 sm:flex sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            class="w-full sm:w-auto"
+            :disabled="isSubmitting"
+            @click="emit('update:open', false)"
+          >
             Cancel
           </Button>
 
-          <Button type="submit" :disabled="isSubmitting">
+          <Button type="submit" class="w-full sm:w-auto" :disabled="isSubmitting">
             {{ isSubmitting ? 'Saving...' : 'Save changes' }}
           </Button>
         </div>

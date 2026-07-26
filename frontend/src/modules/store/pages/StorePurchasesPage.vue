@@ -74,7 +74,21 @@ watch(search, (value) => {
   }, 300);
 });
 
-watch([debouncedSearch, statusInvoice, sortColumn, order, page], () => {
+const purchaseFilterSources = [debouncedSearch, statusInvoice, sortColumn, order] as const;
+
+watch(
+  purchaseFilterSources,
+  () => {
+    if (page.value !== 1) {
+      page.value = 1;
+    }
+  },
+  {
+    flush: 'sync',
+  }
+);
+
+watch([...purchaseFilterSources, page], () => {
   const query: Record<string, string> = {};
 
   if (debouncedSearch.value.length >= 2) {
@@ -241,12 +255,14 @@ function getPaymentProgress(purchase: StorePurchase) {
         class="pointer-events-none absolute -right-40 -top-56 h-[520px] w-[520px] rounded-full bg-primary/10 blur-3xl"
       />
 
-      <div class="relative mx-auto max-w-[1400px] px-6 py-14 lg:px-8">
-        <div class="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
+      <div class="relative mx-auto w-full max-w-[1400px] px-4 py-12 sm:px-6 sm:py-14 lg:px-8">
+        <div class="flex flex-col justify-between gap-7 lg:flex-row lg:items-end">
           <div class="max-w-3xl">
             <p class="text-sm font-semibold text-primary">Nexora account</p>
 
-            <h1 class="mt-3 text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">My purchases</h1>
+            <h1 class="mt-3 text-4xl font-semibold leading-[1.05] tracking-[-0.04em] sm:text-5xl">
+              My purchases
+            </h1>
 
             <p class="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
               Review seller orders, outstanding balances, payments and completed purchases.
@@ -255,7 +271,7 @@ function getPaymentProgress(purchase: StorePurchase) {
 
           <Button
             variant="outline"
-            class="self-start rounded-full lg:self-auto"
+            class="w-full self-start rounded-full sm:w-auto lg:self-auto"
             :disabled="isRefreshing"
             @click="refetch()"
           >
@@ -272,17 +288,18 @@ function getPaymentProgress(purchase: StorePurchase) {
       </div>
     </section>
 
-    <main class="mx-auto max-w-[1400px] space-y-8 px-6 py-8 lg:px-8">
-      <!-- METRICS -->
-      <!-- CURRENT RESULTS SNAPSHOT -->
-      <section class="overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm">
+    <main class="mx-auto w-full max-w-[1400px] space-y-7 px-4 py-8 sm:space-y-8 sm:px-6 lg:px-8">
+      <!-- PAGE SNAPSHOT -->
+      <section
+        class="overflow-hidden rounded-[1.5rem] border border-border bg-card shadow-sm sm:rounded-[1.75rem]"
+      >
         <div
-          class="flex flex-col gap-3 border-b border-border bg-muted/15 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+          class="flex flex-col gap-3 border-b border-border bg-muted/15 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"
         >
           <div>
             <p class="text-sm font-semibold">Current results snapshot</p>
 
-            <p class="mt-1 text-xs text-muted-foreground">
+            <p class="mt-1 text-xs leading-5 text-muted-foreground">
               Values calculated from the purchases visible on this page.
             </p>
           </div>
@@ -294,12 +311,12 @@ function getPaymentProgress(purchase: StorePurchase) {
           </span>
         </div>
 
-        <div class="grid grid-cols-2 gap-px bg-border lg:grid-cols-4">
-          <div class="bg-card p-5">
-            <div class="flex items-center gap-2">
-              <Clock3 class="h-4 w-4 text-amber-600 dark:text-amber-400" />
+        <div class="grid grid-cols-1 gap-px bg-border min-[390px]:grid-cols-2 lg:grid-cols-4">
+          <div class="min-w-0 bg-card p-4 sm:p-5">
+            <div class="flex min-w-0 items-center gap-2">
+              <Clock3 class="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
 
-              <p class="text-xs text-muted-foreground">Awaiting payment</p>
+              <p class="truncate text-xs text-muted-foreground">Awaiting payment</p>
             </div>
 
             <p class="mt-3 text-2xl font-semibold">
@@ -307,11 +324,11 @@ function getPaymentProgress(purchase: StorePurchase) {
             </p>
           </div>
 
-          <div class="bg-card p-5">
-            <div class="flex items-center gap-2">
-              <CheckCircle2 class="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          <div class="min-w-0 bg-card p-4 sm:p-5">
+            <div class="flex min-w-0 items-center gap-2">
+              <CheckCircle2 class="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
 
-              <p class="text-xs text-muted-foreground">Paid orders</p>
+              <p class="truncate text-xs text-muted-foreground">Paid orders</p>
             </div>
 
             <p class="mt-3 text-2xl font-semibold">
@@ -319,26 +336,30 @@ function getPaymentProgress(purchase: StorePurchase) {
             </p>
           </div>
 
-          <div class="bg-card p-5">
-            <div class="flex items-center gap-2">
-              <WalletCards class="h-4 w-4 text-primary" />
+          <div class="min-w-0 bg-card p-4 sm:p-5">
+            <div class="flex min-w-0 items-center gap-2">
+              <WalletCards class="h-4 w-4 shrink-0 text-primary" />
 
-              <p class="text-xs text-muted-foreground">Outstanding</p>
+              <p class="truncate text-xs text-muted-foreground">Outstanding</p>
             </div>
 
-            <p class="mt-3 truncate text-xl font-semibold text-amber-600 dark:text-amber-400">
+            <p
+              class="mt-3 break-words text-lg font-semibold text-amber-600 dark:text-amber-400 sm:text-xl"
+            >
               {{ formatCurrency(pageMetrics.outstanding) }}
             </p>
           </div>
 
-          <div class="bg-card p-5">
-            <div class="flex items-center gap-2">
-              <CreditCard class="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <div class="min-w-0 bg-card p-4 sm:p-5">
+            <div class="flex min-w-0 items-center gap-2">
+              <CreditCard class="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
 
-              <p class="text-xs text-muted-foreground">Amount paid</p>
+              <p class="truncate text-xs text-muted-foreground">Amount paid</p>
             </div>
 
-            <p class="mt-3 truncate text-xl font-semibold text-emerald-600 dark:text-emerald-400">
+            <p
+              class="mt-3 break-words text-lg font-semibold text-emerald-600 dark:text-emerald-400 sm:text-xl"
+            >
               {{ formatCurrency(pageMetrics.spent) }}
             </p>
           </div>
@@ -346,7 +367,9 @@ function getPaymentProgress(purchase: StorePurchase) {
       </section>
 
       <!-- FILTERS -->
-      <section class="rounded-[1.75rem] border border-border bg-card p-5 shadow-sm">
+      <section
+        class="rounded-[1.5rem] border border-border bg-card p-4 shadow-sm sm:rounded-[1.75rem] sm:p-5"
+      >
         <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_220px_170px_auto]">
           <div class="relative">
             <Search
@@ -355,7 +378,7 @@ function getPaymentProgress(purchase: StorePurchase) {
 
             <Input
               v-model="search"
-              class="h-11 rounded-full bg-muted/30 pl-11"
+              class="h-11 rounded-full bg-muted/30 pl-11 pr-10"
               placeholder="Search seller or product..."
             />
 
@@ -367,7 +390,10 @@ function getPaymentProgress(purchase: StorePurchase) {
 
           <Select v-model="statusInvoice">
             <SelectTrigger class="h-11 rounded-full">
-              <span :class="statusInvoice === 'all' ? 'text-muted-foreground' : 'text-foreground'">
+              <span
+                class="truncate"
+                :class="statusInvoice === 'all' ? 'text-muted-foreground' : 'text-foreground'"
+              >
                 {{
                   statusInvoice === 'all'
                     ? 'All statuses'
@@ -389,7 +415,7 @@ function getPaymentProgress(purchase: StorePurchase) {
 
           <Select v-model="sortColumn">
             <SelectTrigger class="h-11 rounded-full">
-              <span>
+              <span class="truncate">
                 {{
                   sortColumn === 'created_at'
                     ? 'Purchase date'
@@ -427,7 +453,7 @@ function getPaymentProgress(purchase: StorePurchase) {
             </SelectContent>
           </Select>
 
-          <Button variant="ghost" class="h-11 rounded-full" @click="clearFilters">
+          <Button variant="ghost" class="h-11 w-full rounded-full lg:w-auto" @click="clearFilters">
             Clear filters
           </Button>
         </div>
@@ -435,6 +461,7 @@ function getPaymentProgress(purchase: StorePurchase) {
         <div class="mt-4 border-t border-border pt-4">
           <p class="text-sm text-muted-foreground">
             {{ data?.meta.total ?? 0 }}
+
             {{ data?.meta.total === 1 ? 'purchase record' : 'purchase records' }}
           </p>
         </div>
@@ -445,7 +472,7 @@ function getPaymentProgress(purchase: StorePurchase) {
         <div
           v-for="index in 4"
           :key="index"
-          class="h-48 animate-pulse rounded-[1.75rem] bg-muted"
+          class="h-64 animate-pulse rounded-[1.5rem] bg-muted sm:h-48 sm:rounded-[1.75rem]"
         />
       </div>
 
@@ -469,27 +496,27 @@ function getPaymentProgress(purchase: StorePurchase) {
           <article
             v-for="purchase in purchases"
             :key="purchase.id"
-            class="group overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm transition hover:border-primary/25 hover:shadow-lg"
+            class="group min-w-0 overflow-hidden rounded-[1.5rem] border border-border bg-card shadow-sm transition hover:border-primary/25 hover:shadow-lg sm:rounded-[1.75rem]"
           >
             <div
-              class="grid gap-6 p-5 lg:grid-cols-[minmax(0,1fr)_160px_160px_auto] lg:items-center"
+              class="grid min-w-0 gap-5 p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_160px_160px_auto] lg:items-center lg:gap-6"
             >
               <!-- ORDER IDENTITY -->
-              <div class="flex min-w-0 gap-4">
+              <div class="flex min-w-0 gap-3 sm:gap-4">
                 <div
-                  class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10"
+                  class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 sm:h-12 sm:w-12 sm:rounded-2xl"
                 >
                   <Building2 class="h-5 w-5 text-primary" />
                 </div>
 
                 <div class="min-w-0">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <h2 class="truncate text-base font-semibold">
+                  <div class="flex min-w-0 flex-wrap items-center gap-2">
+                    <h2 class="min-w-0 truncate text-base font-semibold">
                       {{ purchase.seller_company }}
                     </h2>
 
                     <span
-                      class="inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold"
+                      class="inline-flex shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold"
                       :class="getStatusClass(purchase.status_invoice)"
                     >
                       {{ getStatusLabel(purchase.status_invoice) }}
@@ -502,14 +529,15 @@ function getPaymentProgress(purchase: StorePurchase) {
                     <span class="h-1 w-1 rounded-full bg-muted-foreground/50" />
 
                     <span class="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <CalendarDays class="h-3.5 w-3.5" />
+                      <CalendarDays class="h-3.5 w-3.5 shrink-0" />
 
                       {{ formatDate(purchase.created_at) }}
                     </span>
                   </div>
 
-                  <p class="mt-2 text-xs text-muted-foreground">
+                  <p class="mt-2 text-xs leading-5 text-muted-foreground">
                     {{ purchase.item_count }}
+
                     {{
                       purchase.item_count === 1 ? 'item from this seller' : 'items from this seller'
                     }}
@@ -517,56 +545,66 @@ function getPaymentProgress(purchase: StorePurchase) {
                 </div>
               </div>
 
-              <!-- FINANCIAL TOTAL -->
-              <div>
-                <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                  Order total
-                </p>
-
-                <p class="mt-1 text-lg font-semibold tracking-tight">
-                  {{ formatCurrency(purchase.total_amount) }}
-                </p>
-
-                <p class="mt-1 text-xs text-muted-foreground">
-                  Paid:
-                  {{ formatCurrency(purchase.paid_amount) }}
-                </p>
-              </div>
-
-              <!-- REMAINING -->
-              <div>
-                <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                  Outstanding
-                </p>
-
-                <p
-                  class="mt-1 text-lg font-semibold tracking-tight"
-                  :class="
-                    purchase.remaining_amount > 0
-                      ? 'text-amber-600 dark:text-amber-400'
-                      : 'text-emerald-600 dark:text-emerald-400'
-                  "
+              <!-- FINANCIALS MOBILE/TABLET -->
+              <div class="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2 lg:contents">
+                <div
+                  class="min-w-0 rounded-xl border border-border bg-muted/15 p-4 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0"
                 >
-                  {{ formatCurrency(purchase.remaining_amount) }}
-                </p>
+                  <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Order total
+                  </p>
 
-                <p class="mt-1 text-xs text-muted-foreground">
-                  {{
-                    purchase.remaining_amount > 0 ? 'Payment still required' : 'Order fully paid'
-                  }}
-                </p>
+                  <p class="mt-1 break-words text-lg font-semibold tracking-tight">
+                    {{ formatCurrency(purchase.total_amount) }}
+                  </p>
+
+                  <p class="mt-1 break-words text-xs text-muted-foreground">
+                    Paid: {{ formatCurrency(purchase.paid_amount) }}
+                  </p>
+                </div>
+
+                <div
+                  class="min-w-0 rounded-xl border border-border bg-muted/15 p-4 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0"
+                >
+                  <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Outstanding
+                  </p>
+
+                  <p
+                    class="mt-1 break-words text-lg font-semibold tracking-tight"
+                    :class="
+                      purchase.remaining_amount > 0
+                        ? 'text-amber-600 dark:text-amber-400'
+                        : 'text-emerald-600 dark:text-emerald-400'
+                    "
+                  >
+                    {{ formatCurrency(purchase.remaining_amount) }}
+                  </p>
+
+                  <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                    {{
+                      purchase.remaining_amount > 0 ? 'Payment still required' : 'Order fully paid'
+                    }}
+                  </p>
+                </div>
               </div>
 
               <!-- ACTIONS -->
-              <div class="flex flex-wrap gap-2 lg:justify-end">
-                <Button variant="outline" class="rounded-full" @click="openPurchase(purchase)">
+              <div
+                class="grid w-full gap-2 min-[390px]:grid-cols-2 lg:flex lg:w-auto lg:flex-wrap lg:justify-end"
+              >
+                <Button
+                  variant="outline"
+                  class="w-full rounded-full"
+                  @click="openPurchase(purchase)"
+                >
                   <Eye class="mr-2 h-4 w-4" />
                   Details
                 </Button>
 
                 <Button
                   v-if="canPay(purchase)"
-                  class="rounded-full"
+                  class="w-full rounded-full"
                   @click="openPurchasePayment(purchase)"
                 >
                   <WalletCards class="mr-2 h-4 w-4" />
@@ -575,7 +613,8 @@ function getPaymentProgress(purchase: StorePurchase) {
               </div>
             </div>
 
-            <div class="border-t border-border bg-muted/10 px-5 py-3">
+            <!-- PAYMENT PROGRESS -->
+            <div class="border-t border-border bg-muted/10 px-4 py-3 sm:px-5">
               <div class="flex items-center justify-between gap-4 text-xs">
                 <span class="text-muted-foreground"> Payment progress </span>
 
@@ -596,7 +635,7 @@ function getPaymentProgress(purchase: StorePurchase) {
         </div>
 
         <DataPagination
-          class="mt-8"
+          class="mt-8 w-full"
           :page="page"
           :total-pages="totalPages"
           :total="data?.meta.total"

@@ -417,12 +417,14 @@ function validateNumberInput(event: KeyboardEvent) {
         class="pointer-events-none absolute -right-32 -top-48 h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl"
       />
 
-      <div class="relative mx-auto w-full max-w-[1500px] px-6 py-14 lg:px-8">
+      <div class="relative mx-auto w-full max-w-[1500px] px-4 py-12 sm:px-6 sm:py-14 lg:px-8">
         <div class="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
           <div class="max-w-3xl">
             <p class="text-sm font-semibold text-primary">Nexora catalog</p>
 
-            <h1 class="mt-4 text-4xl font-semibold tracking-[-0.045em] text-foreground sm:text-5xl">
+            <h1
+              class="mt-5 text-4xl font-semibold leading-[1.05] tracking-[-0.035em] text-foreground sm:text-5xl"
+            >
               Products and services from
               <span class="text-muted-foreground"> connected businesses. </span>
             </h1>
@@ -434,7 +436,7 @@ function validateNumberInput(event: KeyboardEvent) {
           </div>
 
           <div
-            class="rounded-2xl border border-border bg-background/80 px-5 py-4 shadow-sm backdrop-blur"
+            class="w-full rounded-2xl border border-border bg-background/80 px-5 py-4 shadow-sm backdrop-blur lg:w-auto"
           >
             <p class="text-xs text-muted-foreground">Available catalog</p>
 
@@ -633,7 +635,9 @@ function validateNumberInput(event: KeyboardEvent) {
         </div>
       </section>
       <!-- PRIMARY FILTERS -->
-      <section class="rounded-[1.75rem] border border-border bg-card p-5 shadow-sm">
+      <section
+        class="rounded-[1.5rem] border border-border bg-card p-4 shadow-sm sm:rounded-[1.75rem] sm:p-5"
+      >
         <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_240px_auto]">
           <div class="relative">
             <Search
@@ -675,7 +679,10 @@ function validateNumberInput(event: KeyboardEvent) {
                     {{ category.name }}
                   </span>
 
-                  <span v-if="category.description" class="text-xs text-muted-foreground">
+                  <span
+                    v-if="category.description"
+                    class="hidden text-xs text-muted-foreground sm:block"
+                  >
                     {{ category.description }}
                   </span>
                 </div>
@@ -685,7 +692,7 @@ function validateNumberInput(event: KeyboardEvent) {
 
           <Button
             variant="outline"
-            class="h-11 justify-between rounded-full px-5"
+            class="h-11 w-full justify-between rounded-full px-5 lg:w-auto"
             @click="filtersOpen = !filtersOpen"
           >
             <span class="flex items-center">
@@ -721,7 +728,7 @@ function validateNumberInput(event: KeyboardEvent) {
             v-if="filtersOpen"
             class="mt-5 overflow-hidden rounded-2xl border border-border bg-muted/15"
           >
-            <div class="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-6">
+            <div class="grid gap-4 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-6">
               <div class="space-y-2">
                 <label class="text-xs font-medium text-muted-foreground"> Resource kind </label>
 
@@ -863,7 +870,7 @@ function validateNumberInput(event: KeyboardEvent) {
             </div>
 
             <div class="flex justify-end border-t border-border px-5 py-4">
-              <Button variant="ghost" size="sm" @click="clearFilters">
+              <Button variant="ghost" size="sm" class="w-full sm:w-auto" @click="clearFilters">
                 <RotateCcw class="mr-2 h-4 w-4" />
                 Reset filters
               </Button>
@@ -872,7 +879,9 @@ function validateNumberInput(event: KeyboardEvent) {
         </Transition>
       </section>
 
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div
+        class="flex flex-col gap-3 border-t border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+      >
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
             Catalog results
@@ -897,7 +906,7 @@ function validateNumberInput(event: KeyboardEvent) {
         </div>
       </div>
 
-      <div v-if="isLoading" class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div v-if="isLoading" class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         <div
           v-for="index in 6"
           :key="index"
@@ -928,7 +937,7 @@ function validateNumberInput(event: KeyboardEvent) {
       />
 
       <template v-else>
-        <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           <StoreProductCard
             v-for="product in products"
             :key="product.id"
@@ -941,7 +950,7 @@ function validateNumberInput(event: KeyboardEvent) {
         </div>
 
         <DataPagination
-          class="mt-8"
+          class="mt-8 w-full"
           :page="page"
           :total-pages="totalPages"
           :total="data?.meta.total"

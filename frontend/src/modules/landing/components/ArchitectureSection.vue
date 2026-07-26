@@ -316,39 +316,57 @@ const architecturePrinciples = [
 
               <div class="mt-4 space-y-3">
                 <div
-                  class="flex items-center gap-4 rounded-xl border border-white/10 bg-black/20 p-4"
+                  class="flex flex-col gap-3 rounded-xl border border-white/10 bg-black/20 p-4 sm:flex-row sm:items-center sm:gap-4"
                 >
-                  <ShoppingBag class="h-4 w-4 shrink-0 text-violet-400" />
+                  <div class="flex min-w-0 items-center gap-3">
+                    <ShoppingBag class="h-4 w-4 shrink-0 text-violet-400" />
 
-                  <span class="font-mono text-xs text-zinc-400"> /store/purchases </span>
+                    <span class="min-w-0 break-words font-mono text-xs text-zinc-400">
+                      /store/purchases
+                    </span>
+                  </div>
 
-                  <Route class="ml-auto h-4 w-4 text-zinc-600" />
+                  <div class="flex items-center gap-3 sm:ml-auto">
+                    <Route class="h-4 w-4 shrink-0 text-zinc-600" />
 
-                  <span class="text-xs font-semibold text-zinc-200"> client context </span>
+                    <span class="text-xs font-semibold text-zinc-200"> client context </span>
+                  </div>
                 </div>
 
                 <div
-                  class="flex items-center gap-4 rounded-xl border border-white/10 bg-black/20 p-4"
+                  class="flex flex-col gap-3 rounded-xl border border-white/10 bg-black/20 p-4 sm:flex-row sm:items-center sm:gap-4"
                 >
-                  <Building2 class="h-4 w-4 shrink-0 text-primary" />
+                  <div class="flex min-w-0 items-center gap-3">
+                    <Building2 class="h-4 w-4 shrink-0 text-primary" />
 
-                  <span class="font-mono text-xs text-zinc-400"> /company/purchases </span>
+                    <span class="min-w-0 break-words font-mono text-xs text-zinc-400">
+                      /company/purchases
+                    </span>
+                  </div>
 
-                  <Route class="ml-auto h-4 w-4 text-zinc-600" />
+                  <div class="flex items-center gap-3 sm:ml-auto">
+                    <Route class="h-4 w-4 text-zinc-600" />
 
-                  <span class="text-xs font-semibold text-zinc-200"> company context </span>
+                    <span class="text-xs font-semibold text-zinc-200"> company context </span>
+                  </div>
                 </div>
 
                 <div
-                  class="flex items-center gap-4 rounded-xl border border-white/10 bg-black/20 p-4"
+                  class="flex flex-col gap-3 rounded-xl border border-white/10 bg-black/20 p-4 sm:flex-row sm:items-center sm:gap-4"
                 >
-                  <Database class="h-4 w-4 shrink-0 text-emerald-400" />
+                  <div class="flex min-w-0 items-center gap-3">
+                    <Database class="h-4 w-4 shrink-0 text-emerald-400" />
 
-                  <span class="font-mono text-xs text-zinc-400"> invoice </span>
+                    <span class="min-w-0 break-words font-mono text-xs text-zinc-400">
+                      invoice
+                    </span>
+                  </div>
 
-                  <Route class="ml-auto h-4 w-4 text-zinc-600" />
+                  <div class="flex items-center gap-3 sm:ml-auto">
+                    <Route class="h-4 w-4 text-zinc-600" />
 
-                  <span class="text-xs font-semibold text-zinc-200"> shared engine </span>
+                    <span class="text-xs font-semibold text-zinc-200"> shared engine </span>
+                  </div>
                 </div>
               </div>
             </div>

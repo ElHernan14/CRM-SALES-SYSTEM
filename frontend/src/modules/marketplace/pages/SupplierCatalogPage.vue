@@ -371,12 +371,12 @@ function handleCheckoutCompleted(invoiceId: number) {
         />
 
         <div
-          class="relative flex min-h-64 flex-col justify-between gap-8 p-8 md:flex-row md:items-end"
+          class="relative flex min-h-64 flex-col justify-between gap-8 p-5 sm:p-8 md:flex-row md:items-end"
         >
           <div class="max-w-2xl">
             <div class="mb-5 flex items-center gap-4">
               <div
-                class="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-border bg-background shadow-lg"
+                class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-background shadow-lg sm:h-16 sm:w-16"
               >
                 <img
                   v-if="supplierLogo"
@@ -423,7 +423,7 @@ function handleCheckoutCompleted(invoiceId: number) {
 
       <!-- FILTERS: AHORA FUERA DEL HERO -->
       <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
-        <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_240px_auto]">
+        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_240px_auto]">
           <div class="relative">
             <Search
               class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -460,7 +460,11 @@ function handleCheckoutCompleted(invoiceId: number) {
             </SelectContent>
           </Select>
 
-          <Button variant="outline" class="justify-between" @click="filtersOpen = !filtersOpen">
+          <Button
+            variant="outline"
+            class="w-full justify-between sm:col-span-2 xl:col-span-1"
+            @click="filtersOpen = !filtersOpen"
+          >
             <div class="flex items-center">
               <SlidersHorizontal class="mr-2 h-4 w-4" />
               Filters
@@ -492,7 +496,7 @@ function handleCheckoutCompleted(invoiceId: number) {
             v-if="filtersOpen"
             class="mt-4 overflow-hidden rounded-xl border border-border bg-muted/20"
           >
-            <div class="grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-5">
+            <div class="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
               <div class="space-y-2">
                 <label class="text-xs font-medium text-muted-foreground"> Resource kind </label>
 
@@ -604,7 +608,7 @@ function handleCheckoutCompleted(invoiceId: number) {
           </div>
         </Transition>
 
-        <div class="mt-4 flex items-center justify-between">
+        <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p class="text-sm text-muted-foreground">{{ data?.meta.total ?? 0 }} catalog results</p>
 
           <div class="flex items-center gap-2 text-xs text-muted-foreground">
@@ -740,14 +744,19 @@ function handleCheckoutCompleted(invoiceId: number) {
                 </span>
               </div>
 
-              <div class="mt-5 flex items-center justify-between border-t border-border pt-4">
-                <Button variant="ghost" size="sm" @click="openProductDetails(product)">
+              <div class="mt-5 grid grid-cols-2 gap-2 border-t border-border pt-4">
+                <Button
+                  variant="ghost"
+                  class="w-full rounded-full"
+                  size="sm"
+                  @click="openProductDetails(product)"
+                >
                   View details
                 </Button>
 
                 <Button
                   size="sm"
-                  class="rounded-full px-4"
+                  class="w-full rounded-full"
                   :disabled="product.available_stock <= 0 || isAddingToCart"
                   @click="addToPurchase(product)"
                 >

@@ -1,16 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 
-import {
-  ArrowDownUp,
-  Building2,
-  ChevronDown,
-  Grid2X2,
-  Loader2,
-  RotateCcw,
-  Search,
-  Store,
-} from 'lucide-vue-next';
+import { Building2, Loader2, RotateCcw, Search, Store } from 'lucide-vue-next';
 
 import { useRoute, useRouter } from 'vue-router';
 
@@ -23,7 +14,6 @@ import EmptyState from '@/shared/components/erp/EmptyState.vue';
 import DataPagination from '@/shared/components/erp/DataPagination.vue';
 
 import { useCategories } from '@/modules/categories/composables/useCategories';
-
 import { useStoreBusinesses } from '../composables/useStoreBusinesses';
 
 import StoreBusinessCard from '../components/businesses/StoreBusinessCard.vue';
@@ -39,7 +29,6 @@ function queryString(value: unknown) {
 }
 
 const search = ref(queryString(route.query.search));
-
 const debouncedSearch = ref(queryString(route.query.search).trim());
 
 const categoryId = ref(queryString(route.query.category_id) || 'all');
@@ -70,8 +59,10 @@ watch(search, (value) => {
   }, 300);
 });
 
+const businessFilterSources = [debouncedSearch, categoryId, sortColumn, order] as const;
+
 watch(
-  [debouncedSearch, categoryId, sortColumn, order],
+  businessFilterSources,
   () => {
     if (page.value !== 1) {
       page.value = 1;
@@ -82,7 +73,7 @@ watch(
   }
 );
 
-watch([debouncedSearch, categoryId, sortColumn, order, page], () => {
+watch([...businessFilterSources, page], () => {
   const query: Record<string, string> = {};
 
   if (debouncedSearch.value.length >= 2) {
@@ -120,7 +111,6 @@ const params = computed(() => ({
   limit: limit.value,
 
   sort_column: sortColumn.value,
-
   order: order.value,
 }));
 
@@ -167,7 +157,6 @@ const activeTitle = computed(() => {
 });
 
 const selectedBusiness = ref<StoreBusiness | null>(null);
-
 const businessDrawerOpen = ref(false);
 
 function openBusiness(business: StoreBusiness) {
@@ -180,6 +169,7 @@ function openBusinessCatalog(business: StoreBusiness) {
 
   router.push({
     name: 'store-catalog',
+
     query: {
       company_id: String(business.id),
     },
@@ -191,9 +181,7 @@ function clearFilters() {
   debouncedSearch.value = '';
 
   categoryId.value = 'all';
-
   sortColumn.value = 'total_products';
-
   order.value = 'desc';
 
   page.value = 1;
@@ -210,13 +198,14 @@ function clearFilters() {
         class="pointer-events-none absolute -right-32 -top-48 h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl"
       />
 
-      <div class="relative mx-auto w-full max-w-[1500px] px-6 py-14 lg:px-8">
+      <div class="relative mx-auto w-full max-w-[1500px] px-4 py-12 sm:px-6 sm:py-14 lg:px-8">
         <div class="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
           <div class="max-w-3xl">
             <p class="text-sm font-semibold text-primary">Nexora businesses</p>
 
-            <h1 class="mt-4 text-4xl font-semibold tracking-[-0.045em] sm:text-5xl">
+            <h1 class="mt-4 text-4xl font-semibold leading-[1.05] tracking-[-0.045em] sm:text-5xl">
               Discover the companies behind
+
               <span class="text-muted-foreground"> every product. </span>
             </h1>
 
@@ -227,7 +216,7 @@ function clearFilters() {
           </div>
 
           <div
-            class="rounded-2xl border border-border bg-background/80 px-5 py-4 shadow-sm backdrop-blur"
+            class="w-full rounded-2xl border border-border bg-background/80 px-5 py-4 shadow-sm backdrop-blur lg:w-auto lg:min-w-48"
           >
             <p class="text-xs text-muted-foreground">Connected businesses</p>
 
@@ -241,10 +230,12 @@ function clearFilters() {
       </div>
     </section>
 
-    <main class="mx-auto w-full max-w-[1500px] space-y-8 px-6 py-8 lg:px-8">
-      <!-- BUSINESS FILTERS -->
-      <section class="rounded-[1.75rem] border border-border bg-card p-5 shadow-sm">
-        <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px_200px_170px_auto]">
+    <main class="mx-auto w-full max-w-[1500px] space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+      <!-- FILTERS -->
+      <section
+        class="rounded-[1.5rem] border border-border bg-card p-4 shadow-sm sm:rounded-[1.75rem] sm:p-5"
+      >
+        <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_240px_210px_160px_auto]">
           <div class="relative">
             <Search
               class="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -252,7 +243,7 @@ function clearFilters() {
 
             <Input
               v-model="search"
-              class="h-11 rounded-full bg-muted/30 pl-11"
+              class="h-11 rounded-full bg-muted/30 pl-11 pr-10"
               placeholder="Search businesses..."
             />
 
@@ -289,7 +280,10 @@ function clearFilters() {
                     {{ category.name }}
                   </span>
 
-                  <span v-if="category.description" class="text-xs text-muted-foreground">
+                  <span
+                    v-if="category.description"
+                    class="hidden text-xs text-muted-foreground sm:block"
+                  >
                     {{ category.description }}
                   </span>
                 </div>
@@ -299,7 +293,7 @@ function clearFilters() {
 
           <Select v-model="sortColumn">
             <SelectTrigger class="h-11 rounded-full">
-              <span>
+              <span class="truncate">
                 {{
                   sortColumn === 'total_products'
                     ? 'Largest catalog'
@@ -333,38 +327,39 @@ function clearFilters() {
             </SelectContent>
           </Select>
 
-          <Button variant="ghost" class="h-11 rounded-full" @click="clearFilters">
+          <Button variant="ghost" class="h-11 w-full rounded-full lg:w-auto" @click="clearFilters">
             <RotateCcw class="mr-2 h-4 w-4" />
             Reset
           </Button>
         </div>
       </section>
 
-      <!-- RESULTS HEADING -->
+      <!-- RESULTS -->
       <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
+        <div class="min-w-0">
           <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
             Business directory
           </p>
 
-          <h2 class="mt-2 text-2xl font-semibold tracking-tight">
+          <h2 class="mt-2 break-words text-2xl font-semibold tracking-tight">
             {{ activeTitle }}
           </h2>
 
           <p class="mt-2 text-sm text-muted-foreground">
             {{ data?.meta.total ?? 0 }}
+
             {{ data?.meta.total === 1 ? 'business available' : 'businesses available' }}
           </p>
         </div>
 
-        <div class="flex items-center gap-2 text-xs text-muted-foreground">
+        <div class="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
           <Store class="h-4 w-4 text-primary" />
           Active Nexora sellers
         </div>
       </div>
 
       <!-- LOADING -->
-      <div v-if="isLoading" class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div v-if="isLoading" class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         <div
           v-for="index in 6"
           :key="index"
@@ -372,7 +367,6 @@ function clearFilters() {
         />
       </div>
 
-      <!-- ERROR -->
       <EmptyState
         v-else-if="isError"
         title="Unable to load businesses"
@@ -380,7 +374,6 @@ function clearFilters() {
         :icon="Building2"
       />
 
-      <!-- EMPTY -->
       <EmptyState
         v-else-if="businesses.length === 0"
         title="No businesses found"
@@ -388,9 +381,8 @@ function clearFilters() {
         :icon="Search"
       />
 
-      <!-- BUSINESS GRID -->
       <template v-else>
-        <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <div class="grid items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-3">
           <StoreBusinessCard
             v-for="business in businesses"
             :key="business.id"
@@ -401,7 +393,7 @@ function clearFilters() {
         </div>
 
         <DataPagination
-          class="mt-8"
+          class="mt-8 w-full"
           :page="page"
           :total-pages="totalPages"
           :total="data?.meta.total"

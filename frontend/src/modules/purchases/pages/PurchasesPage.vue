@@ -95,30 +95,38 @@ const columns = [
   {
     key: 'seller_company',
     label: 'Supplier',
+    cellClass: 'min-w-[220px]',
   },
   {
     key: 'status_invoice',
     label: 'Status',
+    cellClass: 'whitespace-nowrap',
   },
   {
     key: 'created_at',
     label: 'Purchase date',
+    cellClass: 'whitespace-nowrap',
   },
   {
     key: 'total_amount',
     label: 'Total',
+    cellClass: 'whitespace-nowrap',
   },
   {
     key: 'paid_amount',
     label: 'Paid',
+    cellClass: 'whitespace-nowrap',
   },
   {
     key: 'remaining_amount',
     label: 'Remaining',
+    cellClass: 'whitespace-nowrap',
   },
   {
     key: 'actions',
     label: '',
+    headerClass: 'sticky right-0 z-10 w-14 bg-muted/95',
+    cellClass: 'sticky right-0 z-10 w-14 bg-card',
   },
 ];
 
@@ -208,18 +216,6 @@ function openPurchaseDetails(purchase: PurchaseListItem) {
   selectedPurchase.value = purchase;
   purchaseInitialAction.value = 'overview';
   purchaseDetailsOpen.value = true;
-}
-
-function openPurchaseItems(purchase: PurchaseListItem) {
-  console.log('Open purchase items:', purchase.id);
-}
-
-function openPurchasePayments(purchase: PurchaseListItem) {
-  console.log('Open purchase payments:', purchase.id);
-}
-
-function openPurchasePayment(purchase: PurchaseListItem) {
-  console.log('Pay purchase:', purchase.id);
 }
 
 function handleSort(columnKey: string) {
@@ -466,6 +462,7 @@ function openPurchaseForPayment(purchase: PurchaseListItem) {
       <!-- Table -->
       <template v-else>
         <DataTable
+          table-min-width="1040px"
           :columns="columns"
           :rows="rows"
           :sortable-columns="['status_invoice', 'created_at', 'total_amount', 'paid_amount']"
@@ -473,6 +470,114 @@ function openPurchaseForPayment(purchase: PurchaseListItem) {
           :sort-order="order"
           @sort="handleSort"
         >
+          <!-- MOBILE -->
+          <template #mobile-card="{ row }">
+            <div class="p-4">
+              <div class="flex min-w-0 items-start justify-between gap-3">
+                <div class="flex min-w-0 items-start gap-3">
+                  <div
+                    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10"
+                  >
+                    <Building2 class="h-5 w-5 text-primary" />
+                  </div>
+
+                  <div class="min-w-0">
+                    <p class="break-words text-base font-semibold text-foreground">
+                      {{ row.seller_company }}
+                    </p>
+
+                    <p class="mt-1 text-xs text-muted-foreground">
+                      {{ formatDate(row.created_at) }}
+                    </p>
+
+                    <span
+                      class="mt-2 inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold"
+                      :class="getStatusClass(row.status_invoice)"
+                    >
+                      {{ getStatusLabel(row.status_invoice) }}
+                    </span>
+                  </div>
+                </div>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger as-child>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      class="h-9 w-9 shrink-0 rounded-full"
+                    >
+                      <MoreHorizontal class="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+
+                  <DropdownMenuContent align="end" class="w-52">
+                    <DropdownMenuItem @click="openPurchaseDetails(row as PurchaseListItem)">
+                      <Eye class="mr-2 h-4 w-4" />
+                      View purchase
+                    </DropdownMenuItem>
+
+                    <template v-if="row.status_invoice === 'draft'">
+                      <DropdownMenuSeparator />
+
+                      <DropdownMenuItem @click="openPurchaseForCheckout(row as PurchaseListItem)">
+                        <ShoppingBag class="mr-2 h-4 w-4" />
+                        Continue checkout
+                      </DropdownMenuItem>
+                    </template>
+
+                    <template v-else-if="canPayPurchase(row as PurchaseListItem)">
+                      <DropdownMenuSeparator />
+
+                      <DropdownMenuItem @click="openPurchaseForPayment(row as PurchaseListItem)">
+                        <WalletCards class="mr-2 h-4 w-4" />
+                        Pay invoice
+                      </DropdownMenuItem>
+                    </template>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              <div class="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4">
+                <div>
+                  <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Purchase total
+                  </p>
+
+                  <p class="mt-1 truncate text-lg font-semibold">
+                    {{ formatCurrency(row.total_amount) }}
+                  </p>
+
+                  <p class="mt-1 text-xs text-muted-foreground">
+                    Paid {{ formatCurrency(row.paid_amount) }}
+                  </p>
+                </div>
+
+                <div class="text-right">
+                  <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Outstanding
+                  </p>
+
+                  <p
+                    class="mt-1 truncate text-lg font-semibold"
+                    :class="
+                      Number(row.remaining_amount) > 0
+                        ? 'text-amber-600 dark:text-amber-400'
+                        : 'text-emerald-600 dark:text-emerald-400'
+                    "
+                  >
+                    {{ formatCurrency(row.remaining_amount) }}
+                  </p>
+
+                  <p class="mt-1 text-xs text-muted-foreground">
+                    {{ Number(row.remaining_amount) > 0 ? 'Payment required' : 'Fully paid' }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- DESKTOP -->
           <template #cell-seller_company="{ row }">
             <div class="flex min-w-0 items-center gap-3">
               <div
@@ -501,8 +606,8 @@ function openPurchaseForPayment(purchase: PurchaseListItem) {
           </template>
 
           <template #cell-created_at="{ value }">
-            <div class="flex items-center gap-2 text-sm text-muted-foreground">
-              <CalendarDays class="h-4 w-4" />
+            <div class="flex items-center gap-2 whitespace-nowrap text-sm text-muted-foreground">
+              <CalendarDays class="h-4 w-4 shrink-0" />
               {{ formatDate(value) }}
             </div>
           </template>
@@ -533,7 +638,7 @@ function openPurchaseForPayment(purchase: PurchaseListItem) {
           <template #cell-actions="{ row }">
             <DropdownMenu>
               <DropdownMenuTrigger as-child>
-                <Button variant="ghost" size="icon" class="h-8 w-8">
+                <Button variant="ghost" size="icon" class="h-8 w-8 rounded-full">
                   <MoreHorizontal class="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>

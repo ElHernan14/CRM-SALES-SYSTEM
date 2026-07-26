@@ -523,7 +523,7 @@ function validateNumberInput(event: KeyboardEvent) {
       </div>
 
       <!-- CONTENT -->
-      <div v-else-if="invoice && purchase" class="space-y-6 p-6">
+      <div v-else-if="invoice && purchase" class="space-y-5 p-4 sm:space-y-6 sm:p-6">
         <!-- SUPPLIER -->
         <section
           class="relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm"
@@ -532,7 +532,9 @@ function validateNumberInput(event: KeyboardEvent) {
             class="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-muted/40"
           />
 
-          <div class="relative flex items-start justify-between gap-4">
+          <div
+            class="relative flex flex-col gap-4 min-[390px]:flex-row min-[390px]:items-start min-[390px]:justify-between"
+          >
             <div class="flex min-w-0 items-center gap-4">
               <div
                 class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-border bg-background shadow-sm"
@@ -813,7 +815,9 @@ function validateNumberInput(event: KeyboardEvent) {
                       </p>
                     </div>
 
-                    <div class="mt-4 grid grid-cols-3 gap-3 border-t border-border pt-4">
+                    <div
+                      class="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4 sm:grid-cols-3"
+                    >
                       <div>
                         <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
                           Quantity
@@ -834,7 +838,7 @@ function validateNumberInput(event: KeyboardEvent) {
                         </p>
                       </div>
 
-                      <div class="text-right">
+                      <div class="col-span-2 text-left sm:col-span-1 sm:text-right">
                         <p class="text-[11px] uppercase tracking-wide text-muted-foreground">
                           Subtotal
                         </p>
@@ -1422,18 +1426,18 @@ function validateNumberInput(event: KeyboardEvent) {
           </div>
 
           <div class="space-y-3">
-            <div class="flex items-center justify-between">
+            <div class="flex items-start justify-between gap-4">
               <span class="text-sm text-muted-foreground"> Subtotal </span>
 
-              <span class="text-sm font-medium text-foreground">
+              <span class="shrink-0 text-right text-sm font-medium text-foreground">
                 {{ formatCurrency(invoice.subtotal) }}
               </span>
             </div>
 
-            <div class="flex items-center justify-between">
+            <div class="flex items-start justify-between gap-4">
               <span class="text-sm text-muted-foreground"> Taxes </span>
 
-              <span class="text-sm font-medium text-foreground">
+              <span class="shrink-0 text-right text-sm font-medium text-foreground">
                 {{ formatCurrency(invoice.taxes) }}
               </span>
             </div>

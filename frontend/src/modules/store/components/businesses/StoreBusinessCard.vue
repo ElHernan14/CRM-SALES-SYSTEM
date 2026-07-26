@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowRight, BadgeCheck, Building2, ImageIcon, PackageSearch } from 'lucide-vue-next';
+import { ArrowRight, BadgeCheck, Building2, PackageSearch } from 'lucide-vue-next';
 
 import { Button } from '@/components/ui/button';
 
@@ -19,12 +19,12 @@ const emit = defineEmits<{
 
 <template>
   <article
-    class="group flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-xl"
+    class="group flex h-full min-w-0 flex-col overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm transition hover:-translate-y-1 hover:border-primary/25 hover:shadow-xl"
   >
     <!-- BRAND VISUAL -->
     <button
       type="button"
-      class="relative block h-52 overflow-hidden text-left"
+      class="relative block h-44 w-full shrink-0 overflow-hidden text-left sm:h-52"
       @click="emit('view', business)"
     >
       <img
@@ -44,15 +44,15 @@ const emit = defineEmits<{
       />
 
       <span
-        class="absolute left-4 top-4 max-w-[75%] truncate rounded-full border border-white/10 bg-background/85 px-3 py-1.5 text-xs font-semibold shadow-sm backdrop-blur"
+        class="absolute left-4 top-4 max-w-[calc(100%-2rem)] truncate rounded-full border border-white/10 bg-background/85 px-3 py-1.5 text-xs font-semibold shadow-sm backdrop-blur"
       >
         {{ business.category }}
       </span>
 
       <!-- BUSINESS IDENTITY -->
-      <div class="absolute bottom-4 left-4 right-4 flex items-end gap-3">
+      <div class="absolute bottom-4 left-4 right-4 flex min-w-0 items-end gap-3">
         <div
-          class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-background bg-background shadow-lg"
+          class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-background bg-background shadow-lg sm:h-16 sm:w-16"
         >
           <img
             v-if="getCompanyLogoUrl(business.logo)"
@@ -64,47 +64,49 @@ const emit = defineEmits<{
           <Building2 v-else class="h-6 w-6 text-primary" />
         </div>
 
-        <div class="min-w-0 pb-1">
-          <div class="flex items-center gap-2">
-            <h2 class="truncate text-lg font-semibold tracking-tight">
+        <div class="min-w-0 flex-1 pb-1">
+          <div class="flex min-w-0 items-center gap-2">
+            <h2 class="min-w-0 truncate text-base font-semibold tracking-tight sm:text-lg">
               {{ business.name }}
             </h2>
 
             <BadgeCheck class="h-4 w-4 shrink-0 text-primary" />
           </div>
 
-          <p class="mt-1 text-xs text-muted-foreground">Business connected to Nexora</p>
+          <p class="mt-1 truncate text-xs text-muted-foreground">Business connected to Nexora</p>
         </div>
       </div>
     </button>
 
     <!-- INFORMATION -->
-    <div class="flex flex-1 flex-col p-5">
-      <p class="line-clamp-3 min-h-[60px] text-sm leading-6 text-muted-foreground">
+    <div class="flex min-w-0 flex-1 flex-col p-5">
+      <p class="line-clamp-3 text-sm leading-6 text-muted-foreground sm:min-h-[4.5rem]">
         {{ business.description || 'Explore products and services from this business.' }}
       </p>
 
-      <div class="mt-5 flex items-center gap-3 rounded-2xl border border-border bg-muted/20 p-4">
+      <div
+        class="mt-5 flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-muted/20 p-4"
+      >
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
           <PackageSearch class="h-5 w-5 text-primary" />
         </div>
 
-        <div>
-          <p class="text-lg font-semibold">
+        <div class="min-w-0">
+          <p class="truncate text-lg font-semibold">
             {{ business.total_products }}
           </p>
 
-          <p class="text-xs text-muted-foreground">
+          <p class="truncate text-xs text-muted-foreground">
             {{ business.total_products === 1 ? 'available resource' : 'available resources' }}
           </p>
         </div>
       </div>
 
-      <div class="mt-5 grid gap-2 border-t border-border pt-4 sm:grid-cols-2">
+      <div class="mt-auto grid gap-2 border-t border-border pt-5 xl:grid-cols-2">
         <Button
           type="button"
           variant="outline"
-          class="rounded-full"
+          class="w-full rounded-full"
           @click="emit('view', business)"
         >
           Business details
@@ -112,7 +114,7 @@ const emit = defineEmits<{
 
         <Button
           type="button"
-          class="rounded-full"
+          class="w-full rounded-full"
           :disabled="business.total_products <= 0"
           @click="emit('catalog', business)"
         >

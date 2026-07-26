@@ -192,15 +192,23 @@ async function onSubmit() {
   }
 }
 
-// Validate number input for minPrice and maxPrice
-function validateNumberInput(event: KeyboardEvent) {
+function validateDecimalInput(event: KeyboardEvent) {
   const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'];
 
-  // Permitir números y punto decimal
   const isNumber = /^[0-9]$/.test(event.key);
   const isDot = event.key === '.';
 
   if (!isNumber && !isDot && !allowedKeys.includes(event.key)) {
+    event.preventDefault();
+  }
+}
+
+function validateIntegerInput(event: KeyboardEvent) {
+  const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'];
+
+  const isNumber = /^[0-9]$/.test(event.key);
+
+  if (!isNumber && !allowedKeys.includes(event.key)) {
     event.preventDefault();
   }
 }
@@ -348,7 +356,7 @@ function validateNumberInput(event: KeyboardEvent) {
             <label class="text-sm font-medium text-foreground"> Price </label>
 
             <Input
-              @keydown="validateNumberInput"
+              @keydown="validateDecimalInput"
               v-model="form.price"
               type="text"
               inputmode="decimal"
@@ -360,7 +368,7 @@ function validateNumberInput(event: KeyboardEvent) {
             <label class="text-sm font-medium text-foreground"> Initial stock </label>
 
             <Input
-              @keydown="validateNumberInput"
+              @keydown="validateIntegerInput"
               v-model="form.stock"
               type="text"
               inputmode="numeric"
@@ -385,17 +393,18 @@ function validateNumberInput(event: KeyboardEvent) {
           </div>
         </div>
 
-        <div class="flex justify-end gap-2 pt-2">
+        <div class="grid grid-cols-2 gap-2 pt-2 sm:flex sm:justify-end">
           <Button
             type="button"
             variant="outline"
+            class="w-full sm:w-auto"
             :disabled="isSubmitting"
             @click="emit('update:open', false)"
           >
             Cancel
           </Button>
 
-          <Button type="submit" :disabled="isSubmitting">
+          <Button type="submit" :disabled="isSubmitting" class="w-full sm:w-auto">
             <Loader2 v-if="isSubmitting" class="mr-2 h-4 w-4 animate-spin" />
 
             <PackagePlus v-else class="mr-2 h-4 w-4" />

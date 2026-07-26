@@ -58,11 +58,9 @@ watch(
 const { data, isLoading, isFetching, isError, refetch } = useStoreCarts();
 
 const updateMutation = useUpdateStoreCartItem();
-
 const deleteMutation = useDeleteStoreCartItem();
 
 const processingItemId = ref<number | null>(null);
-
 const isSynchronizing = ref(false);
 
 const carts = computed(() => {
@@ -91,6 +89,10 @@ const isRefreshing = computed(() => {
 
 const isChangingCart = computed(() => {
   return isSynchronizing.value || updateMutation.isPending.value || deleteMutation.isPending.value;
+});
+
+const isCartBusy = computed(() => {
+  return isRefreshing.value || isChangingCart.value;
 });
 
 function formatCurrency(value: number) {
@@ -176,18 +178,29 @@ async function deleteItem(cart: StoreSellerCart, item: StoreCartItem) {
 function continueShopping() {
   storeUi.closeCart();
 
-  router.push('/store/catalog');
+  router.push({
+    name: 'store-catalog',
+  });
 }
 
 function goToCheckout() {
   storeUi.closeCart();
 
-  router.push('/store/checkout');
+  router.push({
+    name: 'store-checkout',
+  });
 }
 
-const isCartBusy = computed(() => {
-  return isRefreshing.value || isChangingCart.value;
-});
+function openProduct(productId: number) {
+  storeUi.closeCart();
+
+  router.push({
+    name: 'store-product',
+    params: {
+      productId,
+    },
+  });
+}
 
 function openSellerCatalog(sellerCompanyId: number) {
   storeUi.closeCart();
@@ -203,24 +216,24 @@ function openSellerCatalog(sellerCompanyId: number) {
 
 <template>
   <Sheet :open="storeUi.cartOpen" @update:open="$event ? storeUi.openCart() : storeUi.closeCart()">
-    <SheetContent class="flex w-full flex-col overflow-hidden p-0 sm:max-w-2xl">
+    <SheetContent class="flex h-full w-full flex-col overflow-hidden p-0 sm:max-w-2xl">
       <!-- HEADER -->
       <div
-        class="border-b border-border bg-gradient-to-r from-primary/5 via-muted/15 to-transparent px-6 py-5"
+        class="shrink-0 border-b border-border bg-gradient-to-r from-primary/5 via-muted/15 to-transparent px-4 py-5 sm:px-6"
       >
-        <SheetHeader class="text-left">
-          <div class="flex items-start justify-between gap-4">
-            <div class="flex items-center gap-3">
+        <SheetHeader class="pr-8 text-left">
+          <div class="flex min-w-0 items-start justify-between gap-3">
+            <div class="flex min-w-0 items-center gap-3">
               <div
-                class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm"
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm sm:h-11 sm:w-11"
               >
                 <ShoppingBag class="h-5 w-5" />
               </div>
 
-              <div>
-                <SheetTitle> Nexora cart </SheetTitle>
+              <div class="min-w-0">
+                <SheetTitle class="truncate"> Nexora cart </SheetTitle>
 
-                <SheetDescription class="mt-1">
+                <SheetDescription class="mt-1 line-clamp-2">
                   One checkout, organized into independent seller orders.
                 </SheetDescription>
               </div>
@@ -231,8 +244,9 @@ function openSellerCatalog(sellerCompanyId: number) {
               type="button"
               variant="ghost"
               size="icon"
-              class="rounded-full"
+              class="mr-5 shrink-0 rounded-full sm:mr-3"
               :disabled="isCartBusy"
+              aria-label="Synchronize cart"
               @click="synchronizeStoreCart"
             >
               <RefreshCw
@@ -247,7 +261,7 @@ function openSellerCatalog(sellerCompanyId: number) {
       </div>
 
       <!-- LOADING -->
-      <div v-if="isLoading" class="flex flex-1 items-center justify-center p-8">
+      <div v-if="isLoading" class="flex min-h-0 flex-1 items-center justify-center p-6 sm:p-8">
         <div class="text-center">
           <Loader2 class="mx-auto h-7 w-7 animate-spin text-primary" />
 
@@ -256,21 +270,23 @@ function openSellerCatalog(sellerCompanyId: number) {
       </div>
 
       <!-- ERROR -->
-      <div v-else-if="isError" class="flex flex-1 items-center justify-center p-8">
-        <div class="max-w-sm text-center">
+      <div v-else-if="isError" class="flex min-h-0 flex-1 items-center justify-center p-6 sm:p-8">
+        <div class="w-full max-w-sm text-center">
           <p class="text-sm font-semibold">Unable to load your cart</p>
 
-          <p class="mt-2 text-sm text-muted-foreground">
+          <p class="mt-2 text-sm leading-6 text-muted-foreground">
             Try refreshing your purchase information.
           </p>
 
-          <Button variant="outline" class="mt-5" @click="refetch()"> Try again </Button>
+          <Button variant="outline" class="mt-5 w-full rounded-full sm:w-auto" @click="refetch()">
+            Try again
+          </Button>
         </div>
       </div>
 
       <!-- EMPTY -->
-      <div v-else-if="!hasItems" class="flex flex-1 items-center justify-center p-8">
-        <div class="max-w-sm text-center">
+      <div v-else-if="!hasItems" class="flex min-h-0 flex-1 items-center justify-center p-6 sm:p-8">
+        <div class="w-full max-w-sm text-center">
           <div
             class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-muted/30"
           >
@@ -283,39 +299,45 @@ function openSellerCatalog(sellerCompanyId: number) {
             Browse products from connected businesses and start building your next purchase.
           </p>
 
-          <Button class="mt-6 rounded-full" @click="continueShopping"> Explore products </Button>
+          <Button class="mt-6 w-full rounded-full sm:w-auto" @click="continueShopping">
+            Explore products
+          </Button>
         </div>
       </div>
 
-      <!-- CARTS -->
+      <!-- CART -->
       <template v-else>
-        <div class="relative min-h-0 flex-1 overflow-y-auto px-6 py-5">
+        <!-- SCROLLABLE CART CONTENT -->
+        <div
+          class="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5"
+        >
+          <!-- SYNC STATUS -->
           <div
             v-if="isRefreshing || isSynchronizing"
             class="sticky top-0 z-20 mb-4 overflow-hidden rounded-xl border border-primary/20 bg-background/95 shadow-md backdrop-blur"
           >
-            <div class="flex items-center gap-3 p-4">
-              <Loader2 class="h-4 w-4 animate-spin text-primary" />
+            <div class="flex items-start gap-3 p-3 sm:p-4">
+              <Loader2 class="mt-0.5 h-4 w-4 shrink-0 animate-spin text-primary" />
 
-              <div>
+              <div class="min-w-0">
                 <p class="text-sm font-medium">Updating your cart</p>
 
-                <p class="mt-0.5 text-xs text-muted-foreground">
+                <p class="mt-0.5 text-xs leading-5 text-muted-foreground">
                   Synchronizing quantities, totals and current availability.
                 </p>
               </div>
             </div>
           </div>
 
-          <div class="space-y-5">
+          <div class="space-y-4 sm:space-y-5">
             <section
               v-for="cart in carts"
               :key="cart.invoice_id"
-              class="overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
+              class="min-w-0 overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
             >
               <!-- SELLER -->
               <div
-                class="flex items-center justify-between gap-4 border-b border-border bg-muted/15 px-4 py-4"
+                class="flex flex-col gap-4 border-b border-border bg-muted/15 px-4 py-4 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between"
               >
                 <button
                   type="button"
@@ -329,7 +351,7 @@ function openSellerCatalog(sellerCompanyId: number) {
                   </div>
 
                   <div class="min-w-0">
-                    <div class="flex items-center gap-2">
+                    <div class="flex min-w-0 items-center gap-2">
                       <p class="truncate text-sm font-semibold">
                         {{ cart.seller_company }}
                       </p>
@@ -337,18 +359,22 @@ function openSellerCatalog(sellerCompanyId: number) {
                       <BadgeCheck class="h-4 w-4 shrink-0 text-primary" />
                     </div>
 
-                    <p class="mt-1 text-xs text-muted-foreground">
+                    <p
+                      class="mt-1 truncate text-xs text-muted-foreground transition group-hover:text-foreground"
+                    >
                       Independent order · View seller
                     </p>
                   </div>
                 </button>
 
-                <div class="shrink-0 text-right">
+                <div
+                  class="flex shrink-0 items-end justify-between gap-4 border-t border-border/70 pt-3 min-[420px]:block min-[420px]:border-0 min-[420px]:pt-0 min-[420px]:text-right"
+                >
                   <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                     Seller total
                   </p>
 
-                  <p class="mt-1 text-base font-semibold tracking-tight">
+                  <p class="truncate text-base font-semibold tracking-tight">
                     {{ formatCurrency(cart.total_amount) }}
                   </p>
                 </div>
@@ -356,12 +382,12 @@ function openSellerCatalog(sellerCompanyId: number) {
 
               <!-- ITEMS -->
               <div class="divide-y divide-border">
-                <article v-for="item in cart.items" :key="item.id" class="p-4">
-                  <div class="flex gap-4">
+                <article v-for="item in cart.items" :key="item.id" class="min-w-0 p-4">
+                  <div class="flex min-w-0 gap-3 sm:gap-4">
                     <button
                       type="button"
-                      class="h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-border bg-muted/30"
-                      @click="router.push(`/store/products/${item.product_id}`)"
+                      class="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-border bg-muted/30 sm:h-20 sm:w-20"
+                      @click="openProduct(item.product_id)"
                     >
                       <img
                         v-if="getProductImageUrl(item.product_image_path)"
@@ -376,11 +402,11 @@ function openSellerCatalog(sellerCompanyId: number) {
                     </button>
 
                     <div class="min-w-0 flex-1">
-                      <div class="flex items-start justify-between gap-3">
+                      <div class="flex min-w-0 items-start justify-between gap-2 sm:gap-3">
                         <button
                           type="button"
-                          class="min-w-0 text-left"
-                          @click="router.push(`/store/products/${item.product_id}`)"
+                          class="min-w-0 flex-1 text-left"
+                          @click="openProduct(item.product_id)"
                         >
                           <p
                             class="line-clamp-2 text-sm font-semibold transition hover:text-primary"
@@ -388,9 +414,8 @@ function openSellerCatalog(sellerCompanyId: number) {
                             {{ item.product_name }}
                           </p>
 
-                          <p class="mt-1 text-xs text-muted-foreground">
-                            {{ formatCurrency(item.price) }}
-                            per unit
+                          <p class="mt-1 truncate text-xs text-muted-foreground">
+                            {{ formatCurrency(item.price) }} per unit
                           </p>
                         </button>
 
@@ -399,6 +424,7 @@ function openSellerCatalog(sellerCompanyId: number) {
                           size="icon"
                           class="h-8 w-8 shrink-0 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                           :disabled="isChangingCart"
+                          aria-label="Remove product"
                           @click="deleteItem(cart, item)"
                         >
                           <Loader2
@@ -410,9 +436,11 @@ function openSellerCatalog(sellerCompanyId: number) {
                         </Button>
                       </div>
 
-                      <div class="mt-4 flex items-end justify-between gap-3">
+                      <div
+                        class="mt-4 flex flex-col gap-3 min-[390px]:flex-row min-[390px]:items-end min-[390px]:justify-between"
+                      >
                         <div
-                          class="inline-flex items-center rounded-full border border-border bg-muted/30 p-1"
+                          class="inline-flex w-fit items-center rounded-full border border-border bg-muted/30 p-1"
                         >
                           <Button
                             variant="ghost"
@@ -449,14 +477,14 @@ function openSellerCatalog(sellerCompanyId: number) {
                           </Button>
                         </div>
 
-                        <div class="text-right">
+                        <div class="min-w-0 text-left min-[390px]:text-right">
                           <p
                             class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
                           >
                             Line subtotal
                           </p>
 
-                          <p class="mt-1 text-base font-semibold">
+                          <p class="mt-1 truncate text-base font-semibold">
                             {{ formatCurrency(item.subtotal) }}
                           </p>
                         </div>
@@ -469,26 +497,28 @@ function openSellerCatalog(sellerCompanyId: number) {
               <!-- SELLER SUMMARY -->
               <div class="border-t border-border bg-muted/10 px-4 py-4">
                 <div class="space-y-2 text-sm">
-                  <div class="flex justify-between text-muted-foreground">
+                  <div class="flex min-w-0 justify-between gap-4 text-muted-foreground">
                     <span>Subtotal</span>
 
-                    <span>
+                    <span class="min-w-0 truncate text-right">
                       {{ formatCurrency(cart.subtotal) }}
                     </span>
                   </div>
 
-                  <div class="flex justify-between text-muted-foreground">
+                  <div class="flex min-w-0 justify-between gap-4 text-muted-foreground">
                     <span>Taxes</span>
 
-                    <span>
+                    <span class="min-w-0 truncate text-right">
                       {{ formatCurrency(cart.taxes) }}
                     </span>
                   </div>
 
-                  <div class="flex items-end justify-between border-t border-border pt-3">
+                  <div
+                    class="flex min-w-0 items-end justify-between gap-4 border-t border-border pt-3"
+                  >
                     <span class="font-semibold"> Seller order </span>
 
-                    <span class="text-lg font-semibold tracking-tight">
+                    <span class="min-w-0 truncate text-right text-lg font-semibold tracking-tight">
                       {{ formatCurrency(cart.total_amount) }}
                     </span>
                   </div>
@@ -499,27 +529,77 @@ function openSellerCatalog(sellerCompanyId: number) {
         </div>
 
         <!-- GLOBAL SUMMARY -->
-        <div class="border-t border-border bg-background px-6 py-5">
-          <div class="rounded-[1.5rem] border border-border bg-muted/15 p-5">
-            <div class="mb-5 flex items-center justify-between gap-4">
-              <div>
+        <div
+          class="shrink-0 border-t border-border bg-background px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-4 shadow-[0_-12px_30px_-20px_rgba(0,0,0,0.35)] sm:px-6 sm:py-5"
+        >
+          <div class="rounded-[1.5rem] border border-border bg-muted/15 p-4 sm:p-5">
+            <div class="mb-5 flex min-w-0 items-start justify-between gap-4">
+              <div class="min-w-0">
                 <p class="text-sm font-semibold">Complete purchase</p>
 
-                <p class="mt-1 text-xs text-muted-foreground">
+                <p class="mt-1 text-xs leading-5 text-muted-foreground">
                   Nexora will create one independent order per seller.
                 </p>
               </div>
 
-              <ShoppingBag class="h-5 w-5 text-primary" />
+              <ShoppingBag class="h-5 w-5 shrink-0 text-primary" />
             </div>
 
-            <!-- tus filas actuales de summary -->
+            <div class="space-y-3">
+              <div class="flex items-center justify-between gap-4 text-sm">
+                <span class="text-muted-foreground"> Sellers </span>
+
+                <span class="font-medium">
+                  {{ summary.seller_count }}
+                </span>
+              </div>
+
+              <div class="flex items-center justify-between gap-4 text-sm">
+                <span class="text-muted-foreground"> Items </span>
+
+                <span class="font-medium">
+                  {{ summary.item_count }}
+                </span>
+              </div>
+
+              <div class="flex min-w-0 items-center justify-between gap-4 text-sm">
+                <span class="text-muted-foreground"> Subtotal </span>
+
+                <span class="min-w-0 truncate text-right">
+                  {{ formatCurrency(summary.subtotal) }}
+                </span>
+              </div>
+
+              <div class="flex min-w-0 items-center justify-between gap-4 text-sm">
+                <span class="text-muted-foreground"> Taxes </span>
+
+                <span class="min-w-0 truncate text-right">
+                  {{ formatCurrency(summary.taxes) }}
+                </span>
+              </div>
+
+              <div class="flex min-w-0 items-end justify-between gap-4 border-t border-border pt-4">
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold">Cart total</p>
+
+                  <p class="mt-1 hidden text-xs text-muted-foreground sm:block">
+                    All seller orders included
+                  </p>
+                </div>
+
+                <p
+                  class="min-w-0 truncate text-right text-xl font-semibold tracking-tight sm:text-2xl"
+                >
+                  {{ formatCurrency(summary.total_amount) }}
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div class="mt-4 grid gap-2 sm:grid-cols-[auto_1fr]">
+          <div class="mt-3 grid gap-2 sm:mt-4 sm:grid-cols-[auto_1fr]">
             <Button
               variant="outline"
-              class="rounded-full"
+              class="w-full rounded-full"
               :disabled="isCartBusy"
               @click="continueShopping"
             >

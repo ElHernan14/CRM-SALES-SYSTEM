@@ -148,15 +148,52 @@ const { data, isLoading, isError, refetch } = useProducts(productParams);
 
 // Table columns and rows
 const columns = [
-  { key: 'id', label: 'ID' },
-  { key: 'name', label: 'Name' },
-  { key: 'kind', label: 'Kind' },
-  { key: 'category', label: 'Category' },
-  { key: 'type', label: 'Type' },
-  { key: 'price', label: 'Price' },
-  { key: 'stock', label: 'Stock' },
-  { key: 'status', label: 'Status' },
-  { key: 'actions', label: '' },
+  {
+    key: 'id',
+    label: 'ID',
+    cellClass: 'w-20 whitespace-nowrap',
+  },
+  {
+    key: 'name',
+    label: 'Name',
+    cellClass: 'min-w-[220px]',
+  },
+  {
+    key: 'kind',
+    label: 'Kind',
+    cellClass: 'whitespace-nowrap',
+  },
+  {
+    key: 'category',
+    label: 'Category',
+    cellClass: 'min-w-[170px]',
+  },
+  {
+    key: 'type',
+    label: 'Type',
+    cellClass: 'min-w-[150px]',
+  },
+  {
+    key: 'price',
+    label: 'Price',
+    cellClass: 'whitespace-nowrap',
+  },
+  {
+    key: 'stock',
+    label: 'Stock',
+    cellClass: 'whitespace-nowrap',
+  },
+  {
+    key: 'status',
+    label: 'Status',
+    cellClass: 'whitespace-nowrap',
+  },
+  {
+    key: 'actions',
+    label: '',
+    headerClass: 'sticky right-0 z-10 w-14 bg-muted/95',
+    cellClass: 'sticky right-0 z-10 w-14 bg-card',
+  },
 ];
 
 const rows = computed(() => {
@@ -306,10 +343,12 @@ async function executeBulkDelete() {
       description="Search and review products available for this tenant."
     >
       <template #actions>
-        <div class="flex items-center gap-2">
-          <Button variant="outline" size="sm" @click="refetch()"> Refresh </Button>
+        <div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
+          <Button variant="outline" class="w-full sm:w-auto" size="sm" @click="refetch()">
+            Refresh
+          </Button>
 
-          <Button size="sm" @click="createOpen = true">
+          <Button size="sm" class="w-full sm:w-auto" @click="createOpen = true">
             <Plus class="mr-2 h-4 w-4" />
             New product
           </Button>
@@ -380,6 +419,7 @@ async function executeBulkDelete() {
       <DataTable
         v-else
         selectable
+        table-min-width="1120px"
         :columns="columns"
         :rows="rows"
         :selected-rows="selectedProductIds"
@@ -388,7 +428,129 @@ async function executeBulkDelete() {
         @toggle-row="toggleProduct"
         @toggle-all="toggleAllProducts"
       >
-        <template #cell-price="{ value }"> ${{ Number(value).toFixed(2) }} </template>
+        <!-- MOBILE -->
+        <template #mobile-card="{ row }">
+          <div class="p-4">
+            <div class="flex min-w-0 items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-xs font-medium text-muted-foreground">
+                    Product #{{ row.id }}
+                  </span>
+
+                  <span
+                    class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
+                    :class="
+                      Number(row.status) === 1
+                        ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                        : 'border-border bg-muted text-muted-foreground'
+                    "
+                  >
+                    <span
+                      class="h-1.5 w-1.5 rounded-full"
+                      :class="Number(row.status) === 1 ? 'bg-emerald-500' : 'bg-muted-foreground'"
+                    />
+
+                    {{ Number(row.status) === 1 ? 'Active' : 'Inactive' }}
+                  </span>
+                </div>
+
+                <h3 class="mt-2 break-words text-base font-semibold text-foreground">
+                  {{ row.name }}
+                </h3>
+
+                <div class="mt-3 flex flex-wrap gap-2">
+                  <span
+                    class="rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-medium capitalize text-muted-foreground"
+                  >
+                    {{ row.kind }}
+                  </span>
+
+                  <span
+                    class="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
+                  >
+                    {{ row.category }}
+                  </span>
+
+                  <span class="rounded-full border border-border px-2.5 py-1 text-xs font-medium">
+                    {{ row.type }}
+                  </span>
+                </div>
+              </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger as-child>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    class="h-9 w-9 shrink-0 rounded-full"
+                  >
+                    <MoreHorizontal class="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem @click="openProductImage(row)">
+                    <ImageIcon class="mr-2 h-4 w-4" />
+                    Change image
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem @click="openProductDetails(row)">
+                    <Eye class="mr-2 h-4 w-4" />
+                    View details
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem @click="openEditProduct(row)">
+                    <Pencil class="mr-2 h-4 w-4" />
+                    Edit product
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    v-if="Number(row.status) === 1"
+                    class="text-destructive"
+                    @click="confirmDeleteProduct(row)"
+                  >
+                    <Trash2 class="mr-2 h-4 w-4" />
+                    Delete product
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem v-else disabled>
+                    <CircleOff class="mr-2 h-4 w-4" />
+                    Product inactive
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div class="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4">
+              <div>
+                <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Price
+                </p>
+
+                <p class="mt-1 truncate text-lg font-semibold text-foreground">
+                  ${{ Number(row.price).toFixed(2) }}
+                </p>
+              </div>
+
+              <div class="text-right">
+                <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Stock
+                </p>
+
+                <p class="mt-1 text-lg font-semibold text-foreground">
+                  {{ row.stock }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- DESKTOP -->
+        <template #cell-price="{ value }">
+          <span class="font-semibold"> ${{ Number(value).toFixed(2) }} </span>
+        </template>
 
         <template #cell-kind="{ value }">
           <span
@@ -432,7 +594,7 @@ async function executeBulkDelete() {
           <div class="flex justify-end">
             <DropdownMenu>
               <DropdownMenuTrigger as-child>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" class="rounded-full">
                   <MoreHorizontal class="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -458,8 +620,10 @@ async function executeBulkDelete() {
                   class="text-destructive"
                   @click="confirmDeleteProduct(row)"
                 >
+                  <Trash2 class="mr-2 h-4 w-4" />
                   Delete product
                 </DropdownMenuItem>
+
                 <DropdownMenuItem v-else disabled>
                   <CircleOff class="mr-2 h-4 w-4" />
                   Product inactive

@@ -20,7 +20,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,13 +37,7 @@ import EmptyState from '@/shared/components/erp/EmptyState.vue';
 import DataTable from '@/shared/components/erp/DataTable.vue';
 import DataPagination from '@/shared/components/erp/DataPagination.vue';
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import InvoiceDetailsDrawer from '../components/InvoiceDetailsDrawer.vue';
 import InvoiceItemsDrawer from '../components/InvoiceItemsDrawer.vue';
 import InvoicePaymentsDrawer from '../components/InvoicePaymentsDrawer.vue';
@@ -116,13 +109,42 @@ const totalPages = computed(() => {
 });
 
 const columns = [
-  { key: 'id', label: 'Invoice' },
-  { key: 'buyer_name', label: 'Buyer' },
-  { key: 'status_invoice', label: 'Status' },
-  { key: 'total_amount', label: 'Total' },
-  { key: 'paid_amount', label: 'Paid' },
-  { key: 'created_at', label: 'Created' },
-  { key: 'actions', label: '' },
+  {
+    key: 'id',
+    label: 'Invoice',
+    cellClass: 'whitespace-nowrap',
+  },
+  {
+    key: 'buyer_name',
+    label: 'Buyer',
+    cellClass: 'min-w-[220px]',
+  },
+  {
+    key: 'status_invoice',
+    label: 'Status',
+    cellClass: 'whitespace-nowrap',
+  },
+  {
+    key: 'total_amount',
+    label: 'Total',
+    cellClass: 'whitespace-nowrap',
+  },
+  {
+    key: 'paid_amount',
+    label: 'Paid',
+    cellClass: 'whitespace-nowrap',
+  },
+  {
+    key: 'created_at',
+    label: 'Created',
+    cellClass: 'whitespace-nowrap',
+  },
+  {
+    key: 'actions',
+    label: '',
+    headerClass: 'sticky right-0 z-10 w-14 bg-muted/95',
+    cellClass: 'sticky right-0 z-10 w-14 bg-card',
+  },
 ];
 
 const rows = computed(() => {
@@ -169,21 +191,8 @@ function getStatusLabel(status: unknown) {
   }
 }
 
-// Permissions and actions based on invoice status
-function canManageItems(status: string) {
-  return status === 'draft';
-}
-
-function canSubmit(status: string) {
-  return status === 'draft';
-}
-
 function canCancel(status: string) {
   return status === 'pending';
-}
-
-function canViewPayments(status: string) {
-  return status === 'paid' || status === 'pending';
 }
 
 // Invoice details drawer state
@@ -274,13 +283,18 @@ function handleInvoiceCreated(invoiceId: number) {
       description="Track sales invoices from draft to payment completion."
     >
       <template #actions>
-        <div class="flex items-center gap-2">
-          <Button variant="outline" size="sm" @click="refreshInvoicesWorkspace">
+        <div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
+          <Button
+            variant="outline"
+            size="sm"
+            class="w-full sm:w-auto"
+            @click="refreshInvoicesWorkspace"
+          >
             <RefreshCw class="mr-2 h-4 w-4" />
             Refresh
           </Button>
 
-          <Button size="sm" @click="createOpen = true">
+          <Button size="sm" class="w-full sm:w-auto" @click="createOpen = true">
             <Plus class="mr-2 h-4 w-4" />
             New invoice
           </Button>
@@ -352,6 +366,7 @@ function handleInvoiceCreated(invoiceId: number) {
 
       <template v-else>
         <DataTable
+          table-min-width="940px"
           :columns="columns"
           :rows="rows"
           :sortable-columns="SortColumnSchema.options"
@@ -359,13 +374,123 @@ function handleInvoiceCreated(invoiceId: number) {
           :sort-order="order"
           @sort="handleSort"
         >
+          <!-- MOBILE -->
+          <template #mobile-card="{ row }">
+            <div class="p-4">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-sm font-semibold text-foreground"> #INV-{{ row.id }} </span>
+
+                    <span
+                      class="rounded-full px-2.5 py-1 text-xs font-medium capitalize"
+                      :class="{
+                        'bg-muted text-muted-foreground': row.status_invoice === 'draft',
+                        'bg-amber-500/10 text-amber-600 dark:text-amber-400':
+                          row.status_invoice === 'pending',
+                        'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400':
+                          row.status_invoice === 'paid',
+                        'bg-destructive/10 text-destructive': row.status_invoice === 'cancelled',
+                      }"
+                    >
+                      {{ getStatusLabel(row.status_invoice) }}
+                    </span>
+                  </div>
+
+                  <p class="mt-3 break-words text-base font-semibold text-foreground">
+                    {{ row.buyer_name }}
+                  </p>
+
+                  <p class="mt-1 text-xs text-muted-foreground">
+                    Created {{ formatDate(row.created_at) }}
+                  </p>
+                </div>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger as-child>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      class="h-9 w-9 shrink-0 rounded-full"
+                    >
+                      <MoreHorizontal class="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem @click="openInvoiceDetails(row)">
+                      <Eye class="mr-2 h-4 w-4" />
+                      View invoice
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      v-if="row.status_invoice === 'draft'"
+                      @click="openManageItems(row)"
+                    >
+                      <PackageSearch class="mr-2 h-4 w-4" />
+                      Manage items
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      v-if="row.status_invoice === 'draft'"
+                      @click="confirmSubmitInvoice(row)"
+                    >
+                      <Send class="mr-2 h-4 w-4" />
+                      Submit invoice
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem @click="openInvoicePayments(row)">
+                      <CreditCard class="mr-2 h-4 w-4" />
+                      Payment history
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      v-if="canCancel(String(row.status_invoice))"
+                      class="text-destructive"
+                      @click="confirmCancelInvoice(row)"
+                    >
+                      <Ban class="mr-2 h-4 w-4" />
+                      Cancel invoice
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              <div class="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4">
+                <div>
+                  <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Invoice total
+                  </p>
+
+                  <p class="mt-1 truncate text-lg font-semibold text-foreground">
+                    {{ formatCurrency(row.total_amount) }}
+                  </p>
+                </div>
+
+                <div class="text-right">
+                  <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Paid
+                  </p>
+
+                  <p
+                    class="mt-1 truncate text-lg font-semibold text-emerald-600 dark:text-emerald-400"
+                  >
+                    {{ formatCurrency(row.paid_amount) }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- DESKTOP -->
           <template #cell-id="{ value }">
             <span class="font-medium"> #INV-{{ value }} </span>
           </template>
 
           <template #cell-status_invoice="{ value }">
             <span
-              class="rounded-full px-2 py-1 text-xs font-medium"
+              class="rounded-full px-2 py-1 text-xs font-medium capitalize"
               :class="{
                 'bg-muted text-muted-foreground': value === 'draft',
                 'bg-amber-500/10 text-amber-600 dark:text-amber-400': value === 'pending',
@@ -373,16 +498,20 @@ function handleInvoiceCreated(invoiceId: number) {
                 'bg-destructive/10 text-destructive': value === 'cancelled',
               }"
             >
-              {{ value }}
+              {{ getStatusLabel(value) }}
             </span>
           </template>
 
           <template #cell-total_amount="{ value }">
-            {{ formatCurrency(value) }}
+            <span class="font-semibold">
+              {{ formatCurrency(value) }}
+            </span>
           </template>
 
           <template #cell-paid_amount="{ value }">
-            {{ formatCurrency(value) }}
+            <span class="text-emerald-600 dark:text-emerald-400">
+              {{ formatCurrency(value) }}
+            </span>
           </template>
 
           <template #cell-created_at="{ value }">
@@ -393,7 +522,7 @@ function handleInvoiceCreated(invoiceId: number) {
             <div class="flex justify-end">
               <DropdownMenu>
                 <DropdownMenuTrigger as-child>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" class="rounded-full">
                     <MoreHorizontal class="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>

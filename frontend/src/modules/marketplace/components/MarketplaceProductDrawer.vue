@@ -176,7 +176,9 @@ function handleAdd() {
               </div>
             </div>
 
-            <div class="mt-5 flex items-center justify-between border-t border-border pt-5">
+            <div
+              class="mt-5 flex flex-col gap-4 border-t border-border pt-5 min-[390px]:flex-row min-[390px]:items-center min-[390px]:justify-between"
+            >
               <div>
                 <p class="text-xs text-muted-foreground">Estimated subtotal</p>
 
@@ -185,7 +187,11 @@ function handleAdd() {
                 </p>
               </div>
 
-              <Button :disabled="product.available_stock <= 0 || adding" @click="handleAdd">
+              <Button
+                :disabled="product.available_stock <= 0 || adding"
+                class="w-full min-[390px]:w-auto"
+                @click="handleAdd"
+              >
                 <Loader2 v-if="adding" class="mr-2 h-4 w-4 animate-spin" />
 
                 <ShoppingCart v-else class="mr-2 h-4 w-4" />

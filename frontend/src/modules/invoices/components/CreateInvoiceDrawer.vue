@@ -258,12 +258,17 @@ async function onSubmit() {
           </p>
         </div>
 
-        <div class="flex justify-end gap-2 pt-2">
-          <Button type="button" variant="outline" @click="emit('update:open', false)">
+        <div class="grid grid-cols-2 gap-2 pt-2 sm:flex sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            class="w-full sm:w-auto"
+            @click="emit('update:open', false)"
+          >
             Cancel
           </Button>
 
-          <Button type="submit" :disabled="isSubmitting">
+          <Button type="submit" class="w-full sm:w-auto" :disabled="isSubmitting">
             <Loader2 v-if="isSubmitting" class="mr-2 h-4 w-4 animate-spin" />
 
             <FilePlus2 v-else class="mr-2 h-4 w-4" />

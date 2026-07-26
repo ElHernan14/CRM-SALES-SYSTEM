@@ -111,7 +111,7 @@ async function onSubmit() {
           <p class="mt-1 text-xl font-semibold">#INV-{{ invoice.id }}</p>
         </div>
 
-        <div class="grid gap-4 sm:grid-cols-3">
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <div class="rounded-xl border border-border bg-card p-4">
             <p class="text-xs text-muted-foreground">Total</p>
 

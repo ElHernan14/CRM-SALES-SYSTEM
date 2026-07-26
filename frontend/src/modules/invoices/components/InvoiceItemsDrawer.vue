@@ -105,7 +105,7 @@ const isRefreshingItems = computed(() => {
 const newItemQuantity = ref('1');
 
 const productParams = computed(() => ({
-  company_id: user.value?.company_id,
+  company_id: user.value?.company_id ?? undefined,
 
   search: debouncedProductSearch.value.length >= 2 ? debouncedProductSearch.value : undefined,
 
@@ -470,7 +470,9 @@ function confirmDeleteItem(item: InvoiceItem) {
                 </p>
               </div>
 
-              <div class="flex items-center gap-4">
+              <div
+                class="flex flex-wrap items-center justify-between gap-3 md:flex-nowrap md:justify-end"
+              >
                 <div class="flex items-center rounded-full border border-border bg-muted/40 p-1">
                   <Button
                     size="icon"
@@ -505,7 +507,7 @@ function confirmDeleteItem(item: InvoiceItem) {
                   </Button>
                 </div>
 
-                <div class="min-w-24 text-right">
+                <div class="ml-auto min-w-24 text-right">
                   <p class="text-sm font-semibold text-foreground">
                     {{ formatCurrency(item.subtotal) }}
                   </p>
