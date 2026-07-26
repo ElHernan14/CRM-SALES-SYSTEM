@@ -70,9 +70,17 @@ watch(search, (value) => {
   }, 300);
 });
 
-watch([debouncedSearch, categoryId, sortColumn, order], () => {
-  page.value = 1;
-});
+watch(
+  [debouncedSearch, categoryId, sortColumn, order],
+  () => {
+    if (page.value !== 1) {
+      page.value = 1;
+    }
+  },
+  {
+    flush: 'sync',
+  }
+);
 
 watch([debouncedSearch, categoryId, sortColumn, order, page], () => {
   const query: Record<string, string> = {};

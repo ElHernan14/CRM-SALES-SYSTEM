@@ -113,7 +113,7 @@ const productParams = computed(() => ({
 
   status: status.value !== 'all' ? (Number(status.value) as 0 | 1) : undefined,
 
-  company_id: user.value?.company_id,
+  company_id: user.value?.company_id ?? undefined,
 
   page: page.value,
   limit: limit.value,

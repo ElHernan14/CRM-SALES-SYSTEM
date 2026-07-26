@@ -103,6 +103,18 @@ kind.value = initialKind === 'product' || initialKind === 'service' ? initialKin
 
 let searchTimer: ReturnType<typeof setTimeout> | undefined;
 
+const catalogFilterSources = [
+  debouncedSearch,
+  companyId,
+  categoryId,
+  typeId,
+  kind,
+  minPrice,
+  maxPrice,
+  sortColumn,
+  order,
+] as const;
+
 watch(search, (value) => {
   if (searchTimer) {
     clearTimeout(searchTimer);
@@ -120,67 +132,69 @@ watch(categoryId, (newValue, oldValue) => {
 });
 
 watch(
-  [
-    debouncedSearch,
-    companyId,
-    categoryId,
-    typeId,
-    kind,
-    minPrice,
-    maxPrice,
-    sortColumn,
-    order,
-    page,
-  ],
+  catalogFilterSources,
   () => {
-    const query: Record<string, string> = {};
-
-    if (debouncedSearch.value.length >= 2) {
-      query.search = debouncedSearch.value;
+    if (page.value !== 1) {
+      page.value = 1;
     }
-
-    if (categoryId.value !== 'all') {
-      query.category_id = categoryId.value;
-    }
-
-    if (typeId.value !== 'all') {
-      query.type_id = typeId.value;
-    }
-
-    if (kind.value !== 'all') {
-      query.kind = kind.value;
-    }
-
-    if (minPrice.value !== '') {
-      query.min_price = minPrice.value;
-    }
-
-    if (maxPrice.value !== '') {
-      query.max_price = maxPrice.value;
-    }
-
-    if (sortColumn.value !== 'created_at') {
-      query.sort = sortColumn.value;
-    }
-
-    if (order.value !== 'desc') {
-      query.order = order.value;
-    }
-
-    if (page.value > 1) {
-      query.page = String(page.value);
-    }
-
-    if (companyId.value !== '') {
-      query.company_id = companyId.value;
-    }
-
-    router.replace({
-      name: 'store-catalog',
-      query,
-    });
+  },
+  {
+    flush: 'sync',
   }
 );
+
+watch([...catalogFilterSources, page], () => {
+  syncCatalogQuery();
+});
+
+function syncCatalogQuery() {
+  const query: Record<string, string> = {};
+
+  if (debouncedSearch.value.length >= 2) {
+    query.search = debouncedSearch.value;
+  }
+
+  if (companyId.value !== '') {
+    query.company_id = companyId.value;
+  }
+
+  if (categoryId.value !== 'all') {
+    query.category_id = categoryId.value;
+  }
+
+  if (typeId.value !== 'all') {
+    query.type_id = typeId.value;
+  }
+
+  if (kind.value !== 'all') {
+    query.kind = kind.value;
+  }
+
+  if (minPrice.value !== '') {
+    query.min_price = minPrice.value;
+  }
+
+  if (maxPrice.value !== '') {
+    query.max_price = maxPrice.value;
+  }
+
+  if (sortColumn.value !== 'created_at') {
+    query.sort = sortColumn.value;
+  }
+
+  if (order.value !== 'desc') {
+    query.order = order.value;
+  }
+
+  if (page.value > 1) {
+    query.page = String(page.value);
+  }
+
+  router.replace({
+    name: 'store-catalog',
+    query,
+  });
+}
 
 const selectedBusinessId = computed<number | null>(() => {
   if (companyId.value === '') {
@@ -378,6 +392,19 @@ const activeDiscoveryLabel = computed(() => {
 
   return 'All available resources';
 });
+
+// Validate number input for minPrice and maxPrice
+function validateNumberInput(event: KeyboardEvent) {
+  const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'];
+
+  // Permitir números y punto decimal
+  const isNumber = /^[0-9]$/.test(event.key);
+  const isDot = event.key === '.';
+
+  if (!isNumber && !isDot && !allowedKeys.includes(event.key)) {
+    event.preventDefault();
+  }
+}
 </script>
 
 <template>
@@ -755,7 +782,12 @@ const activeDiscoveryLabel = computed(() => {
               <div class="space-y-2">
                 <label class="text-xs font-medium text-muted-foreground"> Minimum price </label>
 
-                <Input v-model="minPrice" inputmode="decimal" placeholder="0.00" />
+                <Input
+                  v-model="minPrice"
+                  inputmode="decimal"
+                  placeholder="0.00"
+                  @keydown="validateNumberInput"
+                />
                 <p
                   v-if="hasInvalidPriceRange"
                   class="md:col-span-2 xl:col-span-6 text-xs text-destructive"
@@ -767,7 +799,12 @@ const activeDiscoveryLabel = computed(() => {
               <div class="space-y-2">
                 <label class="text-xs font-medium text-muted-foreground"> Maximum price </label>
 
-                <Input v-model="maxPrice" inputmode="decimal" placeholder="0.00" />
+                <Input
+                  v-model="maxPrice"
+                  inputmode="decimal"
+                  placeholder="0.00"
+                  @keydown="validateNumberInput"
+                />
                 <p
                   v-if="hasInvalidPriceRange"
                   class="md:col-span-2 xl:col-span-6 text-xs text-destructive"
