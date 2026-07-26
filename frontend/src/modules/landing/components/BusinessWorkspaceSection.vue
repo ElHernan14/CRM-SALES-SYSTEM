@@ -55,7 +55,7 @@ function openBusinessExperience() {
     />
 
     <div
-      class="relative mx-auto grid max-w-[1500px] items-center gap-16 px-6 py-24 lg:grid-cols-[0.88fr_1.12fr] lg:px-8 lg:py-28"
+      class="relative mx-auto grid w-full max-w-[1500px] items-center gap-16 px-6 py-24 lg:grid-cols-[0.88fr_1.12fr] lg:px-8 lg:py-28"
     >
       <!-- COPY -->
       <div>

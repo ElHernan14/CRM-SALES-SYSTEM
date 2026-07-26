@@ -57,7 +57,7 @@ function openWorkspace() {
 
 <template>
   <header class="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-xl">
-    <div class="mx-auto flex h-16 max-w-[1500px] items-center px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto flex h-16 w-full max-w-[1500px] items-center px-4 sm:px-6 lg:px-8">
       <RouterLink to="/" class="flex items-center gap-2">
         <div
           class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-sm"

@@ -106,7 +106,7 @@ function openAccount() {
   <header
     class="fixed inset-x-0 top-0 z-50 border-b border-border/60 bg-background/75 backdrop-blur-xl"
   >
-    <div class="mx-auto flex h-16 max-w-[1500px] items-center gap-4 px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto flex h-16 w-full max-w-[1500px] items-center gap-4 px-4 sm:px-6 lg:px-8">
       <!-- BRAND -->
       <RouterLink to="/" class="flex shrink-0 items-center gap-3">
         <div
@@ -183,7 +183,11 @@ function openAccount() {
 
         <DropdownMenu v-else>
           <DropdownMenuTrigger as-child>
-            <Button variant="ghost" class="hidden max-w-56 gap-2 rounded-full px-2.5 sm:flex">
+            <Button
+              variant="ghost"
+              class="flex h-10 max-w-56 gap-2 rounded-full px-1.5 sm:px-2.5"
+              aria-label="Open account menu"
+            >
               <div
                 class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary"
               >
@@ -200,7 +204,7 @@ function openAccount() {
                 </p>
               </div>
 
-              <ChevronDown class="h-3.5 w-3.5 text-muted-foreground" />
+              <ChevronDown class="hidden h-3.5 w-3.5 text-muted-foreground xl:block" />
             </Button>
           </DropdownMenuTrigger>
 
@@ -280,7 +284,7 @@ function openAccount() {
     <!-- MOBILE MENU -->
     <div
       v-if="mobileMenuOpen"
-      class="border-t border-border bg-background/95 px-4 py-4 backdrop-blur-xl lg:hidden"
+      class="max-h-[calc(100vh-4rem)] overflow-y-auto border-t border-border bg-background/95 px-4 py-4 backdrop-blur-xl lg:hidden"
     >
       <nav class="space-y-1">
         <button
@@ -351,11 +355,80 @@ function openAccount() {
           </Button>
         </template>
 
-        <Button v-else class="w-full rounded-full" @click="openPrimaryExperience">
-          {{ primaryWorkspaceLabel }}
+        <template v-else>
+          <div class="mb-3 rounded-2xl border border-border bg-muted/25 p-4">
+            <div class="flex min-w-0 items-center gap-3">
+              <div
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary"
+              >
+                {{ user?.email?.charAt(0).toUpperCase() ?? 'N' }}
+              </div>
 
-          <ArrowRight class="ml-2 h-4 w-4" />
-        </Button>
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold">
+                  {{ user?.email }}
+                </p>
+
+                <p class="mt-1 text-xs text-muted-foreground">
+                  {{ isBusinessUser ? 'Business workspace' : 'Personal account' }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <button
+            v-if="isBusinessUser"
+            type="button"
+            class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium transition hover:bg-muted"
+            @click="
+              mobileMenuOpen = false;
+              router.push('/erp/dashboard');
+            "
+          >
+            <Building2 class="h-4 w-4 text-primary" />
+            Open business workspace
+          </button>
+
+          <button
+            type="button"
+            class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium transition hover:bg-muted"
+            @click="
+              mobileMenuOpen = false;
+              router.push('/store/purchases');
+            "
+          >
+            <ShoppingBag class="h-4 w-4 text-primary" />
+            My purchases
+          </button>
+
+          <button
+            type="button"
+            class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium transition hover:bg-muted"
+            @click="openAccount"
+          >
+            <UserRound class="h-4 w-4 text-primary" />
+            My account
+          </button>
+
+          <Button class="mt-3 w-full rounded-full" @click="openPrimaryExperience">
+            {{ primaryWorkspaceLabel }}
+
+            <ArrowRight class="ml-2 h-4 w-4" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            class="mt-2 w-full rounded-full text-destructive hover:text-destructive"
+            :disabled="isLoggingOut"
+            @click="logout"
+          >
+            <Loader2 v-if="isLoggingOut" class="mr-2 h-4 w-4 animate-spin" />
+
+            <LogOut v-else class="mr-2 h-4 w-4" />
+
+            {{ isLoggingOut ? 'Signing out...' : 'Sign out' }}
+          </Button>
+        </template>
       </nav>
     </div>
   </header>

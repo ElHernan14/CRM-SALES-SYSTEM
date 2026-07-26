@@ -61,7 +61,7 @@ const foundations = [
       class="pointer-events-none absolute -left-48 bottom-0 h-[460px] w-[460px] rounded-full bg-primary/5 blur-3xl"
     />
 
-    <div class="mx-auto max-w-[1500px] px-6 py-24 lg:px-8 lg:py-28">
+    <div class="mx-auto w-full max-w-[1500px] px-6 py-24 lg:px-8 lg:py-28">
       <!-- HEADING -->
       <div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
         <div class="max-w-3xl">

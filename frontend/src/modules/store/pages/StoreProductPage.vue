@@ -199,7 +199,7 @@ function openCategory() {
   <div class="pb-20">
     <!-- TOP NAVIGATION -->
     <div
-      class="mx-auto flex max-w-[1500px] items-center justify-between gap-4 px-5 py-6 sm:px-6 lg:px-8"
+      class="mx-auto flex w-full max-w-[1500px] items-center justify-between gap-4 px-5 py-6 sm:px-6 lg:px-8"
     >
       <Button type="button" variant="ghost" class="-ml-3 rounded-full" @click="router.back()">
         <ArrowLeft class="mr-2 h-4 w-4" />
@@ -218,7 +218,7 @@ function openCategory() {
     <!-- LOADING -->
     <div
       v-if="isLoading"
-      class="mx-auto grid max-w-[1500px] gap-10 px-6 py-8 lg:grid-cols-2 lg:px-8"
+      class="mx-auto grid w-full max-w-[1500px] gap-10 px-6 py-8 lg:grid-cols-2 lg:px-8"
     >
       <div class="aspect-square animate-pulse rounded-[2rem] bg-muted" />
 
@@ -255,7 +255,7 @@ function openCategory() {
     <!-- PRODUCT -->
     <main
       v-else-if="product"
-      class="mx-auto grid max-w-[1500px] items-start gap-10 px-6 pb-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:px-8"
+      class="mx-auto grid w-full max-w-[1500px] items-start gap-10 px-6 pb-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:px-8"
     >
       <!-- PRODUCT VISUAL -->
       <section class="lg:sticky lg:top-24">

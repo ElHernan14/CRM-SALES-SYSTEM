@@ -27,7 +27,7 @@ const router = useRouter();
         />
 
         <div
-          class="relative mx-auto grid min-h-[680px] max-w-[1500px] items-center gap-14 px-6 py-20 lg:grid-cols-[1.08fr_0.92fr] lg:px-8"
+          class="relative mx-auto grid min-h-[680px] w-full max-w-[1500px] items-center gap-14 px-6 py-20 lg:grid-cols-[1.08fr_0.92fr] lg:px-8"
         >
           <div>
             <div

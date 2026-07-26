@@ -65,7 +65,7 @@ const architecturePrinciples = [
       class="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:72px_72px]"
     />
 
-    <div class="relative mx-auto max-w-[1500px] px-6 py-24 lg:px-8 lg:py-28">
+    <div class="relative mx-auto w-full max-w-[1500px] px-6 py-24 lg:px-8 lg:py-28">
       <!-- HEADING -->
       <div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
         <div class="max-w-3xl">

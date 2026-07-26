@@ -59,7 +59,7 @@ function openPrimaryExperience() {
     />
 
     <div
-      class="relative mx-auto grid min-h-[760px] max-w-[1500px] items-center gap-16 px-6 py-20 lg:grid-cols-[0.95fr_1.05fr] lg:px-8 lg:py-24"
+      class="relative mx-auto grid min-h-[760px] w-full max-w-[1500px] items-center gap-16 px-6 py-20 lg:grid-cols-[0.95fr_1.05fr] lg:px-8 lg:py-24"
     >
       <!-- COPY -->
       <div>
@@ -140,7 +140,7 @@ function openPrimaryExperience() {
     <!-- BOTTOM TRUST BAND -->
     <div class="relative border-t border-border/70 bg-muted/15">
       <div
-        class="mx-auto flex max-w-[1500px] flex-col gap-5 px-6 py-5 sm:flex-row sm:items-center sm:justify-between lg:px-8"
+        class="mx-auto flex w-full max-w-[1500px] flex-col gap-5 px-6 py-5 sm:flex-row sm:items-center sm:justify-between lg:px-8"
       >
         <p class="text-sm font-semibold">Built for connected operations</p>
 

@@ -31,7 +31,7 @@ const router = useRouter();
       class="pointer-events-none absolute -left-52 bottom-0 h-[460px] w-[460px] rounded-full bg-blue-500/8 blur-3xl"
     />
 
-    <div class="relative mx-auto max-w-[1500px] px-6 py-24 lg:px-8 lg:py-28">
+    <div class="relative mx-auto w-full max-w-[1500px] px-6 py-24 lg:px-8 lg:py-28">
       <!-- HEADING -->
       <div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
         <div class="max-w-3xl">

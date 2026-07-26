@@ -417,7 +417,7 @@ function validateNumberInput(event: KeyboardEvent) {
         class="pointer-events-none absolute -right-32 -top-48 h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl"
       />
 
-      <div class="relative mx-auto max-w-[1500px] px-6 py-14 lg:px-8">
+      <div class="relative mx-auto w-full max-w-[1500px] px-6 py-14 lg:px-8">
         <div class="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
           <div class="max-w-3xl">
             <p class="text-sm font-semibold text-primary">Nexora catalog</p>
@@ -448,7 +448,7 @@ function validateNumberInput(event: KeyboardEvent) {
       </div>
     </section>
 
-    <div class="mx-auto max-w-[1500px] space-y-8 px-6 py-8 lg:px-8">
+    <div class="mx-auto w-full max-w-[1500px] space-y-8 px-6 py-8 lg:px-8">
       <!-- ACTIVE BUSINESS CONTEXT -->
       <section
         v-if="selectedBusinessId"

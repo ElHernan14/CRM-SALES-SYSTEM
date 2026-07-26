@@ -46,7 +46,7 @@ function openPrimary() {
       class="pointer-events-none absolute left-1/2 top-0 h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl"
     />
 
-    <div class="relative mx-auto max-w-[1500px] px-6 py-24 lg:px-8 lg:py-32">
+    <div class="relative mx-auto w-full max-w-[1500px] px-6 py-24 lg:px-8 lg:py-32">
       <div
         class="relative overflow-hidden rounded-[2.5rem] border border-border bg-zinc-950 px-6 py-16 text-center text-white shadow-2xl sm:px-10 lg:py-20"
       >

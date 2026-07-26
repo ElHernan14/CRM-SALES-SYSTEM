@@ -47,7 +47,7 @@ const experiences = [
       class="pointer-events-none absolute -right-48 top-0 h-[520px] w-[520px] rounded-full bg-violet-500/5 blur-3xl"
     />
 
-    <div class="relative mx-auto max-w-[1500px] px-6 py-24 lg:px-8 lg:py-28">
+    <div class="relative mx-auto w-full max-w-[1500px] px-6 py-24 lg:px-8 lg:py-28">
       <div class="mx-auto max-w-4xl text-center">
         <p class="text-sm font-semibold text-primary">One product experience</p>
 

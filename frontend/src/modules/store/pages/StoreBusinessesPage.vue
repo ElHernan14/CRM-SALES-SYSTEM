@@ -210,7 +210,7 @@ function clearFilters() {
         class="pointer-events-none absolute -right-32 -top-48 h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl"
       />
 
-      <div class="relative mx-auto max-w-[1500px] px-6 py-14 lg:px-8">
+      <div class="relative mx-auto w-full max-w-[1500px] px-6 py-14 lg:px-8">
         <div class="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
           <div class="max-w-3xl">
             <p class="text-sm font-semibold text-primary">Nexora businesses</p>
@@ -241,7 +241,7 @@ function clearFilters() {
       </div>
     </section>
 
-    <main class="mx-auto max-w-[1500px] space-y-8 px-6 py-8 lg:px-8">
+    <main class="mx-auto w-full max-w-[1500px] space-y-8 px-6 py-8 lg:px-8">
       <!-- BUSINESS FILTERS -->
       <section class="rounded-[1.75rem] border border-border bg-card p-5 shadow-sm">
         <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px_200px_170px_auto]">

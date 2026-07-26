@@ -4,7 +4,7 @@ import { brand } from '@/shared/config/brand';
 
 <template>
   <footer class="border-t border-border bg-muted/20">
-    <div class="mx-auto grid max-w-[1500px] gap-10 px-6 py-12 md:grid-cols-4">
+    <div class="mx-auto grid w-full max-w-[1500px] gap-10 px-6 py-12 md:grid-cols-4">
       <div class="md:col-span-2">
         <p class="text-xl font-semibold tracking-tight">{{ brand.name }}</p>
 
@@ -46,7 +46,7 @@ import { brand } from '@/shared/config/brand';
 
     <div class="border-t border-border px-6 py-5">
       <div
-        class="mx-auto flex max-w-[1500px] flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between"
+        class="mx-auto flex w-full max-w-[1500px] flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between"
       >
         <span> {{ brand.copyright }} Multi-tenant commerce and operations platform </span>
 

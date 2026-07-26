@@ -116,7 +116,7 @@ function openErp() {
 
 <template>
   <header class="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-xl">
-    <div class="mx-auto flex h-16 max-w-[1500px] items-center gap-4 px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto flex h-16 w-full max-w-[1500px] items-center gap-4 px-4 sm:px-6 lg:px-8">
       <!-- BRAND -->
       <RouterLink to="/store" class="flex shrink-0 items-center gap-3">
         <div

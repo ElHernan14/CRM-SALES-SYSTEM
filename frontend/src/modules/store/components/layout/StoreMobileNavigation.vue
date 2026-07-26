@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Compass, Home, ShoppingBag, UserRound } from 'lucide-vue-next';
+import { Compass, Home, ShoppingBag, UserRound, Building2 } from 'lucide-vue-next';
 import { useStoreUiStore } from '../../stores/store-ui.store';
 import { computed } from 'vue';
 
@@ -51,7 +51,7 @@ function openAccount() {
 
       <button
         type="button"
-        class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium transition hover:bg-muted"
+        class="flex flex-col items-center gap-1 rounded-xl px-2 py-2 text-xs text-muted-foreground transition hover:bg-muted hover:text-foreground"
         @click="router.push('/store/businesses')"
       >
         <Building2 class="h-4 w-4 text-primary" />

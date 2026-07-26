@@ -89,7 +89,7 @@ function openProduct(productId: number) {
       />
 
       <div
-        class="relative mx-auto grid min-h-[660px] max-w-[1500px] items-center gap-14 px-6 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:px-8"
+        class="relative mx-auto grid min-h-[660px] w-full max-w-[1500px] items-center gap-14 px-6 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:px-8"
       >
         <!-- HERO COPY -->
         <div>
@@ -288,7 +288,7 @@ function openProduct(productId: number) {
     </section>
 
     <!-- CATEGORY DISCOVERY -->
-    <section id="store-categories" class="mx-auto max-w-[1500px] px-6 py-20 lg:px-8">
+    <section id="store-categories" class="mx-auto w-full max-w-[1500px] px-6 py-20 lg:px-8">
       <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
@@ -365,7 +365,7 @@ function openProduct(productId: number) {
       </div>
     </section>
 
-    <section class="mx-auto max-w-[1500px] px-6 pb-20 lg:px-8">
+    <section class="mx-auto w-full max-w-[1500px] px-6 pb-20 lg:px-8">
       <div
         class="relative overflow-hidden rounded-[2rem] border border-border bg-card p-7 shadow-sm sm:p-9"
       >
@@ -408,7 +408,7 @@ function openProduct(productId: number) {
 
     <!-- FEATURED PRODUCTS -->
     <section class="border-y border-border bg-muted/15">
-      <div class="mx-auto max-w-[1500px] px-6 py-20 lg:px-8">
+      <div class="mx-auto w-full max-w-[1500px] px-6 py-20 lg:px-8">
         <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary">

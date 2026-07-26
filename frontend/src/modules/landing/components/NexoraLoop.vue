@@ -63,7 +63,7 @@ const loopSteps = [
       class="pointer-events-none absolute -right-44 top-24 h-[500px] w-[500px] rounded-full bg-violet-500/5 blur-3xl"
     />
 
-    <div class="mx-auto max-w-[1500px] px-6 py-24 lg:px-8 lg:py-28">
+    <div class="mx-auto w-full max-w-[1500px] px-6 py-24 lg:px-8 lg:py-28">
       <!-- HEADING -->
       <div class="mx-auto max-w-4xl text-center">
         <p class="text-sm font-semibold text-primary">The Nexora loop</p>

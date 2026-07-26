@@ -31,7 +31,7 @@ import BusinessRegisterForm from '../components/register/BusinessRegisterForm.vu
     </div>
 
     <div
-      class="relative mx-auto grid min-h-screen max-w-[1500px] items-center gap-14 px-6 py-24 lg:grid-cols-[0.82fr_1.18fr] lg:px-8"
+      class="relative mx-auto grid min-h-screen w-full max-w-[1500px] items-center gap-14 px-6 py-24 lg:grid-cols-[0.82fr_1.18fr] lg:px-8"
     >
       <!-- BUSINESS VALUE -->
       <section class="hidden lg:block">

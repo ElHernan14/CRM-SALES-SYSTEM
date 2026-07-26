@@ -17,7 +17,7 @@ function scrollToSection(sectionId: string) {
 
 <template>
   <footer class="border-t border-border bg-muted/10">
-    <div class="mx-auto max-w-[1500px] px-6 py-14 lg:px-8">
+    <div class="mx-auto w-full max-w-[1500px] px-6 py-14 lg:px-8">
       <div class="grid gap-12 lg:grid-cols-[1.3fr_0.7fr_0.7fr_0.7fr]">
         <!-- BRAND -->
         <div class="max-w-md">
