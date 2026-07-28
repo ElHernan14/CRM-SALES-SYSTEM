@@ -10,7 +10,7 @@ defineProps<{
 </script>
 
 <template>
-  <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
+  <div class="nexora-surface rounded-xl border border-border bg-card p-5 shadow-sm">
     <div class="flex items-start justify-between gap-4">
       <div>
         <p class="text-sm text-muted-foreground">

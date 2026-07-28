@@ -1,7 +1,6 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -12,12 +11,29 @@ body,
   min-height: 100vh;
 }
 
+html {
+  color-scheme: light;
+  background: var(--background);
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
 body {
   margin: 0;
+  min-width: 320px;
+  background-color: var(--background);
+  background-image:
+    radial-gradient(circle at 8% -10%, var(--ambient-primary), transparent 30rem),
+    radial-gradient(circle at 92% 0%, var(--ambient-secondary), transparent 34rem);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 @theme inline {
   --font-heading: var(--font-sans);
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -26,109 +42,284 @@ body {
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
+
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
+
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
+
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
+
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+
   --color-foreground: var(--foreground);
   --color-background: var(--background);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* =========================================================
+   NEXORA — LIGHT THEME
+   Cool neutral background + white elevated surfaces
+   ========================================================= */
+
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.147 0.004 49.25);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.147 0.004 49.25);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.147 0.004 49.25);
-  --primary: oklch(0.216 0.006 56.043);
-  --primary-foreground: oklch(0.985 0.001 106.423);
-  --secondary: oklch(0.97 0.001 106.424);
-  --secondary-foreground: oklch(0.216 0.006 56.043);
-  --muted: oklch(0.97 0.001 106.424);
-  --muted-foreground: oklch(0.553 0.013 58.071);
-  --accent: oklch(0.97 0.001 106.424);
-  --accent-foreground: oklch(0.216 0.006 56.043);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.923 0.003 48.717);
-  --input: oklch(0.923 0.003 48.717);
-  --ring: oklch(0.709 0.01 56.259);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0.001 106.423);
-  --sidebar-foreground: oklch(0.147 0.004 49.25);
-  --sidebar-primary: oklch(0.216 0.006 56.043);
-  --sidebar-primary-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-accent: oklch(0.97 0.001 106.424);
-  --sidebar-accent-foreground: oklch(0.216 0.006 56.043);
-  --sidebar-border: oklch(0.923 0.003 48.717);
-  --sidebar-ring: oklch(0.709 0.01 56.259);
+  --radius: 0.75rem;
+
+  /* Main surfaces */
+  --background: oklch(0.978 0.006 255);
+  --foreground: oklch(0.205 0.025 264);
+
+  --card: oklch(0.997 0.002 255);
+  --card-foreground: oklch(0.205 0.025 264);
+
+  --popover: oklch(0.997 0.002 255);
+  --popover-foreground: oklch(0.205 0.025 264);
+
+  /* Nexora blue-violet identity */
+  --primary: oklch(0.565 0.225 264);
+  --primary-foreground: oklch(0.985 0.003 255);
+
+  /* Supporting surfaces */
+  --secondary: oklch(0.948 0.014 258);
+  --secondary-foreground: oklch(0.265 0.04 264);
+
+  --muted: oklch(0.952 0.009 255);
+  --muted-foreground: oklch(0.505 0.03 260);
+
+  --accent: oklch(0.935 0.025 258);
+  --accent-foreground: oklch(0.285 0.065 264);
+
+  /* Semantic */
+  --destructive: oklch(0.585 0.225 27);
+
+  /* Structure */
+  --border: oklch(0.89 0.015 255);
+  --input: oklch(0.875 0.018 255);
+  --ring: oklch(0.62 0.19 264);
+
+  /* Data visualization */
+  --chart-1: oklch(0.59 0.21 264);
+  --chart-2: oklch(0.64 0.17 204);
+  --chart-3: oklch(0.67 0.17 158);
+  --chart-4: oklch(0.72 0.17 78);
+  --chart-5: oklch(0.63 0.2 312);
+
+  /* Sidebar */
+  --sidebar: oklch(0.965 0.01 258);
+  --sidebar-foreground: oklch(0.215 0.03 264);
+
+  --sidebar-primary: oklch(0.565 0.225 264);
+  --sidebar-primary-foreground: oklch(0.985 0.003 255);
+
+  --sidebar-accent: oklch(0.925 0.025 258);
+  --sidebar-accent-foreground: oklch(0.27 0.065 264);
+
+  --sidebar-border: oklch(0.875 0.018 255);
+  --sidebar-ring: oklch(0.62 0.19 264);
+
+  /* Ambient background glows */
+  --ambient-primary: oklch(0.64 0.19 264 / 7%);
+  --ambient-secondary: oklch(0.7 0.16 205 / 5%);
+
+  /* Reusable identity colors */
+  --nexora-blue: oklch(0.565 0.225 264);
+  --nexora-violet: oklch(0.57 0.225 292);
+  --nexora-cyan: oklch(0.69 0.145 218);
 }
 
+/* =========================================================
+   NEXORA — DARK THEME
+   Deep blue-petroleum base + blue/violet identity
+   ========================================================= */
+
 .dark {
-  --background: oklch(0.147 0.004 49.25);
-  --foreground: oklch(0.985 0.001 106.423);
-  --card: oklch(0.216 0.006 56.043);
-  --card-foreground: oklch(0.985 0.001 106.423);
-  --popover: oklch(0.216 0.006 56.043);
-  --popover-foreground: oklch(0.985 0.001 106.423);
-  --primary: oklch(0.923 0.003 48.717);
-  --primary-foreground: oklch(0.216 0.006 56.043);
-  --secondary: oklch(0.268 0.007 34.298);
-  --secondary-foreground: oklch(0.985 0.001 106.423);
-  --muted: oklch(0.268 0.007 34.298);
-  --muted-foreground: oklch(0.709 0.01 56.259);
-  --accent: oklch(0.268 0.007 34.298);
-  --accent-foreground: oklch(0.985 0.001 106.423);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.553 0.013 58.071);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.216 0.006 56.043);
-  --sidebar-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-accent: oklch(0.268 0.007 34.298);
-  --sidebar-accent-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.553 0.013 58.071);
+  /* Main surfaces */
+  --background: oklch(0.145 0.028 264);
+  --foreground: oklch(0.955 0.01 255);
+
+  --card: oklch(0.19 0.035 264);
+  --card-foreground: oklch(0.955 0.01 255);
+
+  --popover: oklch(0.205 0.04 264);
+  --popover-foreground: oklch(0.955 0.01 255);
+
+  /* Brighter primary for dark surfaces */
+  --primary: oklch(0.685 0.195 264);
+  --primary-foreground: oklch(0.985 0.004 255);
+
+  --secondary: oklch(0.235 0.04 264);
+  --secondary-foreground: oklch(0.94 0.012 255);
+
+  --muted: oklch(0.225 0.032 264);
+  --muted-foreground: oklch(0.69 0.03 255);
+
+  --accent: oklch(0.255 0.06 270);
+  --accent-foreground: oklch(0.955 0.01 255);
+
+  /* Semantic */
+  --destructive: oklch(0.68 0.2 24);
+
+  /* Structure */
+  --border: oklch(0.38 0.04 264 / 50%);
+  --input: oklch(0.42 0.045 264 / 55%);
+  --ring: oklch(0.685 0.195 264);
+
+  /* Data visualization */
+  --chart-1: oklch(0.68 0.195 264);
+  --chart-2: oklch(0.73 0.16 190);
+  --chart-3: oklch(0.74 0.17 154);
+  --chart-4: oklch(0.76 0.18 84);
+  --chart-5: oklch(0.7 0.2 312);
+
+  /* Sidebar: slightly deeper than content */
+  --sidebar: oklch(0.125 0.032 264);
+  --sidebar-foreground: oklch(0.93 0.012 255);
+
+  --sidebar-primary: oklch(0.685 0.195 264);
+  --sidebar-primary-foreground: oklch(0.985 0.004 255);
+
+  --sidebar-accent: oklch(0.22 0.055 270);
+  --sidebar-accent-foreground: oklch(0.955 0.01 255);
+
+  --sidebar-border: oklch(0.36 0.045 264 / 45%);
+  --sidebar-ring: oklch(0.685 0.195 264);
+
+  /* Ambient background glows */
+  --ambient-primary: oklch(0.58 0.21 264 / 12%);
+  --ambient-secondary: oklch(0.58 0.19 302 / 8%);
+
+  /* Reusable identity colors */
+  --nexora-blue: oklch(0.685 0.195 264);
+  --nexora-violet: oklch(0.68 0.205 298);
+  --nexora-cyan: oklch(0.73 0.145 215);
 }
+
+/* =========================================================
+   GLOBAL BASE
+   ========================================================= */
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+    font-family:
+      'Inter',
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      sans-serif;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    color: var(--primary-foreground);
+    background: var(--primary);
+  }
+
+  button,
+  a,
+  input,
+  textarea,
+  select,
+  [role='button'] {
+    transition-property: color, background-color, border-color, opacity, box-shadow, transform;
+    transition-duration: 180ms;
+    transition-timing-function: ease-out;
+  }
+}
+
+/* =========================================================
+   NEXORA REUSABLE VISUAL UTILITIES
+   We'll use these progressively in Landing, Store and ERP.
+   ========================================================= */
+
+@layer utilities {
+  .nexora-gradient {
+    background-image: linear-gradient(135deg, var(--nexora-blue), var(--nexora-violet));
+  }
+
+  .nexora-gradient-text {
+    color: transparent;
+    background-image: linear-gradient(
+      120deg,
+      var(--nexora-blue),
+      var(--nexora-violet),
+      var(--nexora-cyan)
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+  }
+
+  .nexora-surface {
+    background:
+      linear-gradient(135deg, color-mix(in oklch, var(--primary) 7%, transparent), transparent 42%),
+      var(--card);
+  }
+
+  .nexora-glow {
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--primary) 12%, transparent),
+      0 20px 60px -30px color-mix(in oklch, var(--primary) 42%, transparent);
+  }
+
+  .nexora-card-interactive {
+    transition:
+      transform 220ms ease,
+      border-color 220ms ease,
+      box-shadow 220ms ease,
+      background-color 220ms ease;
+  }
+
+  .nexora-card-interactive:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in oklch, var(--primary) 28%, var(--border));
+    box-shadow:
+      0 1px 2px oklch(0 0 0 / 4%),
+      0 18px 45px -28px color-mix(in oklch, var(--primary) 38%, transparent);
+  }
+}
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

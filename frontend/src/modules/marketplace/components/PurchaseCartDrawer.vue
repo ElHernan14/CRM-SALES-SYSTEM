@@ -25,12 +25,13 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 
-import { usePurchaseCart } from '../composables/usePurchaseCart';
-import { useCheckoutPurchaseCart } from '../composables/useCheckoutPurchaseCart';
+import { useMarketplacePurchaseCart } from '../composables/useMarketplacePurchaseCart';
+
+import { useCheckoutMarketplacePurchaseCart } from '../composables/useCheckoutMarketplacePurchaseCart';
 import { useUpdatePurchaseCartItem } from '../composables/useUpdatePurchaseCartItem';
 import { useDeletePurchaseCartItem } from '../composables/useDeletePurchaseCartItem';
 
-import type { CartItem } from '../types/purchase-cart.types';
+import type { MarketplaceCartItem } from '../types/purchase-cart.types';
 
 const queryClient = useQueryClient();
 
@@ -46,9 +47,15 @@ const emit = defineEmits<{
 
 const sellerCompanyIdRef = toRef(props, 'sellerCompanyId');
 
-const { data: cart, isLoading, isFetching, isError, refetch } = usePurchaseCart(sellerCompanyIdRef);
+const {
+  data: cart,
+  isLoading,
+  isFetching,
+  isError,
+  refetch,
+} = useMarketplacePurchaseCart(sellerCompanyIdRef);
 
-const checkoutMutation = useCheckoutPurchaseCart();
+const checkoutMutation = useCheckoutMarketplacePurchaseCart();
 
 const updateItemMutation = useUpdatePurchaseCartItem();
 
@@ -77,6 +84,10 @@ async function synchronizeCart() {
       queryClient.refetchQueries({
         queryKey: ['store-products'],
         type: 'active',
+      }),
+
+      queryClient.invalidateQueries({
+        queryKey: ['marketplace-purchase-cart'],
       }),
     ]);
   } finally {
@@ -116,22 +127,34 @@ async function checkout() {
   }
 
   try {
-    const response = await checkoutMutation.mutateAsync({
-      invoiceId: cart.value.invoice_id,
-      sellerCompanyId: cart.value.seller_company_id,
-    });
+    const response = await checkoutMutation.mutateAsync(cart.value.invoice_id);
 
-    await queryClient.refetchQueries({
-      queryKey: ['store-products'],
-      type: 'active',
-    });
+    if (response.source !== 'erp') {
+      throw new Error('Marketplace checkout returned an invalid source');
+    }
+
+    await Promise.all([
+      queryClient.refetchQueries({
+        queryKey: ['store-products'],
+        type: 'active',
+      }),
+
+      queryClient.invalidateQueries({
+        queryKey: ['marketplace-purchase-cart'],
+      }),
+
+      queryClient.invalidateQueries({
+        queryKey: ['purchases'],
+      }),
+    ]);
 
     toast.success('Purchase submitted', {
-      description: 'The draft was converted into a pending purchase invoice.',
-      duration: 4000, // ⏱ 4 segundos
+      description: 'The B2B draft was converted into a pending purchase invoice.',
+      duration: 4000,
     });
 
     emit('update:open', false);
+
     emit('checkoutCompleted', response.invoice_id);
   } catch (error: any) {
     const message =
@@ -143,7 +166,7 @@ async function checkout() {
   }
 }
 
-async function updateQuantity(item: CartItem, nextQuantity: number) {
+async function updateQuantity(item: MarketplaceCartItem, nextQuantity: number) {
   if (!cart.value) return;
   if (nextQuantity < 1) return;
 
@@ -169,7 +192,7 @@ async function updateQuantity(item: CartItem, nextQuantity: number) {
   }
 }
 
-async function deleteItem(item: CartItem) {
+async function deleteItem(item: MarketplaceCartItem) {
   if (!cart.value) return;
 
   try {
@@ -222,8 +245,8 @@ async function deleteItem(item: CartItem) {
               type="button"
               variant="ghost"
               size="icon"
-              :disabled="isRefreshing || isCheckingOut"
-              @click="refetch()"
+              :disabled="isChangingCart || isCheckingOut"
+              @click="synchronizeCart"
             >
               <RefreshCw
                 class="h-4 w-4"

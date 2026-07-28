@@ -86,7 +86,7 @@ watchEffect(() => {
       <article
         v-for="(row, index) in rows"
         :key="getRowKey(row, index)"
-        class="min-w-0 overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
+        class="nexora-surface min-w-0 overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
       >
         <div
           v-if="selectable"
@@ -113,7 +113,7 @@ watchEffect(() => {
 
     <!-- DESKTOP / TABLET TABLE -->
     <div
-      class="max-w-full overflow-x-auto rounded-xl border border-border bg-card shadow-sm"
+      class="nexora-surface max-w-full overflow-x-auto rounded-xl border border-border bg-card shadow-sm"
       :class="hasMobileCards ? 'hidden md:block' : 'block'"
     >
       <table

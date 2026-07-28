@@ -98,13 +98,13 @@ function openCart() {
       <!-- BRAND -->
       <RouterLink to="/" class="flex min-w-0 shrink-0 items-center gap-2">
         <div
-          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary font-bold text-primary-foreground shadow-sm shadow-primary/20"
+          class="nexora-gradient nexora-glow flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary font-bold text-primary-foreground shadow-sm shadow-primary/20"
         >
           N
         </div>
 
         <span
-          class="hidden truncate text-lg font-semibold tracking-tight min-[390px]:block sm:text-xl"
+          class="nexora-gradient-text hidden truncate text-lg font-semibold tracking-tight min-[390px]:block sm:text-xl"
         >
           {{ brand.name }}
         </span>

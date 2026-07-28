@@ -69,14 +69,14 @@ function openPrimaryExperience() {
           class="mt-5 max-w-3xl text-[2.65rem] font-semibold leading-[1.02] tracking-[-0.055em] text-foreground sm:mt-6 sm:text-6xl lg:text-[4.75rem] lg:leading-[0.98]"
         >
           Your business and commerce,
-          <span class="text-muted-foreground"> finally connected. </span>
+          <span class="nexora-gradient-text"> finally connected. </span>
         </h1>
 
         <p
           class="mt-6 max-w-2xl text-base leading-7 text-muted-foreground sm:mt-7 sm:text-lg sm:leading-8"
         >
           Run products, inventory, sales and purchases from one workspace—then bring your catalog
-          directly to customers through a connected Store.
+          directly to customers through a <span class="nexora-gradient-text font-semibold">connected Store.</span>
         </p>
 
         <div class="mt-8 flex flex-col gap-3 sm:mt-9 sm:flex-row">

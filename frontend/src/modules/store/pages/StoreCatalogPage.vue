@@ -450,7 +450,7 @@ function validateNumberInput(event: KeyboardEvent) {
       <!-- ACTIVE BUSINESS CONTEXT -->
       <section
         v-if="selectedBusinessId"
-        class="relative overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm"
+        class="nexora-surface nexora-glow relative overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm"
       >
         <div v-if="selectedBusinessLoading" class="flex min-h-48 items-center justify-center">
           <div class="text-center">
@@ -632,7 +632,7 @@ function validateNumberInput(event: KeyboardEvent) {
       </section>
       <!-- PRIMARY FILTERS -->
       <section
-        class="rounded-[1.5rem] border border-border bg-card p-4 shadow-sm sm:rounded-[1.75rem] sm:p-5"
+        class="nexora-surface rounded-[1.5rem] border border-border bg-card p-4 shadow-sm sm:rounded-[1.75rem] sm:p-5"
       >
         <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_240px_auto]">
           <div class="relative">
@@ -906,7 +906,7 @@ function validateNumberInput(event: KeyboardEvent) {
         <div
           v-for="index in 6"
           :key="index"
-          class="animate-pulse overflow-hidden rounded-[1.75rem] border border-border bg-card"
+          class="nexora-surface animate-pulse overflow-hidden rounded-[1.75rem] border border-border bg-card"
         >
           <div class="h-64 bg-muted" />
 

@@ -36,7 +36,7 @@ import PurchaseCartDrawer from '../components/PurchaseCartDrawer.vue';
 
 import { useStoreProducts } from '../composables/useStoreProducts';
 import { useCategories } from '@/modules/categories/composables/useCategories';
-import { useEnsurePurchaseCart } from '../composables/useEnsurePurchaseCart';
+import { useEnsureMarketplaceCart } from '../composables/useEnsureMarketplaceCart';
 import { useAddPurchaseCartItem } from '../composables/useAddPurchaseCartItem';
 
 import type { StoreProduct } from '../types/store-product.types';
@@ -46,7 +46,7 @@ import { useProductTypes } from '@/modules/product-types/composables/useProductT
 import { getCompanyCoverUrl, getCompanyLogoUrl } from '@/shared/utils/assets';
 import { getProductImageUrl } from '@/shared/utils/assets';
 
-import { getPurchaseCart } from '../api/purchase-cart.api';
+import { getMarketplacePurchaseCart } from '../api/marketplace-purchase-cart.api';
 
 const route = useRoute();
 const router = useRouter();
@@ -173,20 +173,24 @@ async function addProductToCart(
     return false;
   }
 
-  const cartQueryKey = ['purchase-cart', product.company_id] as const;
+  const cartQueryKey = ['marketplace-purchase-cart', product.company_id] as const;
 
   try {
     addingProductId.value = product.id;
 
-    /*
-     * Si había una consulta vieja o en curso, la cancelamos.
-     * Evita que una respuesta anterior sobrescriba el cart nuevo.
-     */
     await queryClient.cancelQueries({
       queryKey: cartQueryKey,
     });
 
     const ensuredCart = await ensureCartMutation.mutateAsync(product.company_id);
+
+    /*
+     * Este guard es opcional porque Zod ya valida source='erp',
+     * pero documenta claramente la regla del flujo B2B.
+     */
+    if (ensuredCart.source !== 'erp') {
+      throw new Error('Marketplace cart was created with an invalid source');
+    }
 
     await addCartItemMutation.mutateAsync({
       invoiceId: ensuredCart.invoice_id,
@@ -196,17 +200,13 @@ async function addProductToCart(
     });
 
     /*
-     * Consultamos explícitamente el estado final,
-     * después de que el item ya fue agregado.
+     * La lectura posterior también debe usar Marketplace.
+     * Ya no se consulta /api/store/cart.
      */
-    const updatedCart = await getPurchaseCart(product.company_id);
+    const updatedCart = await getMarketplacePurchaseCart(product.company_id);
 
     queryClient.setQueryData(cartQueryKey, updatedCart);
 
-    /*
-     * Esperamos el catálogo actualizado antes
-     * de considerar terminada la operación.
-     */
     await queryClient.refetchQueries({
       queryKey: ['store-products'],
       type: 'active',
@@ -218,12 +218,12 @@ async function addProductToCart(
 
     if (openCart) {
       activeSellerCompanyId.value = product.company_id;
-
       purchaseCartOpen.value = true;
     }
 
     return true;
   } catch (error: any) {
+    console.log('error ', error);
     const message =
       error?.response?.data?.errorMessage ??
       error?.response?.data?.message ??
@@ -324,7 +324,7 @@ const productTypeTriggerLabel = computed(() => {
   return selectedProductType.value?.name ?? 'Select product type';
 });
 
-const ensureCartMutation = useEnsurePurchaseCart();
+const ensureCartMutation = useEnsureMarketplaceCart();
 const addCartItemMutation = useAddPurchaseCartItem();
 
 const isAddingToCart = computed(() => {
@@ -352,7 +352,7 @@ function handleCheckoutCompleted(invoiceId: number) {
 
       <!-- HERO -->
       <section
-        class="relative min-h-64 overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
+        class="nexora-surface nexora-glow relative min-h-64 overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
       >
         <img
           v-if="supplierCover"
@@ -422,7 +422,7 @@ function handleCheckoutCompleted(invoiceId: number) {
       </section>
 
       <!-- FILTERS: AHORA FUERA DEL HERO -->
-      <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <section class="nexora-surface rounded-2xl border border-border bg-card p-5 shadow-sm">
         <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_240px_auto]">
           <div class="relative">
             <Search
@@ -645,7 +645,7 @@ function handleCheckoutCompleted(invoiceId: number) {
           <article
             v-for="product in products"
             :key="product.id"
-            class="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl"
+            class="nexora-card-interactive nexora-surface group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl"
           >
             <div
               class="pointer-events-none absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100"

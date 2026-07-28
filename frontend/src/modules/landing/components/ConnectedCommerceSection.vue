@@ -75,7 +75,7 @@ const router = useRouter();
         >
           <div class="flex items-center gap-3">
             <div
-              class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-bold text-primary-foreground"
+              class="nexora-gradient nexora-glow flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-bold text-primary-foreground"
             >
               N
             </div>

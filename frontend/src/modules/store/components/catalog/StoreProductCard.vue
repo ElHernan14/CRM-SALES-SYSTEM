@@ -72,7 +72,7 @@ function getAvailabilityDotClass(stock: number) {
 
 <template>
   <article
-    class="group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-xl"
+    class="nexora-card-interactive nexora-surface group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-xl"
   >
     <!-- PRODUCT IMAGE -->
     <button

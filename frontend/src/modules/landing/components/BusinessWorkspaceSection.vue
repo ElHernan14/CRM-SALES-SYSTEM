@@ -142,7 +142,7 @@ function openBusinessExperience() {
           <div class="flex items-center justify-between border-b border-white/10 px-5 py-4">
             <div class="flex items-center gap-3">
               <div
-                class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-bold text-primary-foreground"
+                class="nexora-gradient nexora-glow flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-bold text-primary-foreground"
               >
                 N
               </div>

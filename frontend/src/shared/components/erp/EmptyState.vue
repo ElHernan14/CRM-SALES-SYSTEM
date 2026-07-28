@@ -9,7 +9,7 @@ defineProps<{
 </script>
 
 <template>
-  <div class="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card p-10 text-center">
+  <div class="nexora-surface flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card p-10 text-center">
     <div
       v-if="icon"
       class="mb-4 rounded-xl border border-border bg-muted p-3 text-muted-foreground"

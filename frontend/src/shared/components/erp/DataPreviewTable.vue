@@ -6,7 +6,7 @@ defineProps<{
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+  <div class="nexora-surface overflow-hidden rounded-xl border border-border bg-card shadow-sm">
     <table class="w-full border-collapse text-sm">
       <thead class="bg-muted/50">
         <tr>

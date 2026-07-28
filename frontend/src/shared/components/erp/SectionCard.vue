@@ -6,7 +6,7 @@ defineProps<{
 </script>
 
 <template>
-  <section class="rounded-xl border border-border bg-card shadow-sm">
+  <section class="nexora-surface rounded-xl border border-border bg-card shadow-sm">
     <div
       v-if="title || description || $slots.actions"
       class="flex items-start justify-between gap-4 border-b border-border p-5"

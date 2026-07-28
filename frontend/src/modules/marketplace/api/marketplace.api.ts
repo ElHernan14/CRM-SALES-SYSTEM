@@ -17,7 +17,6 @@ export async function getSuppliers(params: GetSuppliersRequest): Promise<GetSupp
   const response = await http.get('/marketplace/suppliers', {
     params,
   });
-  console.log('getSuppliers response:', response.data); // Log the response data for debugging
 
   return unwrapResponse(GetSuppliersResponseSchema, response.data);
 }

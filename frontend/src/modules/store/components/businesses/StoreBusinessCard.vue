@@ -19,7 +19,7 @@ const emit = defineEmits<{
 
 <template>
   <article
-    class="group flex h-full min-w-0 flex-col overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm transition hover:-translate-y-1 hover:border-primary/25 hover:shadow-xl"
+    class="nexora-card-interactive nexora-surface group flex h-full min-w-0 flex-col overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm transition hover:-translate-y-1 hover:border-primary/25 hover:shadow-xl"
   >
     <!-- BRAND VISUAL -->
     <button

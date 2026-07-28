@@ -59,13 +59,13 @@ import { brand } from '@/shared/config/brand';
         <div class="relative">
           <RouterLink to="/" class="inline-flex items-center gap-3">
             <div
-              class="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary font-bold text-primary-foreground shadow-lg shadow-primary/15"
+              class="nexora-gradient nexora-glow flex h-11 w-11 items-center justify-center rounded-2xl bg-primary font-bold text-primary-foreground shadow-lg shadow-primary/15"
             >
               N
             </div>
 
             <div>
-              <p class="text-xl font-semibold tracking-[-0.03em]">
+              <p class="nexora-gradient-text text-xl font-semibold tracking-[-0.03em]">
                 {{ brand.name }}
               </p>
 
@@ -85,7 +85,7 @@ import { brand } from '@/shared/config/brand';
 
             <h1 class="mt-7 text-5xl font-semibold tracking-[-0.05em] text-foreground xl:text-6xl">
               One account.
-              <span class="text-muted-foreground"> Every side of commerce. </span>
+              <span class="nexora-gradient-text"> Every side of commerce. </span>
             </h1>
 
             <p class="mt-6 max-w-lg text-lg leading-8 text-muted-foreground">
@@ -96,7 +96,7 @@ import { brand } from '@/shared/config/brand';
 
           <div class="mt-12 grid max-w-xl gap-3 sm:grid-cols-2">
             <div
-              class="rounded-2xl border border-border bg-background/70 p-4 shadow-sm backdrop-blur"
+              class="nexora-card-interactive rounded-2xl border border-border bg-background/70 p-4 shadow-sm backdrop-blur"
             >
               <div class="flex items-center gap-3">
                 <div class="rounded-xl bg-primary/10 p-2.5">
@@ -112,7 +112,7 @@ import { brand } from '@/shared/config/brand';
             </div>
 
             <div
-              class="rounded-2xl border border-border bg-background/70 p-4 shadow-sm backdrop-blur"
+              class="nexora-card-interactive rounded-2xl border border-border bg-background/70 p-4 shadow-sm backdrop-blur"
             >
               <div class="flex items-center gap-3">
                 <div class="rounded-xl bg-blue-500/10 p-2.5">
@@ -153,12 +153,12 @@ import { brand } from '@/shared/config/brand';
           <!-- MOBILE BRAND -->
           <RouterLink to="/" class="mb-10 inline-flex items-center gap-3 lg:hidden">
             <div
-              class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-bold text-primary-foreground"
+              class="nexora-gradient nexora-glow flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-bold text-primary-foreground"
             >
               N
             </div>
 
-            <span class="text-xl font-semibold">
+            <span class="nexora-gradient-text text-xl font-semibold">
               {{ brand.name }}
             </span>
           </RouterLink>

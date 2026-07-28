@@ -97,7 +97,7 @@ const companyCategoryTriggerLabel = computed(() => {
       description="Discover suppliers, browse their catalogs and create purchase flows for your company."
     />
 
-    <section class="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6">
+    <section class="nexora-surface rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h2 class="text-lg font-semibold tracking-tight text-foreground">Verified suppliers</h2>
@@ -209,7 +209,7 @@ const companyCategoryTriggerLabel = computed(() => {
         <article
           v-for="supplier in suppliers"
           :key="supplier.id"
-          class="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          class="nexora-card-interactive nexora-surface group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
         >
           <div class="relative h-40 overflow-hidden border-b border-border bg-muted/40">
             <img

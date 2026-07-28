@@ -462,7 +462,7 @@ function formatCurrency(value: number) {
     <div v-else-if="company && dashboard" class="space-y-6">
       <!-- COMPANY OPERATIONS HERO -->
       <section
-        class="group relative min-h-[330px] overflow-hidden rounded-[2rem] border border-border bg-card shadow-xl"
+        class="nexora-surface nexora-glow group relative min-h-[330px] overflow-hidden rounded-[2rem] border border-border bg-card shadow-xl"
       >
         <img
           v-if="companyCover"
@@ -599,7 +599,7 @@ function formatCurrency(value: number) {
           <article
             v-for="card in pulseCards"
             :key="card.label"
-            class="group flex min-h-52 flex-col rounded-[1.5rem] border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-lg"
+            class="nexora-card-interactive nexora-surface group flex min-h-52 flex-col rounded-[1.5rem] border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-lg"
           >
             <div class="flex items-start justify-between gap-4">
               <div
@@ -643,7 +643,7 @@ function formatCurrency(value: number) {
       </section>
 
       <!-- ATTENTION CENTER -->
-      <section class="overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm">
+      <section class="nexora-surface overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm">
         <div
           class="flex flex-col gap-4 border-b border-border bg-muted/15 p-6 sm:flex-row sm:items-start sm:justify-between"
         >
@@ -757,7 +757,7 @@ function formatCurrency(value: number) {
       <!-- RECENT COMMERCIAL ACTIVITY -->
       <section class="grid items-start gap-6 xl:grid-cols-2">
         <!-- RECENT SALES -->
-        <article class="overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm">
+        <article class="nexora-surface overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm">
           <div class="flex items-start justify-between gap-4 border-b border-border p-6">
             <div>
               <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
@@ -859,7 +859,7 @@ function formatCurrency(value: number) {
         </article>
 
         <!-- RECENT PURCHASES -->
-        <article class="overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm">
+        <article class="nexora-surface overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm">
           <div class="flex items-start justify-between gap-4 border-b border-border p-6">
             <div>
               <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
@@ -966,7 +966,7 @@ function formatCurrency(value: number) {
       <!-- INVENTORY + QUICK ACTIONS -->
       <section class="grid items-start gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(340px,0.8fr)]">
         <!-- INVENTORY SNAPSHOT -->
-        <article class="overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm">
+        <article class="nexora-surface overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm">
           <div class="flex items-start justify-between gap-4 border-b border-border p-6">
             <div>
               <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
@@ -1099,7 +1099,7 @@ function formatCurrency(value: number) {
         </article>
 
         <!-- QUICK ACTIONS -->
-        <aside class="overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm">
+        <aside class="nexora-surface overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm">
           <div class="border-b border-border p-6">
             <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
               Quick actions

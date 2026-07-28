@@ -23,7 +23,7 @@ function scrollToSection(sectionId: string) {
         <div class="max-w-md">
           <RouterLink to="/" class="inline-flex items-center gap-3">
             <div
-              class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary font-bold text-primary-foreground"
+              class="nexora-gradient nexora-glow flex h-11 w-11 items-center justify-center rounded-xl bg-primary font-bold text-primary-foreground"
             >
               N
             </div>

@@ -48,7 +48,7 @@ function openPrimary() {
 
     <div class="relative mx-auto w-full max-w-[1500px] px-6 py-24 lg:px-8 lg:py-32">
       <div
-        class="relative overflow-hidden rounded-[2.5rem] border border-border bg-zinc-950 px-6 py-16 text-center text-white shadow-2xl sm:px-10 lg:py-20"
+        class="nexora-glow relative overflow-hidden rounded-[2.5rem] border border-border bg-zinc-950 px-6 py-16 text-center text-white shadow-2xl sm:px-10 lg:py-20"
       >
         <div
           class="pointer-events-none absolute -left-40 -top-40 h-[440px] w-[440px] rounded-full bg-primary/25 blur-3xl"
@@ -71,7 +71,7 @@ function openPrimary() {
             class="mt-5 text-4xl font-semibold tracking-[-0.06em] text-white sm:text-5xl lg:text-6xl"
           >
             Operations, products and transactions
-            <span class="text-zinc-400"> working as one. </span>
+            <span class="nexora-gradient-text"> working as one. </span>
           </h2>
 
           <p class="mx-auto mt-6 max-w-2xl text-base leading-7 text-zinc-400">

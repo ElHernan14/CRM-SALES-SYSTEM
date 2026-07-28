@@ -60,12 +60,12 @@ function openWorkspace() {
     <div class="mx-auto flex h-16 w-full max-w-[1500px] items-center px-4 sm:px-6 lg:px-8">
       <RouterLink to="/" class="flex items-center gap-2">
         <div
-          class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-sm"
+          class="nexora-gradient nexora-glow flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-sm"
         >
           N
         </div>
 
-        <span class="text-xl font-semibold tracking-[-0.025em] text-foreground">
+        <span class="nexora-gradient-text text-xl font-semibold tracking-[-0.025em]">
           {{ brand.name }}
         </span>
       </RouterLink>

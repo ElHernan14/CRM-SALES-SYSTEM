@@ -45,6 +45,7 @@ import { usePurchasePayments } from '../composables/usePurchasePayments';
 import { usePurchaseItems } from '../composables/usePurchaseItems';
 import { useInvoiceDetail } from '@/modules/invoices/composables/useInvoiceDetail';
 import { useCheckoutPurchase } from '../composables/useCheckoutPurchase';
+import { useCheckoutMarketplacePurchaseCart } from '@/modules/marketplace/composables/useCheckoutMarketplacePurchaseCart';
 
 import type { PaymentMethod } from '../types/purchase-payment.types';
 import type { PurchaseListItem } from '../types/purchase.types';
@@ -69,8 +70,7 @@ const emit = defineEmits<{
   'update:open': [value: boolean];
 }>();
 
-const paymentBalanceLimit = ref(0);
-
+const paymentBalanceLimitCents = ref(0);
 const paymentExpanded = ref(false);
 
 const paymentForm = reactive({
@@ -85,21 +85,27 @@ const isPaying = computed(() => {
 });
 
 const paymentAmount = computed(() => {
-  const value = Number(paymentForm.amount);
+  return parseMoneyInput(paymentForm.amount);
+});
 
-  return Number.isFinite(value) ? value : 0;
+const paymentAmountCents = computed(() => {
+  return toMoneyCents(paymentAmount.value);
 });
 
 const paymentAmountValid = computed(() => {
-  return paymentAmount.value > 0 && paymentAmount.value <= paymentBalanceLimit.value;
+  return paymentAmountCents.value > 0 && paymentAmountCents.value <= paymentBalanceLimitCents.value;
+});
+
+const balanceAfterPaymentCents = computed(() => {
+  return Math.max(paymentBalanceLimitCents.value - paymentAmountCents.value, 0);
 });
 
 const balanceAfterPayment = computed(() => {
-  return Math.max(paymentBalanceLimit.value - paymentAmount.value, 0);
+  return fromMoneyCents(balanceAfterPaymentCents.value);
 });
 
 const willCompletePurchase = computed(() => {
-  return paymentAmountValid.value && balanceAfterPayment.value === 0;
+  return paymentAmountValid.value && balanceAfterPaymentCents.value === 0;
 });
 
 const purchaseId = computed<number | null>(() => {
@@ -179,10 +185,19 @@ const isRefreshing = computed(() => {
   return isFetching.value && !isLoading.value;
 });
 
-const remainingAmount = computed(() => {
-  if (!invoice.value) return 0;
+const remainingAmountCents = computed(() => {
+  if (!invoice.value) {
+    return 0;
+  }
 
-  return Math.max(invoice.value.total_amount - invoice.value.paid_amount, 0);
+  const totalCents = toMoneyCents(invoice.value.total_amount);
+  const paidCents = toMoneyCents(invoice.value.paid_amount);
+
+  return Math.max(totalCents - paidCents, 0);
+});
+
+const remainingAmount = computed(() => {
+  return fromMoneyCents(remainingAmountCents.value);
 });
 
 const paymentProgress = computed(() => {
@@ -196,10 +211,36 @@ const paymentProgress = computed(() => {
 });
 
 const canPay = computed(() => {
-  if (!invoice.value) return false;
+  if (!invoice.value) {
+    return false;
+  }
 
-  return invoice.value.status_invoice === 'pending' && remainingAmount.value > 0;
+  return invoice.value.status_invoice === 'pending' && remainingAmountCents.value > 0;
 });
+
+function toMoneyCents(value: number) {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.round((value + Number.EPSILON) * 100);
+}
+
+function fromMoneyCents(value: number) {
+  return value / 100;
+}
+
+function parseMoneyInput(value: string) {
+  const normalized = value.trim().replace(/\s/g, '').replace(',', '.');
+
+  if (!normalized) {
+    return 0;
+  }
+
+  const parsed = Number(normalized);
+
+  return Number.isFinite(parsed) ? parsed : 0;
+}
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat('es-AR', {
@@ -247,11 +288,13 @@ function getStatusClass(status?: string) {
 }
 
 function handlePay() {
-  if (!invoice.value || !canPay.value) return;
+  if (!invoice.value || !canPay.value) {
+    return;
+  }
 
-  paymentBalanceLimit.value = remainingAmount.value;
+  paymentBalanceLimitCents.value = remainingAmountCents.value;
 
-  paymentForm.amount = paymentBalanceLimit.value.toFixed(2);
+  paymentForm.amount = fromMoneyCents(paymentBalanceLimitCents.value).toFixed(2);
 
   paymentForm.method = 'transfer';
   paymentExpanded.value = true;
@@ -263,8 +306,9 @@ watch(
     itemsExpanded.value = true;
     paymentsExpanded.value = false;
     paymentExpanded.value = false;
+
     paymentForm.amount = '';
-    paymentBalanceLimit.value = 0;
+    paymentBalanceLimitCents.value = 0;
     paymentForm.method = 'transfer';
   }
 );
@@ -327,18 +371,28 @@ function getPaymentMethodIcon(method: string) {
   return icons[method] ?? Receipt;
 }
 
+function setPaymentPercentage(percentage: number) {
+  const amountCents = Math.round(remainingAmountCents.value * percentage);
+
+  paymentForm.amount = fromMoneyCents(amountCents).toFixed(2);
+}
+
+function setFullPaymentAmount() {
+  paymentForm.amount = fromMoneyCents(remainingAmountCents.value).toFixed(2);
+}
+
 async function submitPayment() {
   if (!invoice.value) {
     toast.error('Missing purchase information');
     return;
   }
 
-  if (paymentAmount.value <= 0) {
+  if (paymentAmountCents.value <= 0) {
     toast.error('Enter a valid payment amount');
     return;
   }
 
-  if (paymentAmount.value > remainingAmount.value) {
+  if (paymentAmountCents.value > remainingAmountCents.value) {
     toast.error('Payment amount exceeds the outstanding balance');
     return;
   }
@@ -348,7 +402,7 @@ async function submitPayment() {
       invoiceId: invoice.value.id,
 
       payload: {
-        amount: paymentAmount.value,
+        amount: fromMoneyCents(paymentAmountCents.value),
         payment_method: paymentForm.method,
       },
     });
@@ -360,7 +414,7 @@ async function submitPayment() {
 
     paymentForm.amount = '';
 
-    if (result.remaining_amount === 0) {
+    if (toMoneyCents(result.remaining_amount) === 0) {
       toast.success('Purchase fully paid', {
         description: 'The invoice is now marked as paid.',
       });
@@ -379,10 +433,14 @@ async function submitPayment() {
   }
 }
 
-const checkoutPurchaseMutation = useCheckoutPurchase();
+const checkoutStorePurchaseMutation = useCheckoutPurchase();
+
+const checkoutMarketplacePurchaseMutation = useCheckoutMarketplacePurchaseCart();
 
 const isCheckingOut = computed(() => {
-  return checkoutPurchaseMutation.isPending.value;
+  return props.variant === 'store'
+    ? checkoutStorePurchaseMutation.isPending.value
+    : checkoutMarketplacePurchaseMutation.isPending.value;
 });
 
 const canCheckout = computed(() => {
@@ -408,18 +466,41 @@ async function submitCheckout() {
   }
 
   try {
-    await checkoutPurchaseMutation.mutateAsync(invoice.value.id);
+    if (props.variant === 'store') {
+      /*
+       * Flujo personal:
+       * POST /api/store/checkout
+       * source = store
+       */
+      await checkoutStorePurchaseMutation.mutateAsync(invoice.value.id);
+    } else {
+      /*
+       * Flujo organizacional:
+       * POST /api/marketplace/checkout
+       * source = erp
+       */
+      const result = await checkoutMarketplacePurchaseMutation.mutateAsync(invoice.value.id);
+
+      if (result.source !== 'erp') {
+        throw new Error('Marketplace checkout returned an invalid source');
+      }
+    }
 
     await Promise.all([refetch(), refetchItems()]);
 
-    toast.success('Purchase submitted', {
-      description: 'The supplier invoice is now awaiting payment.',
+    toast.success(props.variant === 'store' ? 'Order submitted' : 'Purchase submitted', {
+      description:
+        props.variant === 'store'
+          ? 'The personal Store order is now awaiting payment.'
+          : 'The B2B supplier invoice is now awaiting payment.',
     });
   } catch (error: any) {
     const message =
       error?.response?.data?.errorMessage ??
       error?.response?.data?.message ??
-      'Failed to submit purchase';
+      (props.variant === 'store'
+        ? 'Failed to submit Store order'
+        : 'Failed to submit B2B purchase');
 
     toast.error(message);
   }
@@ -1084,12 +1165,19 @@ function validateNumberInput(event: KeyboardEvent) {
 
               <div>
                 <h3 class="text-sm font-semibold text-foreground">
-                  Draft purchase ready for checkout
+                  {{
+                    variant === 'store'
+                      ? 'Draft order ready for checkout'
+                      : 'Draft purchase ready for checkout'
+                  }}
                 </h3>
 
                 <p class="mt-1 text-xs leading-5 text-muted-foreground">
-                  Review the items and financial summary before submitting this order to the
-                  supplier.
+                  {{
+                    variant === 'store'
+                      ? 'Review the personal order before submitting it to the seller.'
+                      : 'Review the items and financial summary before submitting this B2B order to the supplier.'
+                  }}
                 </p>
               </div>
             </div>
@@ -1150,7 +1238,15 @@ function validateNumberInput(event: KeyboardEvent) {
 
               <Send v-else class="mr-2 h-4 w-4" />
 
-              {{ isCheckingOut ? 'Submitting purchase...' : 'Submit purchase to supplier' }}
+              {{
+                isCheckingOut
+                  ? variant === 'store'
+                    ? 'Submitting order...'
+                    : 'Submitting purchase...'
+                  : variant === 'store'
+                    ? 'Submit Store order'
+                    : 'Submit purchase to supplier'
+              }}
 
               <ArrowRight v-if="!isCheckingOut" class="ml-2 h-4 w-4" />
             </Button>
@@ -1247,10 +1343,13 @@ function validateNumberInput(event: KeyboardEvent) {
                   </div>
 
                   <p
-                    v-if="!isPaying && paymentExpanded && paymentAmount > paymentBalanceLimit"
+                    v-if="
+                      !isPaying && paymentExpanded && paymentAmountCents > paymentBalanceLimitCents
+                    "
                     class="flex items-center gap-1 text-xs text-destructive"
                   >
                     <AlertCircle class="h-3.5 w-3.5" />
+
                     Amount exceeds outstanding balance.
                   </p>
                 </div>
@@ -1308,7 +1407,7 @@ function validateNumberInput(event: KeyboardEvent) {
                     variant="outline"
                     size="sm"
                     :disabled="isPaying"
-                    @click="paymentForm.amount = (remainingAmount * 0.25).toFixed(2)"
+                    @click="setPaymentPercentage(0.25)"
                   >
                     25%
                   </Button>
@@ -1318,7 +1417,7 @@ function validateNumberInput(event: KeyboardEvent) {
                     variant="outline"
                     size="sm"
                     :disabled="isPaying"
-                    @click="paymentForm.amount = (remainingAmount * 0.5).toFixed(2)"
+                    @click="setPaymentPercentage(0.5)"
                   >
                     50%
                   </Button>
@@ -1328,7 +1427,7 @@ function validateNumberInput(event: KeyboardEvent) {
                     variant="outline"
                     size="sm"
                     :disabled="isPaying"
-                    @click="paymentForm.amount = (remainingAmount * 0.75).toFixed(2)"
+                    @click="setPaymentPercentage(0.75)"
                   >
                     75%
                   </Button>
@@ -1338,7 +1437,7 @@ function validateNumberInput(event: KeyboardEvent) {
                     variant="secondary"
                     size="sm"
                     :disabled="isPaying"
-                    @click="paymentForm.amount = remainingAmount.toFixed(2)"
+                    @click="setFullPaymentAmount"
                   >
                     Full balance
                   </Button>

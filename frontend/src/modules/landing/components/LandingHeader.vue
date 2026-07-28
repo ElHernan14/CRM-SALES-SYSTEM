@@ -110,13 +110,13 @@ function openAccount() {
       <!-- BRAND -->
       <RouterLink to="/" class="flex shrink-0 items-center gap-3">
         <div
-          class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-bold text-primary-foreground shadow-sm shadow-primary/20"
+          class="nexora-gradient nexora-glow flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-bold text-primary-foreground shadow-sm shadow-primary/20"
         >
           N
         </div>
 
         <div class="hidden min-[390px]:block">
-          <p class="text-lg font-semibold leading-none tracking-[-0.03em]">
+          <p class="nexora-gradient-text text-lg font-semibold leading-none tracking-[-0.03em]">
             {{ brand.name }}
           </p>
 

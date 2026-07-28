@@ -37,13 +37,13 @@ import BusinessRegisterForm from '../components/register/BusinessRegisterForm.vu
       <section class="hidden lg:block">
         <RouterLink to="/" class="inline-flex items-center gap-3">
           <div
-            class="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary font-bold text-primary-foreground shadow-lg"
+            class="nexora-gradient nexora-glow flex h-11 w-11 items-center justify-center rounded-2xl bg-primary font-bold text-primary-foreground shadow-lg"
           >
             N
           </div>
 
           <div>
-            <p class="text-xl font-semibold">
+            <p class="nexora-gradient-text text-xl font-semibold">
               {{ brand.name }}
             </p>
 
@@ -58,7 +58,7 @@ import BusinessRegisterForm from '../components/register/BusinessRegisterForm.vu
 
           <h1 class="mt-7 text-5xl font-semibold tracking-[-0.05em]">
             Build your business
-            <span class="text-muted-foreground"> on one operating system. </span>
+            <span class="nexora-gradient-text"> on one operating system. </span>
           </h1>
 
           <p class="mt-6 text-lg leading-8 text-muted-foreground">
@@ -94,17 +94,17 @@ import BusinessRegisterForm from '../components/register/BusinessRegisterForm.vu
 
       <!-- FORM -->
       <section
-        class="mx-auto w-full max-w-3xl rounded-[2rem] border border-border bg-card p-6 shadow-2xl sm:p-8 lg:p-10"
+        class="nexora-surface nexora-glow mx-auto w-full max-w-3xl rounded-[2rem] border border-border bg-card p-6 shadow-2xl sm:p-8 lg:p-10"
       >
         <div class="mb-8">
           <div class="flex items-center gap-3 lg:hidden">
             <div
-              class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-bold text-primary-foreground"
+              class="nexora-gradient nexora-glow flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-bold text-primary-foreground"
             >
               N
             </div>
 
-            <span class="text-xl font-semibold">
+            <span class="nexora-gradient-text text-xl font-semibold">
               {{ brand.name }}
             </span>
           </div>

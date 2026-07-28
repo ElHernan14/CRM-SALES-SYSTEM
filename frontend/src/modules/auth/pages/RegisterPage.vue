@@ -20,12 +20,12 @@ const router = useRouter();
       <div class="text-center">
         <RouterLink to="/" class="inline-flex items-center gap-2">
           <div
-            class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-bold text-primary-foreground"
+            class="nexora-gradient nexora-glow flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-bold text-primary-foreground"
           >
             N
           </div>
 
-          <span class="text-xl font-semibold">
+          <span class="nexora-gradient-text text-xl font-semibold">
             {{ brand.name }}
           </span>
         </RouterLink>
@@ -42,7 +42,7 @@ const router = useRouter();
       <div class="mt-10 grid gap-5 md:grid-cols-2">
         <button
           type="button"
-          class="group rounded-[1.75rem] border border-border bg-card p-7 text-left shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl"
+          class="nexora-card-interactive nexora-surface group rounded-[1.75rem] border border-border bg-card p-7 text-left shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl"
           @click="router.push('/register/personal')"
         >
           <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
@@ -64,7 +64,7 @@ const router = useRouter();
 
         <button
           type="button"
-          class="group rounded-[1.75rem] border border-border bg-card p-7 text-left shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl"
+          class="nexora-card-interactive nexora-surface group rounded-[1.75rem] border border-border bg-card p-7 text-left shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl"
           @click="router.push('/register/business')"
         >
           <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-500/10">

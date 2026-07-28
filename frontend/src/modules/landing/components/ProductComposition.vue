@@ -30,7 +30,7 @@ import {
       <div class="flex items-center justify-between border-b border-border bg-muted/20 px-5 py-4">
         <div class="flex min-w-0 items-center gap-2 sm:gap-3">
           <div
-            class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground"
+            class="nexora-gradient nexora-glow flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground"
           >
             N
           </div>

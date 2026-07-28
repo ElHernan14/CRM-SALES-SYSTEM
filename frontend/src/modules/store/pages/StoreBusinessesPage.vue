@@ -233,7 +233,7 @@ function clearFilters() {
     <main class="mx-auto w-full max-w-[1500px] space-y-8 px-4 py-8 sm:px-6 lg:px-8">
       <!-- FILTERS -->
       <section
-        class="rounded-[1.5rem] border border-border bg-card p-4 shadow-sm sm:rounded-[1.75rem] sm:p-5"
+        class="nexora-surface rounded-[1.5rem] border border-border bg-card p-4 shadow-sm sm:rounded-[1.75rem] sm:p-5"
       >
         <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_240px_210px_160px_auto]">
           <div class="relative">

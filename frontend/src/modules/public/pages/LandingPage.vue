@@ -41,7 +41,7 @@ const router = useRouter();
               class="mt-7 max-w-4xl text-5xl font-semibold tracking-[-0.05em] text-foreground sm:text-6xl lg:text-7xl"
             >
               Commerce connected to
-              <span class="text-muted-foreground"> real operations. </span>
+              <span class="nexora-gradient-text"> real operations. </span>
             </h1>
 
             <p class="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
@@ -68,7 +68,7 @@ const router = useRouter();
           </div>
 
           <div
-            class="relative min-h-[480px] overflow-hidden rounded-[2rem] border border-border bg-card shadow-2xl"
+            class="nexora-surface nexora-glow relative min-h-[480px] overflow-hidden rounded-[2rem] border border-border bg-card shadow-2xl"
           >
             <div
               class="absolute inset-0 bg-gradient-to-br from-primary/15 via-background to-blue-500/10"
