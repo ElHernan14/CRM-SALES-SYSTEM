@@ -3,6 +3,8 @@ package marketplace
 import (
 	"crm-system-sales/internal/core/helper"
 	"crm-system-sales/internal/core/response"
+	validatorx "crm-system-sales/internal/core/validator"
+	marketplacedto "crm-system-sales/internal/modules/marketplace/dto"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -27,6 +29,25 @@ func (c *MarketplaceController) GetSuppliers(w http.ResponseWriter, r *http.Requ
 	}
 
 	res, err := c.service.GetSuppliers(r.Context(), req)
+	if err != nil {
+		return err
+	}
+
+	return json.NewEncoder(w).Encode(response.Success(res))
+}
+
+func (c *MarketplaceController) EnsureCart(w http.ResponseWriter, r *http.Request) error {
+	var req marketplacedto.EnsureMarketplaceCartRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return errorHandler.NewAppError(http.StatusBadRequest, "json invalido")
+	}
+
+	msg, invalid := validatorx.ValidateStruct(req)
+	if invalid {
+		return errorHandler.NewAppError(http.StatusBadRequest, msg)
+	}
+
+	res, err := c.service.EnsureCart(r.Context(), &req)
 	if err != nil {
 		return err
 	}

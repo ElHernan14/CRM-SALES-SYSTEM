@@ -70,7 +70,7 @@ func (r *dashboardRepository) GetPurchasesSummary(ctx context.Context, companyID
 		FROM invoice i
 		INNER JOIN client buyer ON buyer.id = i.buyer_client_id
 		WHERE buyer.company_id = $1
-		  AND i.source = 'erp'
+		  AND COALESCE(i.source, 'erp') = 'erp'
 		  AND i.status = 1
 		  AND i.deleted_at IS NULL
 	`
@@ -120,7 +120,7 @@ func (r *dashboardRepository) CountPartiallyPaidPurchases(ctx context.Context, c
 		FROM invoice i
 		INNER JOIN client buyer ON buyer.id = i.buyer_client_id
 		WHERE buyer.company_id = $1
-		  AND i.source = 'erp'
+		  AND COALESCE(i.source, 'erp') = 'erp'
 		  AND i.status = 1
 		  AND i.deleted_at IS NULL
 		  AND i.status_invoice = 'pending'
@@ -170,7 +170,7 @@ func (r *dashboardRepository) GetRecentPurchases(ctx context.Context, companyID 
 		INNER JOIN client buyer ON buyer.id = i.buyer_client_id
 		LEFT JOIN company seller ON seller.id = i.seller_company_id
 		WHERE buyer.company_id = $1
-		  AND i.source = 'erp'
+		  AND COALESCE(i.source, 'erp') = 'erp'
 		  AND i.status = 1
 		  AND i.deleted_at IS NULL
 		ORDER BY i.created_at DESC

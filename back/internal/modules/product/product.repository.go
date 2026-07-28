@@ -318,6 +318,11 @@ func (r *productRepository) ListAvailableProducts(ctx context.Context, req *stor
 		args = append(args, *req.CompanyID)
 		argPos++
 	}
+	if req.ExcludedCompanyID != nil {
+		baseQuery += fmt.Sprintf(" AND p.company_id <> $%d", argPos)
+		args = append(args, *req.ExcludedCompanyID)
+		argPos++
+	}
 	search := req.Search
 	if search == "" {
 		search = req.Name

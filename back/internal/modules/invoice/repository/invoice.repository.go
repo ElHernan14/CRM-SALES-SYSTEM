@@ -95,7 +95,7 @@ func (r *invoiceRepository) GetByID(ctx context.Context, id int) (*invoiceModel.
 
 	query := `
         SELECT id, buyer_client_id, seller_company_id, created_by_user_id,
-               total_amount, subtotal, paid_amount, status_invoice, source, status, taxes, created_at, updated_at, deleted_at
+               total_amount, subtotal, paid_amount, status_invoice, COALESCE(source, 'erp') AS source, status, taxes, created_at, updated_at, deleted_at
         FROM invoice
         WHERE id = $1
     `
@@ -142,6 +142,8 @@ func (r *invoiceRepository) RecalculateInvoiceTotals(
 		SELECT COALESCE(SUM(subtotal), 0)
 		FROM invoice_item
 		WHERE invoice_id = $1
+		  AND status = 1
+		  AND deleted_at IS NULL
 	`
 
 	err := tx.QueryRowContext(
@@ -196,7 +198,7 @@ func (r *invoiceRepository) GetActiveDraft(
 			buyer_client_id,
 			seller_company_id,
 			status_invoice,
-			source,
+			COALESCE(source, 'erp') AS source,
 			created_at,
 			created_by_user_id,
 			total_amount,
@@ -206,7 +208,7 @@ func (r *invoiceRepository) GetActiveDraft(
 		WHERE
 			buyer_client_id = $1
 			AND seller_company_id = $2
-			AND source = $3
+			AND COALESCE(source, 'erp') = $3
 			AND status_invoice = 'draft'
 			AND status = 1
 		ORDER BY created_at DESC
@@ -320,7 +322,7 @@ func (r *invoiceRepository) ListBySellerCompanyID(
 			i.buyer_client_id,
 			i.seller_company_id,
 			i.status_invoice,
-			i.source,
+			COALESCE(i.source, 'erp') AS source,
 			i.total_amount,
 			i.paid_amount,
 			i.created_at,
@@ -445,7 +447,7 @@ func (r *invoiceRepository) GetActiveDraftByTenant(
             buyer_client_id,
             seller_company_id,
             status_invoice,
-			source,
+			COALESCE(source, 'erp') AS source,
             created_at,
             created_by_user_id,
             total_amount
@@ -505,7 +507,7 @@ func (r *invoiceRepository) ListByBuyerCompanyID(
 			i.buyer_client_id,
 			i.seller_company_id,
 			i.status_invoice,
-			i.source,
+			COALESCE(i.source, 'erp') AS source,
 			i.total_amount,
 			i.paid_amount,
 			i.created_at,
@@ -519,7 +521,7 @@ func (r *invoiceRepository) ListByBuyerCompanyID(
 		LEFT JOIN company bco ON bco.id = cb.company_id
 		LEFT JOIN company co ON co.id = i.seller_company_id
 		WHERE cb.company_id = $1
-		  AND i.source = 'erp'
+		  AND COALESCE(i.source, 'erp') = 'erp'
 	`
 
 	args := []interface{}{companyID}

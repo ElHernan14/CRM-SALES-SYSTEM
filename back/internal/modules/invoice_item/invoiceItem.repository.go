@@ -86,6 +86,7 @@ func (r *invoiceItemRepository) GetByID(
 		FROM invoice_item
 		WHERE id = $1
 		AND status = 1
+		AND deleted_at IS NULL
 	`
 
 	item := &invoiceItemModel.InvoiceItem{}
@@ -179,6 +180,7 @@ func (r *invoiceItemRepository) GetByInvoiceAndProduct(
 			invoice_id = $1
 			AND product_id = $2
 			AND status = 1
+			AND deleted_at IS NULL
 	`
 
 	item := &invoiceItemModel.InvoiceItem{}
@@ -220,6 +222,7 @@ func (r *invoiceItemRepository) CountByInvoice(
 		WHERE
 			invoice_id = $1
 			AND status = 1
+			AND deleted_at IS NULL
 	`
 
 	var count int
@@ -245,7 +248,8 @@ func (r *invoiceItemRepository) GetByInvoiceID(
 			 FROM invoice_item ii
 			 LEFT JOIN product p ON p.id = ii.product_id
 			WHERE ii.invoice_id = $1
-			AND ii.status = 1 `
+			AND ii.status = 1
+			AND ii.deleted_at IS NULL `
 
 	countQuery := `SELECT COUNT(*) ` + baseQuery
 	var total int
@@ -305,7 +309,8 @@ func (r *invoiceItemRepository) ListByInvoiceID(
 				subtotal
 			FROM invoice_item
 			WHERE invoice_id = $1
-			AND status = 1;`
+			AND status = 1
+			AND deleted_at IS NULL;`
 	rows, err := tx.QueryContext(ctx, query, invoiceID)
 	if err != nil {
 		return nil, err

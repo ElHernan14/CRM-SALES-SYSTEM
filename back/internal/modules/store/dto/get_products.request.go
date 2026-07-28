@@ -17,4 +17,6 @@ type GetStoreProductsRequest struct {
 
 	SortColumn string `json:"sort_column" validate:"omitempty,max=50,oneof=name created_at kind type category price stock" example:"price"`
 	Order      string `json:"order" validate:"omitempty,oneof=asc desc" example:"asc"`
+
+	ExcludedCompanyID *int `json:"-" validate:"-"`
 }

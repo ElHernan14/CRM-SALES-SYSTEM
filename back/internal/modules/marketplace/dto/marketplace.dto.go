@@ -28,3 +28,15 @@ type GetSuppliersResponse struct {
 	Items []SupplierResponse `json:"items"`
 	Meta  dto.Meta           `json:"meta"`
 }
+
+type EnsureMarketplaceCartRequest struct {
+	SellerCompanyID int `json:"seller_company_id" validate:"required,gt=0"`
+}
+
+type EnsureMarketplaceCartResponse struct {
+	InvoiceID       int    `json:"invoice_id"`
+	BuyerClientID   int    `json:"buyer_client_id"`
+	SellerCompanyID int    `json:"seller_company_id"`
+	StatusInvoice   string `json:"status_invoice"`
+	Source          string `json:"source"`
+}

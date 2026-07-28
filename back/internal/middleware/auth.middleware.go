@@ -49,3 +49,46 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
+
+func OptionalAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		claims := &authcore.Claims{}
+
+		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+			return jwtSecret, nil
+		})
+		if err != nil || !token.Valid {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		roles := []string{}
+		if claims.Roles != nil {
+			roles = *claims.Roles
+		}
+
+		permissions := []string{}
+		if claims.Permissions != nil {
+			permissions = *claims.Permissions
+		}
+
+		tenant := &tenantHelper.TenantContext{
+			UserID:      claims.UserID,
+			CompanyID:   claims.CompanyID,
+			ClientID:    claims.ClientID,
+			Email:       claims.Email,
+			Roles:       roles,
+			Permissions: permissions,
+		}
+
+		ctx := context.WithValue(r.Context(), tenantHelper.TenantContextKey, tenant)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}

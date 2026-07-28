@@ -18,6 +18,6 @@ func RegisterInvoiceItemRoutes(r *mux.Router, controller *controller.StoreContro
 }
 
 func RegisterPublicStoreRoutes(r *mux.Router, controller *controller.StoreController) {
-	r.HandleFunc("/store/products", middleware.ErrorMiddleware(controller.GetProducts)).Methods("GET")
-	r.HandleFunc("/store/products/{id}", middleware.ErrorMiddleware(controller.GetProductByID)).Methods("GET")
+	r.Handle("/store/products", middleware.OptionalAuthMiddleware(middleware.ErrorMiddleware(controller.GetProducts))).Methods("GET")
+	r.Handle("/store/products/{id}", middleware.OptionalAuthMiddleware(middleware.ErrorMiddleware(controller.GetProductByID))).Methods("GET")
 }

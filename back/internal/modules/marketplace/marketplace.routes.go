@@ -1,6 +1,7 @@
 package marketplace
 
 import (
+	"crm-system-sales/internal/constants"
 	"crm-system-sales/internal/middleware"
 
 	"github.com/gorilla/mux"
@@ -8,6 +9,11 @@ import (
 
 func RegisterMarketplaceRoutes(r *mux.Router, controller *MarketplaceController) {
 	marketplace := r.PathPrefix("/marketplace").Subrouter()
-	marketplace.HandleFunc("/suppliers", middleware.ErrorMiddleware(controller.GetSuppliers)).Methods("GET")
-	marketplace.HandleFunc("/suppliers/{id}", middleware.ErrorMiddleware(controller.GetSupplierByID)).Methods("GET")
+	marketplace.Handle("/suppliers", middleware.OptionalAuthMiddleware(middleware.ErrorMiddleware(controller.GetSuppliers))).Methods("GET")
+	marketplace.Handle("/suppliers/{id}", middleware.OptionalAuthMiddleware(middleware.ErrorMiddleware(controller.GetSupplierByID))).Methods("GET")
+}
+
+func RegisterMarketplaceProtectedRoutes(r *mux.Router, controller *MarketplaceController) {
+	marketplace := r.PathPrefix("/marketplace").Subrouter()
+	marketplace.HandleFunc("/cart/ensure", middleware.RequirePermission(constants.InvoiceCreate)(middleware.ErrorMiddleware(controller.EnsureCart))).Methods("POST")
 }

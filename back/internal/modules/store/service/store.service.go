@@ -51,6 +51,11 @@ func NewStoreService(
 }
 
 func (s *storeService) GetProducts(ctx context.Context, req *storedto.GetStoreProductsRequest) (*storedto.GetStoreProductsResponse, error) {
+	tenant := tenantHelper.GetTenant(ctx)
+	if tenant != nil && tenant.CompanyID != nil {
+		req.ExcludedCompanyID = tenant.CompanyID
+	}
+
 	products, total, err := s.ProductRepo.ListAvailableProducts(ctx, req)
 	if err != nil {
 		return nil, err
@@ -77,6 +82,11 @@ func (s *storeService) GetProductByID(ctx context.Context, id int) (*storedto.St
 	}
 	if product == nil {
 		return nil, errorHandler.NewAppError(http.StatusNotFound, "Producto no encontrado")
+	}
+
+	tenant := tenantHelper.GetTenant(ctx)
+	if tenant != nil && tenant.CompanyID != nil && product.CompanyID == *tenant.CompanyID {
+		return nil, errorHandler.NewAppError(http.StatusNotFound, "Producto no disponible")
 	}
 
 	available := product.Stock - product.ReservedStock
@@ -151,7 +161,15 @@ func (s *storeService) GetCart(ctx context.Context, sellerCompanyID int) (*store
 		return nil, nil
 	}
 
-	return s.buildCartResponse(ctx, draft)
+	cart, err := s.buildCartResponse(ctx, draft)
+	if err != nil {
+		return nil, err
+	}
+	if len(cart.Items) == 0 {
+		return nil, nil
+	}
+
+	return cart, nil
 }
 
 func (s *storeService) GetCarts(ctx context.Context) (*storedto.GetCartsResponse, error) {
@@ -170,6 +188,9 @@ func (s *storeService) GetCarts(ctx context.Context) (*storedto.GetCartsResponse
 		cart, err := s.buildCartResponse(ctx, draft)
 		if err != nil {
 			return nil, err
+		}
+		if len(cart.Items) == 0 {
+			continue
 		}
 		res.Carts = append(res.Carts, *cart)
 		res.Summary.SellerCount++
@@ -240,6 +261,14 @@ func (s *storeService) Checkout(ctx context.Context, req *storedto.CheckoutReque
 		invoiceID = draft.ID
 	}
 
+	itemCount, err := s.InvoiceItemRepo.CountByInvoice(ctx, invoiceID)
+	if err != nil {
+		return nil, errorHandler.NewAppError(http.StatusInternalServerError, "Error validando items del carrito")
+	}
+	if itemCount == 0 {
+		return nil, errorHandler.NewAppError(http.StatusBadRequest, "El carrito no posee items")
+	}
+
 	if err := s.SubmitWorkflow.Submit(ctx, invoiceID); err != nil {
 		return nil, err
 	}
@@ -269,22 +298,31 @@ func (s *storeService) CheckoutAll(ctx context.Context, req *storedto.CheckoutAl
 		return nil, errorHandler.NewAppError(http.StatusNotFound, "Uno o mas carritos no existen o no pertenecen al comprador")
 	}
 
+	validDrafts := make([]*invoicemodel.Invoice, 0, len(drafts))
 	for _, draft := range drafts {
 		itemCount, err := s.InvoiceItemRepo.CountByInvoice(ctx, draft.ID)
 		if err != nil {
 			return nil, errorHandler.NewAppError(http.StatusInternalServerError, "Error validando items del carrito")
 		}
 		if itemCount == 0 {
-			return nil, errorHandler.NewAppError(http.StatusBadRequest, "Uno o mas carritos no poseen items")
+			if len(invoiceIDs) > 0 {
+				return nil, errorHandler.NewAppError(http.StatusBadRequest, "Uno o mas carritos no poseen items")
+			}
+			continue
 		}
 		if draft.Subtotal <= 0 {
 			return nil, errorHandler.NewAppError(http.StatusBadRequest, "Uno o mas carritos tienen subtotal invalido")
 		}
+		validDrafts = append(validDrafts, draft)
 	}
 
-	res := &storedto.CheckoutAllResponse{Orders: make([]storedto.CheckoutAllOrderResponse, 0, len(drafts))}
+	if len(validDrafts) == 0 {
+		return nil, errorHandler.NewAppError(http.StatusNotFound, "No hay carritos con items para procesar")
+	}
+
+	res := &storedto.CheckoutAllResponse{Orders: make([]storedto.CheckoutAllOrderResponse, 0, len(validDrafts))}
 	err = transaction.RunInTransaction(ctx, s.db, func(tx *sql.Tx) error {
-		for _, draft := range drafts {
+		for _, draft := range validDrafts {
 			if err := s.InvoiceRepo.UpdateStatus(ctx, tx, draft.ID, invoiceconstants.InvoicePending); err != nil {
 				return err
 			}
