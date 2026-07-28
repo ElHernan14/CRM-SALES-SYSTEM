@@ -35,7 +35,7 @@ func (r *dashboardRepository) GetSalesSummary(ctx context.Context, companyID int
 			COALESCE(SUM(CASE WHEN i.status_invoice = 'cancelled' THEN 1 ELSE 0 END), 0)::int AS cancelled,
 			COALESCE(SUM(i.total_amount), 0) AS total_amount,
 			COALESCE(SUM(i.paid_amount), 0) AS paid_amount,
-			COALESCE(SUM(CASE WHEN i.status_invoice = 'pending' THEN GREATEST(i.total_amount - i.paid_amount, 0) ELSE 0 END), 0) AS outstanding_amount
+			ROUND(COALESCE(SUM(CASE WHEN i.status_invoice = 'pending' THEN GREATEST(i.total_amount - i.paid_amount, 0) ELSE 0 END), 0), 2) AS outstanding_amount
 		FROM invoice i
 		WHERE i.seller_company_id = $1
 		  AND i.status = 1
@@ -66,7 +66,7 @@ func (r *dashboardRepository) GetPurchasesSummary(ctx context.Context, companyID
 			COALESCE(SUM(CASE WHEN i.status_invoice = 'cancelled' THEN 1 ELSE 0 END), 0)::int AS cancelled,
 			COALESCE(SUM(i.total_amount), 0) AS total_amount,
 			COALESCE(SUM(i.paid_amount), 0) AS paid_amount,
-			COALESCE(SUM(CASE WHEN i.status_invoice = 'pending' THEN GREATEST(i.total_amount - i.paid_amount, 0) ELSE 0 END), 0) AS outstanding_amount
+			ROUND(COALESCE(SUM(CASE WHEN i.status_invoice = 'pending' THEN GREATEST(i.total_amount - i.paid_amount, 0) ELSE 0 END), 0), 2) AS outstanding_amount
 		FROM invoice i
 		INNER JOIN client buyer ON buyer.id = i.buyer_client_id
 		WHERE buyer.company_id = $1
@@ -141,7 +141,7 @@ func (r *dashboardRepository) GetRecentSales(ctx context.Context, companyID int,
 			i.status_invoice,
 			i.total_amount,
 			i.paid_amount,
-			GREATEST(i.total_amount - i.paid_amount, 0) AS remaining_amount,
+			ROUND(GREATEST(i.total_amount - i.paid_amount, 0), 2) AS remaining_amount,
 			i.created_at
 		FROM invoice i
 		LEFT JOIN client buyer ON buyer.id = i.buyer_client_id
@@ -164,7 +164,7 @@ func (r *dashboardRepository) GetRecentPurchases(ctx context.Context, companyID 
 			i.status_invoice,
 			i.total_amount,
 			i.paid_amount,
-			GREATEST(i.total_amount - i.paid_amount, 0) AS remaining_amount,
+			ROUND(GREATEST(i.total_amount - i.paid_amount, 0), 2) AS remaining_amount,
 			i.created_at
 		FROM invoice i
 		INNER JOIN client buyer ON buyer.id = i.buyer_client_id

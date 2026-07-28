@@ -4,6 +4,7 @@ import (
 	"context"
 	"crm-system-sales/internal/core/dto"
 	errorHandler "crm-system-sales/internal/core/error"
+	"crm-system-sales/internal/core/money"
 	tenantHelper "crm-system-sales/internal/core/tenant"
 	transaction "crm-system-sales/internal/core/transaction"
 	"crm-system-sales/internal/modules/client"
@@ -221,9 +222,10 @@ func (s *invoiceService) Pay(
 		return nil, err
 	}
 
-	remaining := invoice.TotalAmount - invoice.PaidAmount
+	req.Amount = money.Round(req.Amount)
+	remaining := money.Remaining(invoice.TotalAmount, invoice.PaidAmount)
 
-	if req.Amount > remaining {
+	if money.GreaterThan(req.Amount, remaining) {
 		return nil, errorHandler.NewAppError(
 			http.StatusBadRequest,
 			"El monto supera el saldo pendiente",
@@ -238,8 +240,8 @@ func (s *invoiceService) Pay(
 	}
 
 	status := invoice.StatusInvoice
-	newPaidAmount := invoice.PaidAmount + req.Amount
-	remainingAmount := invoice.TotalAmount - newPaidAmount
+	newPaidAmount := money.Add(invoice.PaidAmount, req.Amount)
+	remainingAmount := money.Remaining(invoice.TotalAmount, newPaidAmount)
 
 	err = transaction.RunInTransaction(ctx, s.db, func(tx *sql.Tx) error {
 		err = s.InvoicePaymentRepo.Create(
@@ -261,7 +263,7 @@ func (s *invoiceService) Pay(
 			return err
 		}
 
-		if newPaidAmount >= invoice.TotalAmount {
+		if money.GreaterOrEqual(newPaidAmount, invoice.TotalAmount) {
 
 			err = s.Repo.UpdateStatus(
 				ctx,

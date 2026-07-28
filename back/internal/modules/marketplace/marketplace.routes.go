@@ -15,5 +15,7 @@ func RegisterMarketplaceRoutes(r *mux.Router, controller *MarketplaceController)
 
 func RegisterMarketplaceProtectedRoutes(r *mux.Router, controller *MarketplaceController) {
 	marketplace := r.PathPrefix("/marketplace").Subrouter()
+	marketplace.HandleFunc("/cart", middleware.RequirePermission(constants.InvoiceRead)(middleware.ErrorMiddleware(controller.GetCart))).Methods("GET")
 	marketplace.HandleFunc("/cart/ensure", middleware.RequirePermission(constants.InvoiceCreate)(middleware.ErrorMiddleware(controller.EnsureCart))).Methods("POST")
+	marketplace.HandleFunc("/checkout", middleware.RequirePermission(constants.InvoiceUpdate)(middleware.ErrorMiddleware(controller.Checkout))).Methods("POST")
 }

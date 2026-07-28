@@ -40,3 +40,38 @@ type EnsureMarketplaceCartResponse struct {
 	StatusInvoice   string `json:"status_invoice"`
 	Source          string `json:"source"`
 }
+
+type MarketplaceCartItemResponse struct {
+	ID               int     `json:"id"`
+	InvoiceID        int     `json:"invoice_id"`
+	ProductID        int     `json:"product_id"`
+	ProductName      string  `json:"product_name"`
+	ProductImagePath *string `json:"product_image_path,omitempty"`
+	Quantity         int     `json:"quantity"`
+	Price            float64 `json:"price"`
+	Subtotal         float64 `json:"subtotal"`
+}
+
+type MarketplaceCartResponse struct {
+	InvoiceID       int                           `json:"invoice_id"`
+	BuyerClientID   int                           `json:"buyer_client_id"`
+	SellerCompanyID int                           `json:"seller_company_id"`
+	SellerCompany   string                        `json:"seller_company"`
+	StatusInvoice   string                        `json:"status_invoice"`
+	Source          string                        `json:"source"`
+	Subtotal        float64                       `json:"subtotal"`
+	Taxes           float64                       `json:"taxes"`
+	TotalAmount     float64                       `json:"total_amount"`
+	Items           []MarketplaceCartItemResponse `json:"items"`
+}
+
+type MarketplaceCheckoutRequest struct {
+	InvoiceID       *int `json:"invoice_id,omitempty" validate:"omitempty,gt=0"`
+	SellerCompanyID *int `json:"seller_company_id,omitempty" validate:"omitempty,gt=0"`
+}
+
+type MarketplaceCheckoutResponse struct {
+	InvoiceID int    `json:"invoice_id"`
+	Status    string `json:"status"`
+	Source    string `json:"source"`
+}

@@ -2,6 +2,7 @@ package invoiceRepository
 
 import (
 	"context"
+	"crm-system-sales/internal/core/money"
 	tenantHelper "crm-system-sales/internal/core/tenant"
 	invoicedto "crm-system-sales/internal/modules/invoice/dto"
 	invoiceModel "crm-system-sales/internal/modules/invoice/models"
@@ -59,6 +60,7 @@ func (r *invoiceRepository) Create(
 	if invoice.Source == "" {
 		invoice.Source = "erp"
 	}
+	invoice.TotalAmount = money.Round(invoice.TotalAmount)
 	if tx != nil {
 		return tx.QueryRowContext(
 			ctx,
@@ -157,10 +159,11 @@ func (r *invoiceRepository) RecalculateInvoiceTotals(
 	}
 
 	//  taxes
-	taxes := subtotal * DefaultTaxRate
+	subtotal = money.Round(subtotal)
+	taxes := money.Round(subtotal * DefaultTaxRate)
 
 	//  total
-	total := subtotal + taxes
+	total := money.Add(subtotal, taxes)
 
 	//  update invoice
 	queryUpdate := `
@@ -290,7 +293,7 @@ func (r *invoiceRepository) SetPaidAmount(
 	_, err := tx.ExecContext(
 		ctx,
 		query,
-		paidAmount,
+		money.Round(paidAmount),
 		invoiceID,
 	)
 

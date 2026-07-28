@@ -7,6 +7,7 @@ import (
 
 	metadto "crm-system-sales/internal/core/dto"
 	errorHandler "crm-system-sales/internal/core/error"
+	"crm-system-sales/internal/core/money"
 	tenantHelper "crm-system-sales/internal/core/tenant"
 	"crm-system-sales/internal/core/transaction"
 	"crm-system-sales/internal/modules/company"
@@ -120,10 +121,6 @@ func (s *storeService) GetPurchases(ctx context.Context, req *storedto.GetStoreP
 
 	items := make([]storedto.StorePurchaseResponse, 0, len(purchases))
 	for _, purchase := range purchases {
-		remaining := purchase.TotalAmount - purchase.PaidAmount
-		if remaining < 0 {
-			remaining = 0
-		}
 		items = append(items, storedto.StorePurchaseResponse{
 			ID:              purchase.ID,
 			SellerCompanyID: purchase.SellerCompanyID,
@@ -134,7 +131,7 @@ func (s *storeService) GetPurchases(ctx context.Context, req *storedto.GetStoreP
 			Taxes:           purchase.Taxes,
 			TotalAmount:     purchase.TotalAmount,
 			PaidAmount:      purchase.PaidAmount,
-			RemainingAmount: remaining,
+			RemainingAmount: money.Remaining(purchase.TotalAmount, purchase.PaidAmount),
 			ItemCount:       purchase.ItemCount,
 			CreatedAt:       purchase.CreatedAt,
 		})
@@ -194,9 +191,9 @@ func (s *storeService) GetCarts(ctx context.Context) (*storedto.GetCartsResponse
 		}
 		res.Carts = append(res.Carts, *cart)
 		res.Summary.SellerCount++
-		res.Summary.Subtotal += cart.Subtotal
-		res.Summary.Taxes += cart.Taxes
-		res.Summary.TotalAmount += cart.TotalAmount
+		res.Summary.Subtotal = money.Add(res.Summary.Subtotal, cart.Subtotal)
+		res.Summary.Taxes = money.Add(res.Summary.Taxes, cart.Taxes)
+		res.Summary.TotalAmount = money.Add(res.Summary.TotalAmount, cart.TotalAmount)
 		for _, item := range cart.Items {
 			res.Summary.ItemCount += item.Quantity
 		}
@@ -332,7 +329,7 @@ func (s *storeService) CheckoutAll(ctx context.Context, req *storedto.CheckoutAl
 				SellerCompany:   draft.SellerName,
 				Status:          invoiceconstants.InvoicePending,
 			})
-			res.TotalAmount += draft.TotalAmount
+			res.TotalAmount = money.Add(res.TotalAmount, draft.TotalAmount)
 		}
 		return nil
 	})

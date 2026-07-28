@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	errorHandler "crm-system-sales/internal/core/error"
+	"crm-system-sales/internal/core/money"
 	tenantHelper "crm-system-sales/internal/core/tenant"
 	tenantctx "crm-system-sales/internal/core/tenant"
 	core "crm-system-sales/internal/core/transaction"
@@ -145,7 +146,7 @@ func (s *invoiceItemService) Create(
 			)
 			existingItem.Price = product.Price
 			existingItem.Quantity = newQty
-			existingItem.Subtotal = product.Price * float64(newQty)
+			existingItem.Subtotal = money.Round(product.Price * float64(newQty))
 
 			// Actualizo el item existente con la nueva cantidad y subtotal junto con la invoice
 			err = s.repo.Update(
@@ -199,7 +200,7 @@ func (s *invoiceItemService) Create(
 			return err
 		}
 
-		subtotal := product.Price * float64(req.Quantity)
+		subtotal := money.Round(product.Price * float64(req.Quantity))
 
 		item := &invoiceItemModel.InvoiceItem{
 			InvoiceID:   invoice.ID,
@@ -358,7 +359,7 @@ func (s *invoiceItemService) Update(
 		item.Quantity = req.Quantity
 
 		//  subtotal
-		item.Subtotal = product.Price * float64(item.Quantity)
+		item.Subtotal = money.Round(product.Price * float64(item.Quantity))
 
 		//  persist
 		err = s.repo.Update(

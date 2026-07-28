@@ -88,7 +88,7 @@ func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 	invoiceService := invoiceService.NewInvoiceService(db, invoiceRepo, clientRepo, companyRepo, invoiceItemRepo, inventoryService, invoicePaymentRepo, paymentWorkflow)
 	invoicePaymentService := invoicepayment.NewInvoicePaymentService(db, invoiceRepo, clientRepo, invoicePaymentRepo)
 	storeService := storeservice.NewStoreService(db, productRepo, invoiceRepo, invoiceItemRepo, companyRepo, submitWorkflow)
-	marketplaceService := marketplace.NewMarketplaceService(marketplaceRepo, invoiceRepo, companyRepo)
+	marketplaceService := marketplace.NewMarketplaceService(marketplaceRepo, invoiceRepo, invoiceItemRepo, companyRepo, submitWorkflow)
 	categoriesService := categories.NewCategoriesService(categoryProductRepo, categoryCompanyRepo, productTypeRepo)
 	dashboardService := dashboardoverview.NewDashboardOverviewService(dashboardRepo)
 
