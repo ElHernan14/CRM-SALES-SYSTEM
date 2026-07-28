@@ -2,7 +2,6 @@
 import { computed, ref, watch } from 'vue';
 
 import {
-  ArrowDownUp,
   Building2,
   CalendarDays,
   CheckCircle2,

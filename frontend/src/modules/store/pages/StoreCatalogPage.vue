@@ -5,15 +5,11 @@ import {
   ChevronDown,
   Grid2X2,
   Loader2,
-  PackageSearch,
   RotateCcw,
   Search,
   SlidersHorizontal,
-  ArrowRight,
   BadgeCheck,
   Building2,
-  ImageIcon,
-  Store,
   X,
 } from 'lucide-vue-next';
 

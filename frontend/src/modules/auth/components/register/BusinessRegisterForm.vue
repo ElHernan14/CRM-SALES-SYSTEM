@@ -36,8 +36,6 @@ import { useRouter } from 'vue-router';
 
 import { useUploadCompanyLogo } from '@/modules/company/composables/useUploadCompanyLogo';
 
-import { getCompanyLogoUrl } from '@/shared/utils/assets';
-
 const router = useRouter();
 
 const { businessRegisterMutation, establishSession } = useRegister();

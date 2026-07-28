@@ -6,9 +6,9 @@ export function useCheckoutPurchaseCart() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ invoiceId, sellerCompanyId }: { invoiceId: number; sellerCompanyId: number }) =>
+    mutationFn: (variables: { invoiceId: number; sellerCompanyId: number }) =>
       checkoutPurchaseCart({
-        invoice_id: invoiceId,
+        invoice_id: variables.invoiceId,
       }),
 
     onSuccess: (_, variables) => {

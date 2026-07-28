@@ -83,7 +83,7 @@ watch([search, kind, categoryId, typeId, minPrice, maxPrice, sortColumn, order],
   page.value = 1;
 });
 
-const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
+const { data: categoriesData } = useCategories();
 const { data: productTypesData, isLoading: productTypesLoading } =
   useProductTypes(selectedCategoryId);
 

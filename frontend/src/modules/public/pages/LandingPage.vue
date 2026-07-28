@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 
-import { ArrowRight, Building2, ShoppingBag, Sparkles } from 'lucide-vue-next';
+import { Building2, ShoppingBag, Sparkles } from 'lucide-vue-next';
 
 import { Button } from '@/components/ui/button';
 

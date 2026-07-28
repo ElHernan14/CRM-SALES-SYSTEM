@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, toRef, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 
 import {
   Building2,
