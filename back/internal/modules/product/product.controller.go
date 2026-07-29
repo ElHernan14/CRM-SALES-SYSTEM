@@ -45,7 +45,16 @@ func (c *ProductController) CreateProduct(w http.ResponseWriter, r *http.Request
 
 func (c *ProductController) GetProducts(w http.ResponseWriter, r *http.Request) error {
 	q := r.URL.Query()
-	req := productdto.GetProductsRequest{Search: q.Get("search"), Kind: q.Get("kind"), Type: q.Get("type"), Category: q.Get("category"), Page: 1, Limit: 10}
+	req := productdto.GetProductsRequest{
+		Search:     q.Get("search"),
+		Kind:       q.Get("kind"),
+		Type:       q.Get("type"),
+		Category:   q.Get("category"),
+		SortColumn: q.Get("sort_column"),
+		Order:      q.Get("order"),
+		Page:       1,
+		Limit:      10,
+	}
 	if req.Kind == "" && (req.Type == "product" || req.Type == "service") {
 		req.Kind = req.Type
 		req.Type = ""

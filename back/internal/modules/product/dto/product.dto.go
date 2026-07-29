@@ -47,6 +47,8 @@ type GetProductsRequest struct {
 	CompanyID  *int    `validate:"omitempty,gt=0" example:"1"`
 	Page       int     `validate:"gte=1" example:"1"`
 	Limit      int     `validate:"gte=1,lte=100" example:"10"`
+	SortColumn string  `validate:"omitempty,max=50,oneof=id name description kind type category price stock reserved_stock available_stock status created_at" example:"name"`
+	Order      string  `validate:"omitempty,oneof=asc desc" example:"asc"`
 }
 
 type ProductListItem struct {
@@ -60,6 +62,7 @@ type ProductListItem struct {
 	Type           string  `json:"type" example:"Notebook"`
 	Price          float64 `json:"price" example:"1200.50"`
 	Stock          int     `json:"stock" example:"50"`
+	ReservedStock  int     `json:"reserved_stock" example:"5"`
 	Status         int     `json:"status" example:"1"`
 	CompanyID      int     `json:"company_id" example:"1"`
 	AvailableStock int     `json:"available_stock" example:"25"`

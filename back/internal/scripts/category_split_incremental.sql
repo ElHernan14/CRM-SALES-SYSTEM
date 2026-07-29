@@ -109,3 +109,11 @@ DROP INDEX IF EXISTS idx_company_category;
 
 CREATE INDEX IF NOT EXISTS idx_product_category_id ON product(category_id);
 CREATE INDEX IF NOT EXISTS idx_company_category_id ON company(category_id);
+
+INSERT INTO category_company (
+    name,
+    description
+) VALUES (
+    'Tecnología e Ingeniería',
+    'Empresas dedicadas al desarrollo tecnológico, ingeniería, innovación y soluciones industriales.'
+);

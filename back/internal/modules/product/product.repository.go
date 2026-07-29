@@ -13,7 +13,7 @@ import (
 
 type ProductRepository interface {
 	Create(ctx context.Context, p *models.Product) error
-	GetAll(ctx context.Context, search string, kind string, categoryID *int, category string, typeID *int, productType string, status *int, minPrice float64, maxPrice float64, companyID *int, limit int, offset int) ([]models.Product, int, error)
+	GetAll(ctx context.Context, search string, kind string, categoryID *int, category string, typeID *int, productType string, status *int, minPrice float64, maxPrice float64, companyID *int, limit int, offset int, sortColumn string, order string) ([]models.Product, int, error)
 	GetByID(ctx context.Context, id int) (*models.Product, error)
 	Update(ctx context.Context, p *models.Product) error
 	UpdateImage(ctx context.Context, productID int, imagePath string) error
@@ -42,7 +42,7 @@ func (r *productRepository) Create(ctx context.Context, p *models.Product) error
 	return r.db.QueryRowContext(ctx, query, p.CompanyID, p.Name, p.Description, p.Kind, p.CategoryID, p.TypeID, p.Price, p.Stock, p.ImagePath).Scan(&p.ID)
 }
 
-func (r *productRepository) GetAll(ctx context.Context, search string, kind string, categoryID *int, category string, typeID *int, productType string, status *int, minPrice float64, maxPrice float64, companyID *int, limit int, offset int) ([]models.Product, int, error) {
+func (r *productRepository) GetAll(ctx context.Context, search string, kind string, categoryID *int, category string, typeID *int, productType string, status *int, minPrice float64, maxPrice float64, companyID *int, limit int, offset int, sortColumn string, order string) ([]models.Product, int, error) {
 	baseQuery := `
 		FROM product p
 		INNER JOIN category_product cat ON cat.id = p.category_id
@@ -111,12 +111,37 @@ func (r *productRepository) GetAll(ctx context.Context, search string, kind stri
 		return nil, 0, err
 	}
 
+	allowedSortColumns := map[string]string{
+		"id":              "p.id",
+		"name":            "p.name",
+		"description":     "p.description",
+		"kind":            "p.kind",
+		"type":            "pt.name",
+		"category":        "cat.name",
+		"price":           "p.price",
+		"stock":           "p.stock",
+		"reserved_stock":  "p.reserved_stock",
+		"available_stock": "(p.stock - p.reserved_stock)",
+		"status":          "p.status",
+		"created_at":      "p.created_at",
+	}
+	allowedOrders := map[string]string{"asc": "ASC", "desc": "DESC"}
+
+	sortSQL := "p.id"
+	orderSQL := "DESC"
+	if v, ok := allowedSortColumns[sortColumn]; ok {
+		sortSQL = v
+	}
+	if v, ok := allowedOrders[strings.ToLower(order)]; ok {
+		orderSQL = v
+	}
+
 	dataQuery := `
 		SELECT p.id, p.name, p.description, p.kind, p.type_id, pt.name, p.category_id, cat.name, p.price, p.stock, p.status, p.company_id, p.reserved_stock, p.image_path
 	` + baseQuery + fmt.Sprintf(`
-		ORDER BY p.id DESC
+		ORDER BY %s %s, p.id DESC
 		LIMIT $%d OFFSET $%d
-	`, i, i+1)
+	`, sortSQL, orderSQL, i, i+1)
 
 	args = append(args, limit, offset)
 	rows, err := r.db.QueryContext(ctx, dataQuery, args...)

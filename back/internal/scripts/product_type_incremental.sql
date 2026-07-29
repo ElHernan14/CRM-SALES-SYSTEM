@@ -56,3 +56,102 @@ END $$;
 
 CREATE INDEX IF NOT EXISTS idx_product_type_id ON product(type_id);
 CREATE INDEX IF NOT EXISTS idx_product_kind ON product(kind);
+
+
+-- =====================================================
+-- CATEGORY COMPANY
+-- Tecnología e Ingeniería
+-- =====================================================
+
+INSERT INTO category_product (
+    name,
+    description
+) VALUES (
+    'Tecnología e Ingeniería',
+    'Empresas dedicadas al desarrollo tecnológico, ingeniería, innovación y soluciones industriales.'
+);
+
+-- =====================================================
+-- PRODUCT TYPES
+-- Categoría: Tecnología e Ingeniería
+-- =====================================================
+
+INSERT INTO product_type (category_id, name, description)
+SELECT
+    cp.id,
+    'Drones Industriales',
+    'Vehículos aéreos no tripulados para inspección, vigilancia y monitoreo.'
+FROM category_product cp
+WHERE cp.name = 'Tecnología e Ingeniería';
+
+INSERT INTO product_type (category_id, name, description)
+SELECT
+    cp.id,
+    'Robótica Industrial',
+    'Robots y sistemas automatizados para procesos industriales y manufactura.'
+FROM category_product cp
+WHERE cp.name = 'Tecnología e Ingeniería';
+
+INSERT INTO product_type (category_id, name, description)
+SELECT
+    cp.id,
+    'Infraestructura Inteligente',
+    'Soluciones para edificios, ciudades e instalaciones inteligentes.'
+FROM category_product cp
+WHERE cp.name = 'Tecnología e Ingeniería';
+
+INSERT INTO product_type (category_id, name, description)
+SELECT
+    cp.id,
+    'Sistemas de Seguridad',
+    'Equipamiento y plataformas para vigilancia y protección avanzada.'
+FROM category_product cp
+WHERE cp.name = 'Tecnología e Ingeniería';
+
+INSERT INTO product_type (category_id, name, description)
+SELECT
+    cp.id,
+    'Comunicaciones Satelitales',
+    'Equipos y plataformas para conectividad y comunicaciones satelitales.'
+FROM category_product cp
+WHERE cp.name = 'Tecnología e Ingeniería';
+
+INSERT INTO product_type (category_id, name, description)
+SELECT
+    cp.id,
+    'Energía Inteligente',
+    'Tecnologías para generación, almacenamiento y gestión energética.'
+FROM category_product cp
+WHERE cp.name = 'Tecnología e Ingeniería';
+
+INSERT INTO product_type (category_id, name, description)
+SELECT
+    cp.id,
+    'Automatización Industrial',
+    'Soluciones para automatizar procesos industriales y operativos.'
+FROM category_product cp
+WHERE cp.name = 'Tecnología e Ingeniería';
+
+INSERT INTO product_type (category_id, name, description)
+SELECT
+    cp.id,
+    'Hardware Empresarial',
+    'Equipamiento tecnológico de alto rendimiento para organizaciones.'
+FROM category_product cp
+WHERE cp.name = 'Tecnología e Ingeniería';
+
+INSERT INTO product_type (category_id, name, description)
+SELECT
+    cp.id,
+    'Inteligencia Artificial',
+    'Plataformas y soluciones basadas en inteligencia artificial.'
+FROM category_product cp
+WHERE cp.name = 'Tecnología e Ingeniería';
+
+INSERT INTO product_type (category_id, name, description)
+SELECT
+    cp.id,
+    'Investigación y Desarrollo',
+    'Productos y tecnologías desarrolladas para innovación e investigación aplicada.'
+FROM category_product cp
+WHERE cp.name = 'Tecnología e Ingeniería';

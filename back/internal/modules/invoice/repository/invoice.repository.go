@@ -22,7 +22,7 @@ type InvoiceRepository interface {
 	ListBySellerCompanyID(ctx context.Context, companyID int, req *invoicedto.GetCompanyInvoicesRequest) ([]*invoiceModel.Invoice, int, error)
 	ListByBuyerCompanyID(ctx context.Context, companyID int, req *invoicedto.GetCompanyInvoicesRequest) ([]*invoiceModel.Invoice, int, error)
 	ListActiveDraftsByBuyer(ctx context.Context, buyerClientID int, invoiceIDs []int) ([]*invoiceModel.Invoice, error)
-	ListStorePurchasesByBuyer(ctx context.Context, buyerClientID int, req *storedto.GetStorePurchasesRequest) ([]*invoiceModel.Invoice, int, error)
+	ListStorePurchasesByBuyer(ctx context.Context, buyerClientID int, includeERPIndividualPurchases bool, req *storedto.GetStorePurchasesRequest) ([]*invoiceModel.Invoice, int, error)
 	GetActiveDraftByTenant(
 		ctx context.Context,
 		tenant *tenantHelper.TenantContext,
@@ -671,7 +671,7 @@ func (r *invoiceRepository) ListActiveDraftsByBuyer(ctx context.Context, buyerCl
 	return invoices, rows.Err()
 }
 
-func (r *invoiceRepository) ListStorePurchasesByBuyer(ctx context.Context, buyerClientID int, req *storedto.GetStorePurchasesRequest) ([]*invoiceModel.Invoice, int, error) {
+func (r *invoiceRepository) ListStorePurchasesByBuyer(ctx context.Context, buyerClientID int, includeERPIndividualPurchases bool, req *storedto.GetStorePurchasesRequest) ([]*invoiceModel.Invoice, int, error) {
 	allowedSortColumns := map[string]string{
 		"created_at":     "i.created_at",
 		"total_amount":   "i.total_amount",
@@ -697,14 +697,30 @@ func (r *invoiceRepository) ListStorePurchasesByBuyer(ctx context.Context, buyer
 	baseQuery := `
 		FROM invoice i
 		INNER JOIN company co ON co.id = i.seller_company_id
+		INNER JOIN client cb ON cb.id = i.buyer_client_id
 		LEFT JOIN invoice_item ii ON ii.invoice_id = i.id AND ii.status = 1
 		WHERE i.buyer_client_id = $1
 		  AND i.status = 1
-		  AND i.source = 'store'
 		  AND i.status_invoice <> 'draft'
 	`
 	args := []interface{}{buyerClientID}
 	argPos := 2
+
+	if includeERPIndividualPurchases {
+		baseQuery += `
+		  AND (
+			COALESCE(i.source, 'erp') = 'store'
+			OR (
+				COALESCE(i.source, 'erp') = 'erp'
+				AND cb.company_id IS NULL
+			)
+		  )
+		`
+	} else {
+		baseQuery += `
+		  AND COALESCE(i.source, 'erp') = 'store'
+		`
+	}
 
 	if req.StatusInvoice != "" {
 		baseQuery += fmt.Sprintf(" AND i.status_invoice = $%d", argPos)

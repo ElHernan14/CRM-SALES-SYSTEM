@@ -114,7 +114,13 @@ func (s *storeService) GetPurchases(ctx context.Context, req *storedto.GetStoreP
 		return nil, errorHandler.NewAppError(http.StatusForbidden, "Solo clientes compradores")
 	}
 
-	purchases, total, err := s.InvoiceRepo.ListStorePurchasesByBuyer(ctx, *tenant.ClientID, req)
+	includeERPIndividualPurchases := tenant.CompanyID == nil
+	purchases, total, err := s.InvoiceRepo.ListStorePurchasesByBuyer(
+		ctx,
+		*tenant.ClientID,
+		includeERPIndividualPurchases,
+		req,
+	)
 	if err != nil {
 		return nil, err
 	}

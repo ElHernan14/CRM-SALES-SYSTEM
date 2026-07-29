@@ -93,7 +93,7 @@ func (s *productService) GetProducts(ctx context.Context, req *productdto.GetPro
 		return nil, err
 	}
 
-	products, total, err := s.repo.GetAll(ctx, req.Search, req.Kind, req.CategoryID, req.Category, req.TypeID, req.Type, req.Status, req.MinPrice, req.MaxPrice, companyID, req.Limit, offset)
+	products, total, err := s.repo.GetAll(ctx, req.Search, req.Kind, req.CategoryID, req.Category, req.TypeID, req.Type, req.Status, req.MinPrice, req.MaxPrice, companyID, req.Limit, offset, req.SortColumn, req.Order)
 	if err != nil {
 		return nil, err
 	}
@@ -112,6 +112,7 @@ func (s *productService) GetProducts(ctx context.Context, req *productdto.GetPro
 			Type:           p.Type,
 			Price:          p.Price,
 			Stock:          p.Stock,
+			ReservedStock:  p.ReservedStock,
 			Status:         p.Status,
 			CompanyID:      p.CompanyID,
 			AvailableStock: available,
