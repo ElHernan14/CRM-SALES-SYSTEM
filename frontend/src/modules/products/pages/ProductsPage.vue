@@ -385,9 +385,11 @@ async function executeBulkDelete() {
           :disabled="isBulkDeleting"
           @click="requestBulkDelete"
         >
-          <Loader2 v-if="isBulkDeleting" class="mr-2 h-4 w-4 animate-spin" />
+          <span class="mr-2 flex h-4 w-4 items-center justify-center">
+            <Loader2 v-if="isBulkDeleting" class="h-4 w-4 animate-spin" />
 
-          <Trash2 v-else class="mr-2 h-4 w-4" />
+            <Trash2 v-else class="h-4 w-4" />
+          </span>
 
           {{ isBulkDeleting ? 'Deactivating...' : 'Deactivate selected' }}
         </Button>

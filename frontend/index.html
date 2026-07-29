@@ -2,12 +2,67 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.png" />
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta
+      name="description"
+      content="Modern multi-tenant ERP, marketplace and commerce platform for connected business operations."
+    />
+
+    <meta name="application-name" content="Nexora" />
+
+    <meta name="theme-color" content="#f3f2f8" media="(prefers-color-scheme: light)" />
+
+    <meta name="theme-color" content="#101526" media="(prefers-color-scheme: dark)" />
+
+    <meta name="color-scheme" content="light dark" />
+
+    <meta property="og:type" content="website" />
+
+    <meta property="og:site_name" content="Nexora" />
+
+    <meta property="og:title" content="Nexora | Connected Commerce Platform" />
+
+    <meta
+      property="og:description"
+      content="Connected commerce, marketplace and business operations through one multi-tenant platform."
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <meta name="twitter:title" content="Nexora | Connected Commerce Platform" />
+
+    <meta property="og:image" content="/images/social/nexora-preview.png" />
+    <meta name="twitter:image" content="/images/social/nexora-preview.png" />
+
+    <meta
+      name="twitter:description"
+      content="Connected commerce, marketplace and business operations through one multi-tenant platform."
+    />
+
     <title>Nexora | Connected Commerce Platform</title>
+
+    <script>
+      (() => {
+        const preference = localStorage.getItem('nexora-theme') || 'system';
+
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        const dark = preference === 'dark' || (preference === 'system' && systemDark);
+
+        document.documentElement.classList.toggle('dark', dark);
+
+        document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+      })();
+    </script>
   </head>
+
   <body>
     <div id="app"></div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

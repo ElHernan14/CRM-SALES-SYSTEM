@@ -83,7 +83,7 @@ const loopSteps = [
         <article
           v-for="(step, index) in loopSteps"
           :key="step.title"
-          class="group relative flex min-h-[310px] flex-col overflow-hidden rounded-[1.75rem] border border-border bg-card p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-xl"
+          class="nexora-interactive nexora-shine group relative flex min-h-[310px] flex-col overflow-hidden rounded-[1.75rem] border border-border bg-card p-6 shadow-sm hover:border-primary/25 hover:shadow-xl"
         >
           <div
             class="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-primary/5 blur-3xl transition group-hover:bg-primary/10"

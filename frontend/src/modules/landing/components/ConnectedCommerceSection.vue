@@ -28,7 +28,7 @@ const router = useRouter();
     />
 
     <div
-      class="pointer-events-none absolute -left-52 bottom-0 h-[460px] w-[460px] rounded-full bg-blue-500/8 blur-3xl"
+      class="pointer-events-none absolute -left-52 bottom-0 h-[460px] w-[460px] rounded-full bg-violet-500/10 blur-3xl"
     />
 
     <div class="relative mx-auto w-full max-w-[1500px] px-6 py-24 lg:px-8 lg:py-28">
@@ -67,8 +67,135 @@ const router = useRouter();
         </div>
       </div>
 
+      <!-- CONNECTED OPERATIONS VISUAL -->
+      <div
+        class="nexora-surface nexora-glow relative mt-12 overflow-hidden rounded-[2rem] border border-border bg-card shadow-xl sm:mt-14"
+      >
+        <div class="grid min-h-[340px] lg:grid-cols-[1.15fr_0.85fr]">
+          <!-- IMAGE -->
+          <div class="relative min-h-[280px] overflow-hidden sm:min-h-[340px]">
+            <img
+              src="/images/landing/connected-commerce.jpg"
+              alt="Modern logistics and distribution operations connected through Nexora"
+              class="absolute inset-0 h-full w-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+
+            <div
+              class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/5 to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-transparent lg:to-card"
+            />
+
+            <div
+              class="absolute inset-0 bg-gradient-to-br from-violet-950/20 via-transparent to-primary/15"
+            />
+
+            <div
+              class="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-violet-500/20 blur-3xl"
+            />
+
+            <div class="absolute inset-0 ring-1 ring-inset ring-white/10" />
+
+            <div
+              class="absolute bottom-5 left-5 right-5 rounded-2xl border border-white/10 bg-slate-950/55 p-4 text-white shadow-xl backdrop-blur-md sm:bottom-6 sm:left-6 sm:right-auto sm:max-w-sm"
+            >
+              <div class="flex items-start gap-3">
+                <div
+                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/10"
+                >
+                  <PackageCheck class="h-5 w-5 text-blue-300" />
+                </div>
+
+                <div>
+                  <p class="text-xs font-medium text-slate-300">Operational inventory</p>
+
+                  <p class="mt-1 text-sm font-semibold">
+                    Business activity becomes customer-facing commerce.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- EXPLANATION -->
+          <div class="relative flex flex-col justify-center p-6 sm:p-8 lg:p-10">
+            <div
+              class="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl"
+            />
+
+            <div class="relative">
+              <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+                From operations to commerce
+              </p>
+
+              <h3 class="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground">
+                Published once.
+                <span class="text-muted-foreground"> Available everywhere. </span>
+              </h3>
+
+              <p class="mt-4 text-sm leading-7 text-muted-foreground">
+                Products created inside a business workspace carry their seller identity, pricing
+                and available inventory directly into the Nexora Store.
+              </p>
+
+              <div class="mt-7 space-y-4">
+                <div class="flex items-start gap-3">
+                  <div
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10"
+                  >
+                    <Building2 class="h-4 w-4 text-primary" />
+                  </div>
+
+                  <div>
+                    <p class="text-sm font-semibold">Business-owned catalogs</p>
+
+                    <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                      Every resource remains connected to the company responsible for it.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flex items-start gap-3">
+                  <div
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10"
+                  >
+                    <PackageCheck class="h-4 w-4 text-primary" />
+                  </div>
+
+                  <div>
+                    <p class="text-sm font-semibold">Operational availability</p>
+
+                    <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                      Store inventory reflects the same product state managed by the ERP.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flex items-start gap-3">
+                  <div
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10"
+                  >
+                    <ShoppingBag class="h-4 w-4 text-primary" />
+                  </div>
+
+                  <div>
+                    <p class="text-sm font-semibold">Structured purchases</p>
+
+                    <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                      Customer carts become seller-specific transactional orders.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- COMMERCE SURFACE -->
-      <div class="mt-16 overflow-hidden rounded-[2.25rem] border border-border bg-card shadow-2xl">
+      <div
+        class="mt-10 overflow-hidden rounded-[2.25rem] border border-border bg-card shadow-2xl sm:mt-12"
+      >
         <!-- STORE HEADER -->
         <div
           class="flex flex-col gap-4 border-b border-border bg-background/80 px-5 py-4 sm:flex-row sm:items-center"

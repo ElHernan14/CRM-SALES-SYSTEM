@@ -55,6 +55,7 @@ export const storeRoutes: RouteRecordRaw[] = [
         component: StoreCheckoutPage,
         meta: {
           requiresAuth: true,
+          title: 'Checkout',
         },
       },
       {
@@ -63,6 +64,7 @@ export const storeRoutes: RouteRecordRaw[] = [
         component: StorePurchasesPage,
         meta: {
           requiresAuth: true,
+          title: 'My purchases',
         },
       },
       {

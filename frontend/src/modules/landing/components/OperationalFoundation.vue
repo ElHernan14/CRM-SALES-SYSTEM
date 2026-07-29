@@ -84,7 +84,7 @@ const foundations = [
         <article
           v-for="foundation in foundations"
           :key="foundation.title"
-          class="group relative overflow-hidden rounded-[1.75rem] border border-border bg-card p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-xl"
+          class="nexora-interactive nexora-shine group relative overflow-hidden rounded-[1.75rem] border border-border bg-card p-6 shadow-sm hover:border-primary/25 hover:shadow-xl"
         >
           <div
             class="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-primary/5 blur-3xl transition group-hover:bg-primary/10"

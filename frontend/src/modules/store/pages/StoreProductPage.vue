@@ -517,9 +517,11 @@ function openCategory() {
               :disabled="!canAddToCart"
               @click="handleAddToCart"
             >
-              <Loader2 v-if="adding" class="mr-2 h-4 w-4 animate-spin" />
+              <span class="mr-2 flex h-4 w-4 items-center justify-center">
+                <Loader2 v-if="adding" class="h-4 w-4 animate-spin" />
 
-              <ShoppingBag v-else class="mr-2 h-4 w-4" />
+                <ShoppingBag v-else class="h-4 w-4" />
+              </span>
 
               {{ addButtonLabel }}
             </Button>

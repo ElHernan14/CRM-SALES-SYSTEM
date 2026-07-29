@@ -269,9 +269,11 @@ async function onSubmit() {
           </Button>
 
           <Button type="submit" class="w-full sm:w-auto" :disabled="isSubmitting">
-            <Loader2 v-if="isSubmitting" class="mr-2 h-4 w-4 animate-spin" />
+            <span class="mr-2 flex h-4 w-4 items-center justify-center">
+              <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
 
-            <FilePlus2 v-else class="mr-2 h-4 w-4" />
+              <FilePlus2 v-else class="h-4 w-4" />
+            </span>
 
             {{ isSubmitting ? 'Creating...' : 'Create invoice' }}
           </Button>

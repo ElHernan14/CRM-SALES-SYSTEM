@@ -105,9 +105,11 @@ function openWorkspace() {
         <template v-if="!isAuthenticated">
           <Button variant="ghost" @click="router.push('/login')"> Sign in </Button>
 
-          <Button class="rounded-full px-5" @click="router.push('/register')">
+          <Button class="group rounded-full px-5" @click="router.push('/register')">
             Create account
-            <ArrowRight class="ml-2 h-4 w-4" />
+            <ArrowRight
+              class="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+            />
           </Button>
         </template>
 

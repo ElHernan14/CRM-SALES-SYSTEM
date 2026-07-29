@@ -209,7 +209,7 @@ const companyCategoryTriggerLabel = computed(() => {
         <article
           v-for="supplier in suppliers"
           :key="supplier.id"
-          class="nexora-card-interactive nexora-surface group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          class="nexora-interactive nexora-shine nexora-surface group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm hover:shadow-md"
         >
           <div class="relative h-40 overflow-hidden border-b border-border bg-muted/40">
             <img
@@ -272,11 +272,11 @@ const companyCategoryTriggerLabel = computed(() => {
 
               <Button
                 size="sm"
-                class="w-full rounded-full px-4 min-[390px]:w-auto"
+                class="group w-full rounded-full px-4 min-[390px]:w-auto"
                 @click="$router.push(`/erp/marketplace/suppliers/${supplier.id}`)"
               >
                 Browse catalog
-                <ArrowRight class="ml-2 h-4 w-4" />
+                <ArrowRight class="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
               </Button>
             </div>
           </div>

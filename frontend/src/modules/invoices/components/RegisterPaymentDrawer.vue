@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue';
 import { toast } from 'vue-sonner';
+import { CreditCard, Loader2 } from 'lucide-vue-next';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -168,6 +169,12 @@ async function onSubmit() {
             </Button>
 
             <Button type="submit" :disabled="isSubmitting">
+              <span class="mr-2 flex h-4 w-4 items-center justify-center">
+                <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
+
+                <CreditCard v-else class="h-4 w-4" />
+              </span>
+
               {{ isSubmitting ? 'Registering...' : 'Register payment' }}
             </Button>
           </div>

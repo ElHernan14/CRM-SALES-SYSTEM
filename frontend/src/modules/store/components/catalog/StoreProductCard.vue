@@ -72,7 +72,7 @@ function getAvailabilityDotClass(stock: number) {
 
 <template>
   <article
-    class="nexora-card-interactive nexora-surface group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-xl"
+    class="nexora-interactive nexora-surface group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm hover:border-primary/25 hover:shadow-xl"
   >
     <!-- PRODUCT IMAGE -->
     <button
@@ -198,9 +198,11 @@ function getAvailabilityDotClass(stock: number) {
           :disabled="product.available_stock <= 0 || actionsDisabled"
           @click="emit('add', product)"
         >
-          <Loader2 v-if="adding" class="mr-2 h-4 w-4 animate-spin" />
+          <span class="mr-2 flex h-4 w-4 items-center justify-center">
+            <Loader2 v-if="adding" class="h-4 w-4 animate-spin" />
 
-          <ShoppingBag v-else class="mr-2 h-4 w-4" />
+            <ShoppingBag v-else class="h-4 w-4" />
+          </span>
 
           {{ adding ? 'Adding...' : 'Add' }}
         </Button>

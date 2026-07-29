@@ -409,6 +409,22 @@ function validateNumberInput(event: KeyboardEvent) {
     <section
       class="relative overflow-hidden border-b border-border bg-gradient-to-br from-background via-background to-primary/5"
     >
+      <!-- EDITORIAL CATALOG BACKDROP -->
+      <img
+        src="/images/store/store-discovery.jpg"
+        alt=""
+        aria-hidden="true"
+        class="pointer-events-none absolute inset-y-0 right-0 hidden h-full w-[48%] object-cover opacity-[0.08] saturate-[0.75] dark:opacity-[0.17] lg:block"
+      />
+
+      <div
+        class="pointer-events-none absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/55"
+      />
+
+      <div
+        class="pointer-events-none absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-violet-500/5"
+      />
+
       <div
         class="pointer-events-none absolute -right-32 -top-48 h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl"
       />

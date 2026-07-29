@@ -581,8 +581,17 @@ function validateNumberInput(event: KeyboardEvent) {
         </SheetHeader>
       </div>
 
+      <Transition
+        mode="out-in"
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-100 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
       <!-- LOADING -->
-      <div v-if="isLoading" class="flex min-h-96 items-center justify-center p-8">
+      <div v-if="isLoading" key="loading" class="flex min-h-96 items-center justify-center p-8">
         <div class="text-center">
           <Loader2 class="mx-auto h-7 w-7 animate-spin text-muted-foreground" />
 
@@ -591,7 +600,7 @@ function validateNumberInput(event: KeyboardEvent) {
       </div>
 
       <!-- ERROR -->
-      <div v-else-if="isError" class="p-6">
+      <div v-else-if="isError" key="error" class="p-6">
         <EmptyState
           title="Unable to load purchase"
           description="There was a problem retrieving the invoice details."
@@ -604,7 +613,11 @@ function validateNumberInput(event: KeyboardEvent) {
       </div>
 
       <!-- CONTENT -->
-      <div v-else-if="invoice && purchase" class="space-y-5 p-4 sm:space-y-6 sm:p-6">
+      <div
+        v-else-if="invoice && purchase"
+        key="content"
+        class="space-y-5 p-4 sm:space-y-6 sm:p-6"
+      >
         <!-- SUPPLIER -->
         <section
           class="relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm"
@@ -728,7 +741,7 @@ function validateNumberInput(event: KeyboardEvent) {
 
           <div class="mt-4 h-2 overflow-hidden rounded-full bg-muted">
             <div
-              class="h-full rounded-full bg-primary transition-all duration-500"
+              class="h-full rounded-full bg-primary transition-[width] duration-500 ease-out"
               :style="{
                 width: `${paymentProgress}%`,
               }"
@@ -1234,9 +1247,11 @@ function validateNumberInput(event: KeyboardEvent) {
               :disabled="!canCheckout || isCheckingOut || itemsLoading || itemsRefreshing"
               @click="submitCheckout"
             >
-              <Loader2 v-if="isCheckingOut" class="mr-2 h-4 w-4 animate-spin" />
+              <span class="mr-2 flex h-4 w-4 items-center justify-center">
+                <Loader2 v-if="isCheckingOut" class="h-4 w-4 animate-spin" />
 
-              <Send v-else class="mr-2 h-4 w-4" />
+                <Send v-else class="h-4 w-4" />
+              </span>
 
               {{
                 isCheckingOut
@@ -1502,9 +1517,11 @@ function validateNumberInput(event: KeyboardEvent) {
                 :disabled="!paymentAmountValid || isPaying"
                 @click="submitPayment"
               >
-                <Loader2 v-if="isPaying" class="mr-2 h-4 w-4 animate-spin" />
+                <span class="mr-2 flex h-4 w-4 items-center justify-center">
+                  <Loader2 v-if="isPaying" class="h-4 w-4 animate-spin" />
 
-                <ShieldCheck v-else class="mr-2 h-4 w-4" />
+                  <ShieldCheck v-else class="h-4 w-4" />
+                </span>
 
                 {{
                   isPaying
@@ -1559,6 +1576,7 @@ function validateNumberInput(event: KeyboardEvent) {
           </Button>
         </section>
       </div>
+      </Transition>
     </SheetContent>
   </Sheet>
 </template>

@@ -114,14 +114,14 @@ function openCart() {
       <nav class="hidden items-center gap-1 lg:flex">
         <RouterLink
           to="/store/catalog"
-          class="rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted/50 hover:text-foreground"
+          class="rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:bg-muted/50 hover:text-foreground"
         >
           Explore
         </RouterLink>
 
         <RouterLink
           to="/store/businesses"
-          class="rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted/50 hover:text-foreground"
+          class="rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:bg-muted/50 hover:text-foreground"
         >
           Businesses
         </RouterLink>

@@ -141,7 +141,7 @@ function closeMobileNavigation() {
         v-for="item in navItems"
         :key="item.to"
         :to="item.to"
-        class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
+        class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
         :class="{
           'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground':
             isItemActive(item.to),
@@ -149,7 +149,7 @@ function closeMobileNavigation() {
       >
         <component
           :is="item.icon"
-          class="h-4 w-4 shrink-0 transition"
+          class="h-4 w-4 shrink-0 transition-colors duration-200"
           :class="isItemActive(item.to) ? 'text-primary-foreground' : 'group-hover:text-foreground'"
         />
 
@@ -198,7 +198,7 @@ function closeMobileNavigation() {
           v-for="item in navItems"
           :key="item.to"
           :to="item.to"
-          class="group flex min-w-0 items-start gap-3 rounded-xl px-3 py-3 transition"
+          class="group flex min-w-0 items-start gap-3 rounded-xl px-3 py-3 transition-colors duration-200"
           :class="
             isItemActive(item.to)
               ? 'bg-primary text-primary-foreground shadow-sm'

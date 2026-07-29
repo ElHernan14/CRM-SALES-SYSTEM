@@ -622,7 +622,7 @@ function getPaymentProgress(purchase: StorePurchase) {
 
               <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
                 <div
-                  class="h-full rounded-full transition-all duration-500"
+                  class="h-full rounded-full transition-[width] duration-500 ease-out"
                   :class="purchase.remaining_amount <= 0 ? 'bg-emerald-500' : 'bg-primary'"
                   :style="{
                     width: `${getPaymentProgress(purchase)}%`,

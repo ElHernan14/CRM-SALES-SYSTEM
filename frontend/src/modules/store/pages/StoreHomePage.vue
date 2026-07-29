@@ -386,37 +386,110 @@ function openProduct(productId: number) {
     <!-- BUSINESS DISCOVERY -->
     <section class="mx-auto w-full max-w-[1500px] px-4 pb-16 sm:px-6 sm:pb-20 lg:px-8">
       <div
-        class="relative overflow-hidden rounded-[1.75rem] border border-border bg-card p-6 shadow-sm sm:rounded-[2rem] sm:p-9"
+        class="nexora-surface nexora-glow relative grid overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-xl lg:grid-cols-[0.92fr_1.08fr]"
       >
-        <div
-          class="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl"
-        />
+        <!-- COPY -->
+        <div class="relative z-10 flex flex-col justify-center p-6 sm:p-9 lg:p-12">
+          <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+            Business discovery
+          </p>
 
-        <div class="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div class="max-w-2xl">
-            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-              Business discovery
-            </p>
+          <h2 class="mt-3 max-w-xl text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">
+            Meet the businesses behind the catalog.
+          </h2>
 
-            <h2 class="mt-3 text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">
-              Meet the businesses behind the catalog.
-            </h2>
+          <p class="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">
+            Explore companies by industry, understand their identity and browse products directly
+            from each connected seller.
+          </p>
 
-            <p class="mt-3 text-sm leading-6 text-muted-foreground">
-              Explore companies by industry, understand their identity and browse products directly
-              from each seller.
-            </p>
+          <div class="mt-7">
+            <Button size="lg" class="w-full rounded-full sm:w-auto" @click="openBusinesses">
+              Explore businesses
+
+              <ArrowRight
+                class="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+              />
+            </Button>
           </div>
 
-          <Button
-            size="lg"
-            class="w-full self-start rounded-full lg:w-auto lg:self-auto"
-            @click="openBusinesses"
-          >
-            Explore businesses
+          <div class="mt-8 grid gap-4 border-t border-border pt-6 min-[420px]:grid-cols-2">
+            <div class="flex items-start gap-3">
+              <div
+                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10"
+              >
+                <Building2 class="h-4 w-4 text-primary" />
+              </div>
 
-            <ArrowRight class="ml-2 h-4 w-4" />
-          </Button>
+              <div>
+                <p class="text-sm font-semibold">Verified businesses</p>
+
+                <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                  Real companies connected to Nexora.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3">
+              <div
+                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10"
+              >
+                <PackageCheck class="h-4 w-4 text-primary" />
+              </div>
+
+              <div>
+                <p class="text-sm font-semibold">Connected inventory</p>
+
+                <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                  Catalog availability backed by ERP data.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- IMAGE -->
+        <div class="relative min-h-[280px] overflow-hidden sm:min-h-[360px] lg:min-h-[440px]">
+          <img
+            src="/images/store/store-discovery.jpg"
+            alt="Modern warehouse operations connected to the Nexora commerce network"
+            class="absolute inset-0 h-full w-full object-cover transition duration-700 hover:scale-[1.025]"
+            loading="lazy"
+            decoding="async"
+          />
+
+          <!-- Mobile readability -->
+          <div
+            class="absolute inset-0 bg-gradient-to-t from-card/75 via-transparent to-transparent lg:hidden"
+          />
+
+          <!-- Desktop connection with copy -->
+          <div
+            class="absolute inset-0 hidden bg-gradient-to-r from-card via-card/20 to-transparent lg:block"
+          />
+
+          <!-- Nexora visual identity -->
+          <div
+            class="absolute inset-0 bg-gradient-to-br from-violet-950/10 via-transparent to-primary/15"
+          />
+
+          <div
+            class="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-violet-500/20 blur-3xl"
+          />
+
+          <div class="absolute inset-0 ring-1 ring-inset ring-white/10" />
+
+          <div
+            class="absolute bottom-5 left-5 right-5 flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/55 px-4 py-3 text-white shadow-xl backdrop-blur-md sm:bottom-6 sm:left-6 sm:right-6"
+          >
+            <div>
+              <p class="text-xs text-slate-300">Connected operations</p>
+
+              <p class="mt-1 text-sm font-semibold">Inventory visible throughout Nexora</p>
+            </div>
+
+            <Store class="h-5 w-5 shrink-0 text-blue-300" />
+          </div>
         </div>
       </div>
     </section>

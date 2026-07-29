@@ -260,8 +260,21 @@ function openSellerCatalog(sellerCompanyId: number) {
         </SheetHeader>
       </div>
 
+      <Transition
+        mode="out-in"
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-100 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
       <!-- LOADING -->
-      <div v-if="isLoading" class="flex min-h-0 flex-1 items-center justify-center p-6 sm:p-8">
+      <div
+        v-if="isLoading"
+        key="loading"
+        class="flex min-h-0 flex-1 items-center justify-center p-6 sm:p-8"
+      >
         <div class="text-center">
           <Loader2 class="mx-auto h-7 w-7 animate-spin text-primary" />
 
@@ -270,7 +283,11 @@ function openSellerCatalog(sellerCompanyId: number) {
       </div>
 
       <!-- ERROR -->
-      <div v-else-if="isError" class="flex min-h-0 flex-1 items-center justify-center p-6 sm:p-8">
+      <div
+        v-else-if="isError"
+        key="error"
+        class="flex min-h-0 flex-1 items-center justify-center p-6 sm:p-8"
+      >
         <div class="w-full max-w-sm text-center">
           <p class="text-sm font-semibold">Unable to load your cart</p>
 
@@ -285,7 +302,11 @@ function openSellerCatalog(sellerCompanyId: number) {
       </div>
 
       <!-- EMPTY -->
-      <div v-else-if="!hasItems" class="flex min-h-0 flex-1 items-center justify-center p-6 sm:p-8">
+      <div
+        v-else-if="!hasItems"
+        key="empty"
+        class="flex min-h-0 flex-1 items-center justify-center p-6 sm:p-8"
+      >
         <div class="w-full max-w-sm text-center">
           <div
             class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-muted/30"
@@ -306,28 +327,37 @@ function openSellerCatalog(sellerCompanyId: number) {
       </div>
 
       <!-- CART -->
-      <template v-else>
+      <div v-else key="cart" class="contents">
         <!-- SCROLLABLE CART CONTENT -->
         <div
           class="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5"
         >
           <!-- SYNC STATUS -->
-          <div
-            v-if="isRefreshing || isSynchronizing"
-            class="sticky top-0 z-20 mb-4 overflow-hidden rounded-xl border border-primary/20 bg-background/95 shadow-md backdrop-blur"
+          <Transition
+            enter-active-class="transition duration-200 ease-out"
+            enter-from-class="-translate-y-2 opacity-0"
+            enter-to-class="translate-y-0 opacity-100"
+            leave-active-class="transition duration-150 ease-in"
+            leave-from-class="translate-y-0 opacity-100"
+            leave-to-class="-translate-y-2 opacity-0"
           >
-            <div class="flex items-start gap-3 p-3 sm:p-4">
-              <Loader2 class="mt-0.5 h-4 w-4 shrink-0 animate-spin text-primary" />
+            <div
+              v-if="isRefreshing || isSynchronizing"
+              class="sticky top-0 z-20 mb-4 overflow-hidden rounded-xl border border-primary/20 bg-background/95 shadow-md backdrop-blur"
+            >
+              <div class="flex items-start gap-3 p-3 sm:p-4">
+                <Loader2 class="mt-0.5 h-4 w-4 shrink-0 animate-spin text-primary" />
 
-              <div class="min-w-0">
-                <p class="text-sm font-medium">Updating your cart</p>
+                <div class="min-w-0">
+                  <p class="text-sm font-medium">Updating your cart</p>
 
-                <p class="mt-0.5 text-xs leading-5 text-muted-foreground">
-                  Synchronizing quantities, totals and current availability.
-                </p>
+                  <p class="mt-0.5 text-xs leading-5 text-muted-foreground">
+                    Synchronizing quantities, totals and current availability.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          </Transition>
 
           <div class="space-y-4 sm:space-y-5">
             <section
@@ -608,17 +638,18 @@ function openSellerCatalog(sellerCompanyId: number) {
 
             <Button
               size="lg"
-              class="w-full rounded-full"
+              class="group w-full rounded-full"
               :disabled="isCartBusy"
               @click="goToCheckout"
             >
               Continue to checkout
 
-              <ArrowRight class="ml-2 h-4 w-4" />
+              <ArrowRight class="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
             </Button>
           </div>
         </div>
-      </template>
+      </div>
+      </Transition>
     </SheetContent>
   </Sheet>
 </template>

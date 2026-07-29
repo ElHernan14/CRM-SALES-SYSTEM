@@ -92,7 +92,7 @@ function openRegistration() {
       <div class="mt-16 grid gap-6 xl:grid-cols-2">
         <!-- B2B -->
         <article
-          class="group relative overflow-hidden rounded-[2rem] border border-border bg-card shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-2xl"
+          class="nexora-interactive nexora-shine group relative overflow-hidden rounded-[2rem] border border-border bg-card shadow-sm hover:border-primary/25 hover:shadow-2xl"
         >
           <div
             class="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl"
@@ -237,17 +237,19 @@ function openRegistration() {
               </div>
             </div>
 
-            <Button variant="outline" class="mt-8 rounded-full" @click="openBusinessFlow">
+            <Button variant="outline" class="group mt-8 rounded-full" @click="openBusinessFlow">
               {{ isBusinessUser ? 'Open ERP workflow' : 'Create business workspace' }}
 
-              <ArrowRight class="ml-2 h-4 w-4" />
+              <ArrowRight
+                class="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+              />
             </Button>
           </div>
         </article>
 
         <!-- B2C -->
         <article
-          class="group relative overflow-hidden rounded-[2rem] border border-border bg-card shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-2xl"
+          class="nexora-interactive nexora-shine group relative overflow-hidden rounded-[2rem] border border-border bg-card shadow-sm hover:border-primary/25 hover:shadow-2xl"
         >
           <div
             class="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full bg-violet-500/10 blur-3xl"
@@ -390,10 +392,12 @@ function openRegistration() {
               </div>
             </div>
 
-            <Button variant="outline" class="mt-8 rounded-full" @click="openConsumerFlow">
+            <Button variant="outline" class="group mt-8 rounded-full" @click="openConsumerFlow">
               Explore personal commerce
 
-              <ArrowRight class="ml-2 h-4 w-4" />
+              <ArrowRight
+                class="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+              />
             </Button>
           </div>
         </article>

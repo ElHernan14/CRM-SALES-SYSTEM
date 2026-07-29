@@ -58,7 +58,11 @@ const architecturePrinciples = [
     />
 
     <div
-      class="pointer-events-none absolute -right-52 bottom-0 h-[560px] w-[560px] rounded-full bg-blue-500/15 blur-3xl"
+      class="pointer-events-none absolute -right-52 bottom-0 h-[560px] w-[560px] rounded-full bg-violet-500/15 blur-3xl"
+    />
+
+    <div
+      class="pointer-events-none absolute right-1/4 top-1/3 h-[360px] w-[360px] rounded-full bg-blue-500/10 blur-3xl"
     />
 
     <div
@@ -86,126 +90,162 @@ const architecturePrinciples = [
       <div class="mt-16 grid items-stretch gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <!-- CONTEXT VISUAL -->
         <div
-          class="relative overflow-hidden rounded-[2rem] border border-white/10 bg-zinc-900/90 p-6 shadow-2xl backdrop-blur-xl sm:p-8"
+          class="relative overflow-hidden rounded-[2rem] border border-white/10 bg-zinc-900/90 shadow-2xl backdrop-blur-xl"
         >
-          <div
-            class="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-primary/20 blur-3xl"
-          />
+          <!-- DATA INFRASTRUCTURE IMAGE -->
+          <div class="relative h-48 overflow-hidden border-b border-white/10 sm:h-56">
+            <img
+              src="/images/landing/platform-infrastructure.jpg"
+              alt="Modern data infrastructure supporting Nexora multi-tenant operations"
+              class="absolute inset-0 h-full w-full object-cover opacity-80 saturate-[0.85]"
+              loading="lazy"
+              decoding="async"
+            />
 
-          <div class="relative">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                  Tenant Context
-                </p>
+            <div
+              class="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-950/15 to-transparent"
+            />
 
-                <h3 class="mt-2 text-2xl font-semibold text-white">Request identity</h3>
+            <div
+              class="absolute inset-0 bg-gradient-to-br from-violet-950/35 via-transparent to-blue-950/30"
+            />
+
+            <div
+              class="pointer-events-none absolute -right-16 -top-20 h-60 w-60 rounded-full bg-violet-500/25 blur-3xl"
+            />
+
+            <div class="absolute inset-0 ring-1 ring-inset ring-white/10" />
+
+            <div class="absolute bottom-5 left-5 right-5">
+              <div
+                class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-1.5 text-xs font-medium text-zinc-200 backdrop-blur-md"
+              >
+                <Database class="h-3.5 w-3.5 text-emerald-400" />
+                Shared infrastructure · isolated contexts
+              </div>
+            </div>
+          </div>
+
+          <div class="relative p-6 sm:p-8">
+            <div
+              class="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-primary/20 blur-3xl"
+            />
+
+            <div class="relative">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+                    Tenant Context
+                  </p>
+
+                  <h3 class="mt-2 text-2xl font-semibold text-white">Request identity</h3>
+                </div>
+
+                <Fingerprint class="h-6 w-6 text-primary" />
               </div>
 
-              <Fingerprint class="h-6 w-6 text-primary" />
-            </div>
+              <div class="mt-7 rounded-[1.5rem] border border-white/10 bg-black/20 p-5">
+                <div class="space-y-4 font-mono text-xs">
+                  <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                    <span class="text-zinc-500">user_id</span>
+                    <span class="text-zinc-200">42</span>
+                  </div>
 
-            <div class="mt-7 rounded-[1.5rem] border border-white/10 bg-black/20 p-5">
-              <div class="space-y-4 font-mono text-xs">
-                <div class="flex items-center justify-between border-b border-white/10 pb-3">
-                  <span class="text-zinc-500">user_id</span>
-                  <span class="text-zinc-200">42</span>
-                </div>
+                  <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                    <span class="text-zinc-500">company_id</span>
+                    <span class="text-primary">15</span>
+                  </div>
 
-                <div class="flex items-center justify-between border-b border-white/10 pb-3">
-                  <span class="text-zinc-500">company_id</span>
-                  <span class="text-primary">15</span>
-                </div>
+                  <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                    <span class="text-zinc-500">client_id</span>
+                    <span class="text-zinc-200">28</span>
+                  </div>
 
-                <div class="flex items-center justify-between border-b border-white/10 pb-3">
-                  <span class="text-zinc-500">client_id</span>
-                  <span class="text-zinc-200">28</span>
-                </div>
+                  <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                    <span class="text-zinc-500">role</span>
+                    <span class="text-blue-400">company_user</span>
+                  </div>
 
-                <div class="flex items-center justify-between border-b border-white/10 pb-3">
-                  <span class="text-zinc-500">role</span>
-                  <span class="text-blue-400">company_user</span>
-                </div>
+                  <div class="flex items-start justify-between gap-5">
+                    <span class="text-zinc-500">permissions</span>
 
-                <div class="flex items-start justify-between gap-5">
-                  <span class="text-zinc-500">permissions</span>
+                    <div class="flex max-w-52 flex-wrap justify-end gap-1.5">
+                      <span
+                        class="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] text-zinc-300"
+                      >
+                        product:read
+                      </span>
 
-                  <div class="flex max-w-52 flex-wrap justify-end gap-1.5">
-                    <span
-                      class="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] text-zinc-300"
-                    >
-                      product:read
-                    </span>
+                      <span
+                        class="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] text-zinc-300"
+                      >
+                        invoice:pay
+                      </span>
 
-                    <span
-                      class="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] text-zinc-300"
-                    >
-                      invoice:pay
-                    </span>
-
-                    <span
-                      class="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] text-zinc-300"
-                    >
-                      company:update
-                    </span>
+                      <span
+                        class="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] text-zinc-300"
+                      >
+                        company:update
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <!-- VALIDATION FLOW -->
-            <div class="mt-6 space-y-3">
-              <div
-                class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.035] p-4"
-              >
+              <!-- VALIDATION FLOW -->
+              <div class="mt-6 space-y-3">
                 <div
-                  class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15"
+                  class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.035] p-4"
                 >
-                  <Fingerprint class="h-4 w-4 text-primary" />
+                  <div
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15"
+                  >
+                    <Fingerprint class="h-4 w-4 text-primary" />
+                  </div>
+
+                  <div class="min-w-0">
+                    <p class="text-sm font-semibold text-white">Resolve identity</p>
+
+                    <p class="mt-1 text-xs text-zinc-500">
+                      Authentication creates the request context.
+                    </p>
+                  </div>
                 </div>
 
-                <div class="min-w-0">
-                  <p class="text-sm font-semibold text-white">Resolve identity</p>
-
-                  <p class="mt-1 text-xs text-zinc-500">
-                    Authentication creates the request context.
-                  </p>
-                </div>
-              </div>
-
-              <div
-                class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.035] p-4"
-              >
                 <div
-                  class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-500/15"
+                  class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.035] p-4"
                 >
-                  <KeyRound class="h-4 w-4 text-violet-400" />
+                  <div
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-500/15"
+                  >
+                    <KeyRound class="h-4 w-4 text-violet-400" />
+                  </div>
+
+                  <div class="min-w-0">
+                    <p class="text-sm font-semibold text-white">Validate permission</p>
+
+                    <p class="mt-1 text-xs text-zinc-500">
+                      The operation must be explicitly authorized.
+                    </p>
+                  </div>
                 </div>
 
-                <div class="min-w-0">
-                  <p class="text-sm font-semibold text-white">Validate permission</p>
-
-                  <p class="mt-1 text-xs text-zinc-500">
-                    The operation must be explicitly authorized.
-                  </p>
-                </div>
-              </div>
-
-              <div
-                class="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4"
-              >
                 <div
-                  class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15"
+                  class="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4"
                 >
-                  <ShieldCheck class="h-4 w-4 text-emerald-400" />
-                </div>
+                  <div
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15"
+                  >
+                    <ShieldCheck class="h-4 w-4 text-emerald-400" />
+                  </div>
 
-                <div class="min-w-0">
-                  <p class="text-sm font-semibold text-white">Enforce ownership</p>
+                  <div class="min-w-0">
+                    <p class="text-sm font-semibold text-white">Enforce ownership</p>
 
-                  <p class="mt-1 text-xs text-zinc-500">
-                    Tenant and commercial participation are confirmed.
-                  </p>
+                    <p class="mt-1 text-xs text-zinc-500">
+                      Tenant and commercial participation are confirmed.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

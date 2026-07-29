@@ -199,8 +199,9 @@ function clearFilters() {
       />
 
       <div class="relative mx-auto w-full max-w-[1500px] px-4 py-12 sm:px-6 sm:py-14 lg:px-8">
-        <div class="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
-          <div class="max-w-3xl">
+        <div class="grid items-stretch gap-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-12">
+          <!-- COPY -->
+          <div class="flex max-w-3xl flex-col justify-center">
             <p class="text-sm font-semibold text-primary">Nexora businesses</p>
 
             <h1 class="mt-4 text-4xl font-semibold leading-[1.05] tracking-[-0.045em] sm:text-5xl">
@@ -213,18 +214,64 @@ function clearFilters() {
               Explore real businesses, understand what they offer and enter their connected Store
               catalog.
             </p>
+
+            <div class="mt-7 flex flex-wrap gap-x-6 gap-y-3 text-xs text-muted-foreground">
+              <span class="flex items-center gap-2">
+                <Building2 class="h-4 w-4 text-primary" />
+                Active companies
+              </span>
+
+              <span class="flex items-center gap-2">
+                <Store class="h-4 w-4 text-primary" />
+                Connected catalogs
+              </span>
+            </div>
           </div>
 
+          <!-- EDITORIAL BUSINESS VISUAL -->
           <div
-            class="w-full rounded-2xl border border-border bg-background/80 px-5 py-4 shadow-sm backdrop-blur lg:w-auto lg:min-w-48"
+            class="relative min-h-[260px] overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-xl sm:min-h-[320px]"
           >
-            <p class="text-xs text-muted-foreground">Connected businesses</p>
+            <img
+              src="/images/landing/business-collaboration.jpg"
+              alt="Professionals collaborating inside a modern connected business"
+              class="absolute inset-0 h-full w-full object-cover"
+              fetchpriority="high"
+              decoding="async"
+            />
 
-            <p class="mt-1 text-2xl font-semibold tracking-tight">
-              {{ data?.meta.total ?? 0 }}
-            </p>
+            <div
+              class="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/10 to-transparent"
+            />
 
-            <p class="text-xs text-muted-foreground">active sellers</p>
+            <div
+              class="absolute inset-0 bg-gradient-to-br from-violet-950/25 via-transparent to-primary/10"
+            />
+
+            <div
+              class="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-violet-500/20 blur-3xl"
+            />
+
+            <div
+              class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5 text-white sm:p-6"
+            >
+              <div>
+                <p class="text-xs font-medium text-slate-300">Connected business network</p>
+
+                <p class="mt-1 text-xl font-semibold tracking-tight">
+                  {{ data?.meta.total ?? 0 }}
+                  {{ data?.meta.total === 1 ? 'active seller' : 'active sellers' }}
+                </p>
+              </div>
+
+              <div
+                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 backdrop-blur"
+              >
+                <Building2 class="h-5 w-5" />
+              </div>
+            </div>
+
+            <div class="absolute inset-0 ring-1 ring-inset ring-white/10" />
           </div>
         </div>
       </div>

@@ -66,7 +66,7 @@ const experiences = [
         <article
           v-for="experience in experiences"
           :key="experience.title"
-          class="nexora-card-interactive nexora-surface group relative flex min-h-[430px] flex-col overflow-hidden rounded-[2rem] border border-border bg-card p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-2xl sm:p-7"
+          class="nexora-interactive nexora-shine nexora-surface group relative flex min-h-[430px] flex-col overflow-hidden rounded-[2rem] border border-border bg-card p-6 shadow-sm hover:border-primary/25 hover:shadow-2xl sm:p-7"
         >
           <div
             class="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-primary/5 blur-3xl transition group-hover:bg-primary/10"

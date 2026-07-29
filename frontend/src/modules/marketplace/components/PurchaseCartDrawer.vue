@@ -259,8 +259,17 @@ async function deleteItem(item: MarketplaceCartItem) {
         </SheetHeader>
       </div>
 
+      <Transition
+        mode="out-in"
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-100 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
       <!-- INITIAL LOADING -->
-      <div v-if="isLoading" class="flex flex-1 items-center justify-center p-8">
+      <div v-if="isLoading" key="loading" class="flex flex-1 items-center justify-center p-8">
         <div class="text-center">
           <Loader2 class="mx-auto h-7 w-7 animate-spin text-muted-foreground" />
 
@@ -269,7 +278,7 @@ async function deleteItem(item: MarketplaceCartItem) {
       </div>
 
       <!-- ERROR -->
-      <div v-else-if="isError" class="flex flex-1 items-center justify-center p-8">
+      <div v-else-if="isError" key="error" class="flex flex-1 items-center justify-center p-8">
         <div class="max-w-sm text-center">
           <div
             class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-destructive/20 bg-destructive/10"
@@ -289,7 +298,11 @@ async function deleteItem(item: MarketplaceCartItem) {
       </div>
 
       <!-- EMPTY / NONEXISTENT CART -->
-      <div v-else-if="!cart || !hasItems" class="flex flex-1 items-center justify-center p-8">
+      <div
+        v-else-if="!cart || !hasItems"
+        key="empty"
+        class="flex flex-1 items-center justify-center p-8"
+      >
         <div class="max-w-sm text-center">
           <div
             class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-muted/30 shadow-sm"
@@ -310,7 +323,7 @@ async function deleteItem(item: MarketplaceCartItem) {
       </div>
 
       <!-- CART -->
-      <template v-else-if="cart">
+      <div v-else-if="cart" key="cart" class="contents">
         <!-- SUPPLIER SUMMARY -->
         <div class="border-b border-border px-6 py-4">
           <div
@@ -351,16 +364,25 @@ async function deleteItem(item: MarketplaceCartItem) {
 
         <!-- SCROLLABLE ITEMS -->
         <div class="relative min-h-0 flex-1 overflow-y-auto px-6 py-5">
-          <div
-            v-if="isRefreshing || isSynchronizingCart"
-            class="absolute inset-x-6 top-5 z-10 rounded-xl border border-border bg-background/90 p-4 shadow-sm backdrop-blur"
+          <Transition
+            enter-active-class="transition duration-200 ease-out"
+            enter-from-class="-translate-y-2 opacity-0"
+            enter-to-class="translate-y-0 opacity-100"
+            leave-active-class="transition duration-150 ease-in"
+            leave-from-class="translate-y-0 opacity-100"
+            leave-to-class="-translate-y-2 opacity-0"
           >
-            <div class="flex items-center gap-3">
-              <Loader2 class="h-4 w-4 animate-spin text-muted-foreground" />
+            <div
+              v-if="isRefreshing || isSynchronizingCart"
+              class="absolute inset-x-6 top-5 z-10 rounded-xl border border-border bg-background/90 p-4 shadow-sm backdrop-blur"
+            >
+              <div class="flex items-center gap-3">
+                <Loader2 class="h-4 w-4 animate-spin text-muted-foreground" />
 
-              <p class="text-sm text-muted-foreground">Synchronizing purchase and stock...</p>
+                <p class="text-sm text-muted-foreground">Synchronizing purchase and stock...</p>
+              </div>
             </div>
-          </div>
+          </Transition>
 
           <div class="space-y-3">
             <article
@@ -517,15 +539,18 @@ async function deleteItem(item: MarketplaceCartItem) {
               :disabled="isCheckingOut || isRefreshing || !hasItems"
               @click="checkout"
             >
-              <Loader2 v-if="isCheckingOut" class="mr-2 h-4 w-4 animate-spin" />
+              <span class="mr-2 flex h-4 w-4 items-center justify-center">
+                <Loader2 v-if="isCheckingOut" class="h-4 w-4 animate-spin" />
 
-              <ShoppingBag v-else class="mr-2 h-4 w-4" />
+                <ShoppingBag v-else class="h-4 w-4" />
+              </span>
 
               {{ isCheckingOut ? 'Processing purchase...' : 'Proceed to checkout' }}
             </Button>
           </div>
         </div>
-      </template>
+      </div>
+      </Transition>
     </SheetContent>
   </Sheet>
 </template>

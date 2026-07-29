@@ -43,18 +43,27 @@ export const erpRoutes = [
         path: 'dashboard',
         name: 'erp-dashboard',
         component: DashboardPage,
+        meta: {
+          title: 'Dashboard',
+        },
       },
 
       {
         path: 'products',
         name: 'erp-products',
         component: ProductsPage,
+        meta: {
+          title: 'Products',
+        },
       },
 
       {
         path: 'sales',
         name: 'erp-sales',
         component: InvoicesPage,
+        meta: {
+          title: 'Sales invoices',
+        },
       },
 
       {

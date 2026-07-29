@@ -405,9 +405,11 @@ function validateIntegerInput(event: KeyboardEvent) {
           </Button>
 
           <Button type="submit" :disabled="isSubmitting" class="w-full sm:w-auto">
-            <Loader2 v-if="isSubmitting" class="mr-2 h-4 w-4 animate-spin" />
+            <span class="mr-2 flex h-4 w-4 items-center justify-center">
+              <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
 
-            <PackagePlus v-else class="mr-2 h-4 w-4" />
+              <PackagePlus v-else class="h-4 w-4" />
+            </span>
 
             {{ isSubmitting ? 'Creating...' : 'Create product' }}
           </Button>

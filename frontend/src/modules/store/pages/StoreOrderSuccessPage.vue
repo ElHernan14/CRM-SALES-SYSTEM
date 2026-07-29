@@ -352,14 +352,16 @@ function continueShopping() {
         <Button
           type="button"
           size="lg"
-          class="w-full rounded-full px-8 sm:w-auto"
+          class="group w-full rounded-full px-8 sm:w-auto"
           @click="openPurchases"
         >
           <ReceiptText class="mr-2 h-4 w-4" />
 
           View my purchases
 
-          <ArrowRight class="ml-2 h-4 w-4" />
+          <ArrowRight
+            class="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+          />
         </Button>
 
         <Button

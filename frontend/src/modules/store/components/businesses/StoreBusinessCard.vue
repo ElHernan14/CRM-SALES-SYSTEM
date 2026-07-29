@@ -19,7 +19,7 @@ const emit = defineEmits<{
 
 <template>
   <article
-    class="nexora-card-interactive nexora-surface group flex h-full min-w-0 flex-col overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm transition hover:-translate-y-1 hover:border-primary/25 hover:shadow-xl"
+    class="nexora-interactive nexora-shine nexora-surface group flex h-full min-w-0 flex-col overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm hover:border-primary/25 hover:shadow-xl"
   >
     <!-- BRAND VISUAL -->
     <button
@@ -106,7 +106,7 @@ const emit = defineEmits<{
         <Button
           type="button"
           variant="outline"
-          class="w-full rounded-full"
+          class="group w-full rounded-full"
           @click="emit('view', business)"
         >
           Business details
@@ -120,7 +120,7 @@ const emit = defineEmits<{
         >
           View catalog
 
-          <ArrowRight class="ml-2 h-4 w-4" />
+          <ArrowRight class="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
         </Button>
       </div>
     </div>

@@ -645,7 +645,7 @@ function handleCheckoutCompleted(invoiceId: number) {
           <article
             v-for="product in products"
             :key="product.id"
-            class="nexora-card-interactive nexora-surface group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl"
+            class="nexora-interactive nexora-shine nexora-surface group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm hover:border-primary/30 hover:shadow-xl"
           >
             <div
               class="pointer-events-none absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100"

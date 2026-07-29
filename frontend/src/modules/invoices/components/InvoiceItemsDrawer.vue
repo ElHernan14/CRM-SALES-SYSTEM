@@ -428,32 +428,44 @@ function confirmDeleteItem(item: InvoiceItem) {
           </div>
         </div>
 
-        <div
-          v-if="isLoading || isRefreshingItems"
-          class="rounded-xl border border-border bg-muted/30 p-6 text-sm text-muted-foreground"
+        <Transition
+          mode="out-in"
+          enter-active-class="transition duration-200 ease-out"
+          enter-from-class="opacity-0"
+          enter-to-class="opacity-100"
+          leave-active-class="transition duration-100 ease-in"
+          leave-from-class="opacity-100"
+          leave-to-class="opacity-0"
         >
-          Loading invoice items...
-        </div>
+          <div
+            v-if="isLoading || isRefreshingItems"
+            key="loading"
+            class="rounded-xl border border-border bg-muted/30 p-6 text-sm text-muted-foreground"
+          >
+            Loading invoice items...
+          </div>
 
-        <div
-          v-else-if="isError"
-          class="rounded-xl border border-border bg-muted/30 p-6 text-sm text-destructive"
-        >
-          Unable to load invoice items.
-        </div>
+          <div
+            v-else-if="isError"
+            key="error"
+            class="rounded-xl border border-border bg-muted/30 p-6 text-sm text-destructive"
+          >
+            Unable to load invoice items.
+          </div>
 
-        <div
-          v-else-if="items.length === 0"
-          class="rounded-xl border border-dashed border-border bg-card p-10 text-center"
-        >
-          <p class="text-sm font-medium text-foreground">No items added yet</p>
+          <div
+            v-else-if="items.length === 0"
+            key="empty"
+            class="rounded-xl border border-dashed border-border bg-card p-10 text-center"
+          >
+            <p class="text-sm font-medium text-foreground">No items added yet</p>
 
-          <p class="mt-1 text-sm text-muted-foreground">
-            Add products to build this draft invoice.
-          </p>
-        </div>
+            <p class="mt-1 text-sm text-muted-foreground">
+              Add products to build this draft invoice.
+            </p>
+          </div>
 
-        <div v-else class="relative space-y-3">
+        <div v-else key="items" class="relative space-y-3">
           <div
             v-for="item in items"
             :key="item.id"
@@ -528,6 +540,7 @@ function confirmDeleteItem(item: InvoiceItem) {
             </div>
           </div>
         </div>
+        </Transition>
 
         <div class="relative overflow-hidden rounded-xl border border-border bg-muted/40 p-4">
           <div v-if="isRefreshingItems">

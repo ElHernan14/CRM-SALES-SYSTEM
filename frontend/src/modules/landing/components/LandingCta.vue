@@ -80,12 +80,14 @@ function openPrimary() {
           </p>
 
           <div class="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-            <Button size="lg" class="rounded-full px-8" @click="openPrimary">
+            <Button size="lg" class="group rounded-full px-8" @click="openPrimary">
               <Building2 v-if="isBusinessUser" class="mr-2 h-4 w-4" />
 
               {{ primaryLabel }}
 
-              <ArrowRight class="ml-2 h-4 w-4" />
+              <ArrowRight
+                class="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+              />
             </Button>
 
             <Button

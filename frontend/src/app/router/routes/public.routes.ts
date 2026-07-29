@@ -24,6 +24,10 @@ export const publicRoutes: RouteRecordRaw[] = [
         path: '',
         name: 'landing',
         component: LandingPage,
+
+        meta: {
+          title: 'Connected Commerce Platform',
+        },
       },
 
       {
@@ -33,6 +37,7 @@ export const publicRoutes: RouteRecordRaw[] = [
 
         meta: {
           guestOnly: true,
+          title: 'Sign in',
         },
       },
 
@@ -43,6 +48,7 @@ export const publicRoutes: RouteRecordRaw[] = [
 
         meta: {
           guestOnly: true,
+          title: 'Create an account',
         },
       },
 
@@ -53,6 +59,7 @@ export const publicRoutes: RouteRecordRaw[] = [
 
         meta: {
           guestOnly: true,
+          title: 'Create personal account',
         },
       },
 
@@ -63,6 +70,7 @@ export const publicRoutes: RouteRecordRaw[] = [
 
         meta: {
           guestOnly: true,
+          title: 'Create business workspace',
         },
       },
 
@@ -75,6 +83,7 @@ export const publicRoutes: RouteRecordRaw[] = [
 
         meta: {
           guestOnly: true,
+          title: 'Join business workspace',
         },
       },
     ],

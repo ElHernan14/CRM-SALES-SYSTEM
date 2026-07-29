@@ -850,16 +850,21 @@ function validateNumberInput(event: KeyboardEvent) {
         <Button
           type="submit"
           size="lg"
-          class="w-full rounded-full"
+          class="group w-full rounded-full"
           :disabled="isSubmitting || categoriesLoading"
         >
-          <Loader2 v-if="isSubmitting" class="mr-2 h-4 w-4 animate-spin" />
+          <span class="mr-2 flex h-4 w-4 items-center justify-center">
+            <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
 
-          <Building2 v-else class="mr-2 h-4 w-4" />
+            <Building2 v-else class="h-4 w-4" />
+          </span>
 
           {{ isSubmitting ? 'Creating workspace...' : 'Create business workspace' }}
 
-          <ArrowRight v-if="!isSubmitting" class="ml-2 h-4 w-4" />
+          <ArrowRight
+            v-if="!isSubmitting"
+            class="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+          />
         </Button>
       </div>
     </div>
@@ -973,17 +978,22 @@ function validateNumberInput(event: KeyboardEvent) {
         <Button
           type="button"
           size="lg"
-          class="w-full rounded-full"
+          class="group w-full rounded-full"
           :disabled="isFinishingSetup"
           @click="finishBusinessSetup"
         >
-          <Loader2 v-if="isFinishingSetup" class="mr-2 h-4 w-4 animate-spin" />
+          <span class="mr-2 flex h-4 w-4 items-center justify-center">
+            <Loader2 v-if="isFinishingSetup" class="h-4 w-4 animate-spin" />
 
-          <Building2 v-else class="mr-2 h-4 w-4" />
+            <Building2 v-else class="h-4 w-4" />
+          </span>
 
           {{ isUploadingLogo ? 'Uploading logo...' : 'Open business workspace' }}
 
-          <ArrowRight v-if="!isFinishingSetup" class="ml-2 h-4 w-4" />
+          <ArrowRight
+            v-if="!isFinishingSetup"
+            class="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+          />
         </Button>
       </div>
     </div>

@@ -336,14 +336,19 @@ function validateNumberInput(event: KeyboardEvent) {
       </p>
     </div>
 
-    <Button type="submit" size="lg" class="w-full rounded-full" :disabled="isSubmitting">
-      <Loader2 v-if="isSubmitting" class="mr-2 h-4 w-4 animate-spin" />
+    <Button type="submit" size="lg" class="group w-full rounded-full" :disabled="isSubmitting">
+      <span class="mr-2 flex h-4 w-4 items-center justify-center">
+        <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
 
-      <UserRound v-else class="mr-2 h-4 w-4" />
+        <UserRound v-else class="h-4 w-4" />
+      </span>
 
       {{ isSubmitting ? 'Creating your account...' : 'Create personal account' }}
 
-      <ArrowRight v-if="!isSubmitting" class="ml-2 h-4 w-4" />
+      <ArrowRight
+        v-if="!isSubmitting"
+        class="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+      />
     </Button>
   </form>
 </template>

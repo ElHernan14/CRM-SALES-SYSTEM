@@ -62,7 +62,7 @@ function openPrimaryExperience() {
       class="relative mx-auto grid min-h-[680px] w-full max-w-[1500px] items-center gap-12 px-4 py-14 sm:px-6 sm:py-20 lg:min-h-[760px] lg:grid-cols-[0.95fr_1.05fr] lg:gap-16 lg:px-8 lg:py-24"
     >
       <!-- COPY -->
-      <div>
+      <div class="nexora-enter-up">
         <p class="text-sm font-semibold text-primary">Commerce and operations, working as one</p>
 
         <h1
@@ -76,18 +76,21 @@ function openPrimaryExperience() {
           class="mt-6 max-w-2xl text-base leading-7 text-muted-foreground sm:mt-7 sm:text-lg sm:leading-8"
         >
           Run products, inventory, sales and purchases from one workspace—then bring your catalog
-          directly to customers through a <span class="nexora-gradient-text font-semibold">connected Store.</span>
+          directly to customers through a
+          <span class="nexora-gradient-text font-semibold">connected Store.</span>
         </p>
 
         <div class="mt-8 flex flex-col gap-3 sm:mt-9 sm:flex-row">
           <Button
             size="lg"
-            class="w-full rounded-full px-7 sm:w-auto"
+            class="group w-full rounded-full px-7 sm:w-auto"
             @click="openPrimaryExperience"
           >
             {{ primaryLabel }}
 
-            <ArrowRight class="ml-2 h-4 w-4" />
+            <ArrowRight
+              class="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+            />
           </Button>
 
           <Button
@@ -140,7 +143,42 @@ function openPrimaryExperience() {
       </div>
 
       <!-- PRODUCT VISUAL -->
-      <ProductComposition />
+      <div class="relative isolate min-w-0">
+        <!-- Editorial operations backdrop -->
+        <div
+          class="pointer-events-none absolute -inset-3 overflow-hidden rounded-[2rem] border border-border bg-card shadow-2xl sm:-inset-5 lg:-inset-6"
+          aria-hidden="true"
+        >
+          <img
+            src="/images/landing/operations-network.jpg"
+            alt=""
+            class="absolute inset-0 h-full w-full object-cover opacity-[0.16] saturate-[0.85] dark:opacity-[0.24]"
+            fetchpriority="high"
+            decoding="async"
+          />
+
+          <div
+            class="absolute inset-0 bg-gradient-to-br from-background/95 via-background/75 to-violet-950/25"
+          />
+
+          <div
+            class="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-background/45"
+          />
+
+          <div
+            class="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-violet-500/20 blur-3xl"
+          />
+
+          <div class="absolute -bottom-28 left-12 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
+
+          <div class="absolute inset-0 ring-1 ring-inset ring-white/5" />
+        </div>
+
+        <!-- PRODUCT VISUAL -->
+        <div class="nexora-enter">
+          <ProductComposition />
+        </div>
+      </div>
     </div>
 
     <!-- BOTTOM TRUST BAND -->
