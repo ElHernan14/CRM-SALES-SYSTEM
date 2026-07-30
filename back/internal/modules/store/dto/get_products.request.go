@@ -15,7 +15,7 @@ type GetStoreProductsRequest struct {
 	MinPrice   float64 `json:"min_price" validate:"omitempty,gte=0" example:"100"`
 	MaxPrice   float64 `json:"max_price" validate:"omitempty,gte=0" example:"1500"`
 
-	SortColumn string `json:"sort_column" validate:"omitempty,max=50,oneof=name created_at kind type category price stock" example:"price"`
+	SortColumn string `json:"sort_column" validate:"omitempty,max=50,oneof=name created_at kind type category price stock reserved_stock available_stock" example:"price"`
 	Order      string `json:"order" validate:"omitempty,oneof=asc desc" example:"asc"`
 
 	ExcludedCompanyID *int `json:"-" validate:"-"`

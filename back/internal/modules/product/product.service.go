@@ -170,6 +170,12 @@ func (s *productService) Update(ctx context.Context, id int, req *productdto.Upd
 		product.Price = *req.Price
 	}
 	if req.Stock != nil {
+		if *req.Stock < product.ReservedStock {
+			return nil, errorHandler.NewAppError(
+				http.StatusBadRequest,
+				"El stock no puede ser menor al stock reservado",
+			)
+		}
 		product.Stock = *req.Stock
 	}
 	if req.Status != nil {
@@ -328,5 +334,6 @@ func mapProductResponse(product *models.Product) *productdto.ProductResponse {
 }
 
 func mapProductDetailResponse(product *models.Product) *productdto.ProductDetailResponse {
-	return &productdto.ProductDetailResponse{ID: product.ID, Name: product.Name, Description: product.Description, Kind: product.Kind, CategoryID: product.CategoryID, Category: product.Category, TypeID: product.TypeID, Type: product.Type, Price: product.Price, Stock: product.Stock, Status: product.Status, CompanyID: product.CompanyID, ImagePath: product.ImagePath}
+	available := product.Stock - product.ReservedStock
+	return &productdto.ProductDetailResponse{ID: product.ID, Name: product.Name, Description: product.Description, Kind: product.Kind, CategoryID: product.CategoryID, Category: product.Category, TypeID: product.TypeID, Type: product.Type, Price: product.Price, Stock: product.Stock, ReservedStock: product.ReservedStock, AvailableStock: available, Status: product.Status, CompanyID: product.CompanyID, ImagePath: product.ImagePath}
 }

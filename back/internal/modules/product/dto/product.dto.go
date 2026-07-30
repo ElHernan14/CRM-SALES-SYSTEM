@@ -75,19 +75,21 @@ type GetProductsResponse struct {
 }
 
 type ProductDetailResponse struct {
-	ID          int     `json:"id" example:"1"`
-	Name        string  `json:"name" example:"Notebook Lenovo ThinkPad"`
-	Description string  `json:"description" example:"Business laptop with Intel Core i7 processor"`
-	Kind        string  `json:"kind" example:"product"`
-	CategoryID  int     `json:"category_id" example:"1"`
-	Category    string  `json:"category" example:"Technology"`
-	TypeID      int     `json:"type_id" example:"3"`
-	Type        string  `json:"type" example:"Notebook"`
-	Price       float64 `json:"price" example:"1200.50"`
-	Stock       int     `json:"stock" example:"50"`
-	Status      int     `json:"status" example:"1"`
-	CompanyID   int     `json:"company_id" example:"1"`
-	ImagePath   *string `json:"image_path,omitempty" example:"/uploads/product/images/product_1.png"`
+	ID             int     `json:"id" example:"1"`
+	Name           string  `json:"name" example:"Notebook Lenovo ThinkPad"`
+	Description    string  `json:"description" example:"Business laptop with Intel Core i7 processor"`
+	Kind           string  `json:"kind" example:"product"`
+	CategoryID     int     `json:"category_id" example:"1"`
+	Category       string  `json:"category" example:"Technology"`
+	TypeID         int     `json:"type_id" example:"3"`
+	Type           string  `json:"type" example:"Notebook"`
+	Price          float64 `json:"price" example:"1200.50"`
+	Stock          int     `json:"stock" example:"50"`
+	ReservedStock  int     `json:"reserved_stock" example:"5"`
+	AvailableStock int     `json:"available_stock" example:"45"`
+	Status         int     `json:"status" example:"1"`
+	CompanyID      int     `json:"company_id" example:"1"`
+	ImagePath      *string `json:"image_path,omitempty" example:"/uploads/product/images/product_1.png"`
 }
 
 type UpdateProductRequest struct {

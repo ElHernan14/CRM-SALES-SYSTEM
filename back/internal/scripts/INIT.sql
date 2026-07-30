@@ -79,6 +79,7 @@ CREATE TABLE company (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     category_id INT NOT NULL,
+    category VARCHAR(80) NOT NULL DEFAULT 'general',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
     status INT DEFAULT 1, -- 1 activo, 0 inactivo
@@ -123,9 +124,13 @@ CREATE TABLE product (
     description TEXT,
     kind VARCHAR(20) NOT NULL, -- product | service
     category_id INT NOT NULL,
+    category VARCHAR(80) NOT NULL DEFAULT 'general',
     type_id INT NOT NULL,
+    type VARCHAR(80) NOT NULL DEFAULT 'General',
     price NUMERIC(10,2) NOT NULL,
     stock INT DEFAULT 0,
+    reserved_stock INT NOT NULL DEFAULT 0,
+    image_path TEXT,
     company_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
@@ -150,6 +155,7 @@ CREATE INDEX IF NOT EXISTS idx_company_category_id ON company(category_id);
 CREATE INDEX IF NOT EXISTS idx_product_category_id ON product(category_id);
 CREATE INDEX IF NOT EXISTS idx_product_type_id ON product(type_id);
 CREATE INDEX IF NOT EXISTS idx_product_kind ON product(kind);
+CREATE INDEX IF NOT EXISTS idx_product_company_id ON product(company_id);
 
 CREATE TABLE invoice (
     id SERIAL PRIMARY KEY,
@@ -197,8 +203,12 @@ CREATE TABLE invoice_item (
 );
 
 CREATE INDEX idx_client_user_id ON client(user_id);
-CREATE INDEX idx_product_company_id ON product(company_id);
 CREATE INDEX idx_invoice_buyer ON invoice(buyer_client_id);
+CREATE INDEX IF NOT EXISTS idx_invoice_source ON invoice(source);
+CREATE INDEX IF NOT EXISTS idx_invoice_buyer_source_status
+ON invoice(buyer_client_id, source, status_invoice, status);
+CREATE INDEX IF NOT EXISTS idx_invoice_seller_source_status
+ON invoice(seller_company_id, source, status_invoice, status);
 
 ALTER TABLE user_rol
 ADD CONSTRAINT user_role_unique UNIQUE (user_id, role_id);
@@ -238,17 +248,10 @@ CREATE TABLE invoice_payment (
         REFERENCES users(id)
 );
 
--- STOCK RESERVATION ENGINE PRO
-ALTER TABLE product
-ADD COLUMN reserved_stock INT NOT NULL DEFAULT 0;
-
-ALTER TABLE product
-ADD COLUMN image_path TEXT;
-
 ALTER TABLE invoice_item
 ADD COLUMN status SMALLINT DEFAULT 1,
 ADD COLUMN deleted_at TIMESTAMP NULL,
-ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 ADD COLUMN updated_at TIMESTAMP NULL;
 
 

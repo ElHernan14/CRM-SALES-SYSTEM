@@ -34,12 +34,12 @@ func NewProductRepository(db *sql.DB) ProductRepository {
 
 func (r *productRepository) Create(ctx context.Context, p *models.Product) error {
 	query := `
-		INSERT INTO product (company_id, name, description, kind, category_id, type_id, price, stock, image_path, status)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 1)
+		INSERT INTO product (company_id, name, description, kind, category_id, category, type_id, type, price, stock, image_path, status)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 1)
 		RETURNING id
 	`
 
-	return r.db.QueryRowContext(ctx, query, p.CompanyID, p.Name, p.Description, p.Kind, p.CategoryID, p.TypeID, p.Price, p.Stock, p.ImagePath).Scan(&p.ID)
+	return r.db.QueryRowContext(ctx, query, p.CompanyID, p.Name, p.Description, p.Kind, p.CategoryID, p.Category, p.TypeID, p.Type, p.Price, p.Stock, p.ImagePath).Scan(&p.ID)
 }
 
 func (r *productRepository) GetAll(ctx context.Context, search string, kind string, categoryID *int, category string, typeID *int, productType string, status *int, minPrice float64, maxPrice float64, companyID *int, limit int, offset int, sortColumn string, order string) ([]models.Product, int, error) {
@@ -164,7 +164,7 @@ func (r *productRepository) GetAll(ctx context.Context, search string, kind stri
 
 func (r *productRepository) GetByID(ctx context.Context, id int) (*models.Product, error) {
 	query := `
-		SELECT p.id, p.name, p.description, p.kind, p.type_id, pt.name, p.category_id, cat.name, p.price, p.stock, p.status, p.company_id, p.image_path
+		SELECT p.id, p.name, p.description, p.kind, p.type_id, pt.name, p.category_id, cat.name, p.price, p.stock, p.reserved_stock, p.status, p.company_id, p.image_path
 		FROM product p
 		INNER JOIN category_product cat ON cat.id = p.category_id
 		INNER JOIN product_type pt ON pt.id = p.type_id
@@ -172,7 +172,7 @@ func (r *productRepository) GetByID(ctx context.Context, id int) (*models.Produc
 	`
 
 	var p models.Product
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&p.ID, &p.Name, &p.Description, &p.Kind, &p.TypeID, &p.Type, &p.CategoryID, &p.Category, &p.Price, &p.Stock, &p.Status, &p.CompanyID, &p.ImagePath)
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&p.ID, &p.Name, &p.Description, &p.Kind, &p.TypeID, &p.Type, &p.CategoryID, &p.Category, &p.Price, &p.Stock, &p.ReservedStock, &p.Status, &p.CompanyID, &p.ImagePath)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -190,14 +190,16 @@ func (r *productRepository) Update(ctx context.Context, p *models.Product) error
 			description = $2,
 			kind = $3,
 			category_id = $4,
-			type_id = $5,
-			price = $6,
-			stock = $7,
-			status = $8
-		WHERE id = $9
+			category = $5,
+			type_id = $6,
+			type = $7,
+			price = $8,
+			stock = $9,
+			status = $10
+		WHERE id = $11
 	`
 
-	_, err := r.db.ExecContext(ctx, query, p.Name, p.Description, p.Kind, p.CategoryID, p.TypeID, p.Price, p.Stock, p.Status, p.ID)
+	_, err := r.db.ExecContext(ctx, query, p.Name, p.Description, p.Kind, p.CategoryID, p.Category, p.TypeID, p.Type, p.Price, p.Stock, p.Status, p.ID)
 	return err
 }
 
@@ -318,7 +320,7 @@ func (r *productRepository) ListByCompanyID(ctx context.Context, companyID int, 
 }
 
 func (r *productRepository) ListAvailableProducts(ctx context.Context, req *storedto.GetStoreProductsRequest) ([]*models.Product, int, error) {
-	allowedSortColumns := map[string]string{"name": "p.name", "created_at": "p.created_at", "kind": "p.kind", "type": "pt.name", "category": "cat.name", "price": "p.price", "stock": "p.stock"}
+	allowedSortColumns := map[string]string{"name": "p.name", "created_at": "p.created_at", "kind": "p.kind", "type": "pt.name", "category": "cat.name", "price": "p.price", "stock": "p.stock", "reserved_stock": "p.reserved_stock", "available_stock": "(p.stock - p.reserved_stock)"}
 	allowedOrders := map[string]string{"asc": "ASC", "desc": "DESC"}
 
 	selectQuery := `
@@ -333,7 +335,6 @@ func (r *productRepository) ListAvailableProducts(ctx context.Context, req *stor
 		  AND p.deleted_at IS NULL
 		  AND c.status = 1
 		  AND c.deleted_at IS NULL
-		  AND p.stock > p.reserved_stock
 	`
 
 	args := []interface{}{}
@@ -453,7 +454,6 @@ func (r *productRepository) GetAvailableProductByID(ctx context.Context, id int)
 		  AND p.deleted_at IS NULL
 		  AND c.status = 1
 		  AND c.deleted_at IS NULL
-		  AND p.stock > p.reserved_stock
 	`
 
 	var p models.Product

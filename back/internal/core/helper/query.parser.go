@@ -193,6 +193,7 @@ func ParseGetStorePurchasesRequest(r *http.Request) (*storedto.GetStorePurchases
 func ParseGetSuppliersRequest(r *http.Request) (*marketplacedto.GetSuppliersRequest, error) {
 	q := r.URL.Query()
 	req := &marketplacedto.GetSuppliersRequest{Search: q.Get("search"), Category: q.Get("category"), SortColumn: q.Get("sort_column"), Order: q.Get("order")}
+	req.IncludeSelf = q.Get("include_self") == "true"
 	if v := q.Get("category_id"); v != "" {
 		categoryID, err := strconv.Atoi(v)
 		if err != nil {

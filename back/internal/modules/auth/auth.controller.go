@@ -41,7 +41,6 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) error {
 	var err error
 
 	err = json.NewDecoder(r.Body).Decode(&req)
-	log.Println("Received login request: ", req)
 	if err != nil {
 		log.Println("Error decoding login request: ", err)
 		err = errorHandler.NewAppError(http.StatusBadRequest, "Invalid request payload")
@@ -73,7 +72,6 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) error {
 		Token: token,
 	}
 
-	log.Print("Login success")
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response.Success(res))
 	return nil

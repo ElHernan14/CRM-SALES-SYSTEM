@@ -52,11 +52,6 @@ func NewStoreService(
 }
 
 func (s *storeService) GetProducts(ctx context.Context, req *storedto.GetStoreProductsRequest) (*storedto.GetStoreProductsResponse, error) {
-	tenant := tenantHelper.GetTenant(ctx)
-	if tenant != nil && tenant.CompanyID != nil {
-		req.ExcludedCompanyID = tenant.CompanyID
-	}
-
 	products, total, err := s.ProductRepo.ListAvailableProducts(ctx, req)
 	if err != nil {
 		return nil, err
@@ -83,11 +78,6 @@ func (s *storeService) GetProductByID(ctx context.Context, id int) (*storedto.St
 	}
 	if product == nil {
 		return nil, errorHandler.NewAppError(http.StatusNotFound, "Producto no encontrado")
-	}
-
-	tenant := tenantHelper.GetTenant(ctx)
-	if tenant != nil && tenant.CompanyID != nil && product.CompanyID == *tenant.CompanyID {
-		return nil, errorHandler.NewAppError(http.StatusNotFound, "Producto no disponible")
 	}
 
 	available := product.Stock - product.ReservedStock
@@ -352,7 +342,7 @@ func (s *storeService) validateSeller(ctx context.Context, tenant *tenantHelper.
 		return errorHandler.NewAppError(http.StatusBadRequest, "seller_company_id invalido")
 	}
 	if tenant.CompanyID != nil && *tenant.CompanyID == sellerCompanyID {
-		return errorHandler.NewAppError(http.StatusBadRequest, "una empresa no puede comprarse a si misma")
+		return errorHandler.NewAppError(http.StatusConflict, "Una empresa no puede comprar sus propios productos")
 	}
 	seller, err := s.CompanyRepo.GetByID(ctx, sellerCompanyID)
 	if err != nil {

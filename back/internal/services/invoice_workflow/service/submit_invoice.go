@@ -113,7 +113,6 @@ func (s *submitInvoiceWorkflow) Submit(
 		)
 	}
 
-	log.Printf("Invoice %d tiene subtotal %.2f", invoice.ID, invoice.Subtotal)
 	//  validate subtotal
 	if invoice.Subtotal <= 0 {
 		return errorHandler.NewAppError(

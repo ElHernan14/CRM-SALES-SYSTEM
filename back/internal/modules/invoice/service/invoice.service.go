@@ -105,6 +105,13 @@ func (s *invoiceService) CreateDraft(
 		)
 	}
 
+	if buyer.CompanyID != nil && req.SellerCompanyID == *buyer.CompanyID {
+		return nil, errorHandler.NewAppError(
+			http.StatusConflict,
+			"Una empresa no puede comprarse a si misma",
+		)
+	}
+
 	existingDraft, err := s.Repo.GetActiveDraft(
 		ctx,
 		req.BuyerClientID,
@@ -134,16 +141,6 @@ func (s *invoiceService) CreateDraft(
 	}
 
 	_ = company
-
-	//  no comprarte a vos mismo
-	if buyer.CompanyID != nil &&
-		req.SellerCompanyID == *buyer.CompanyID {
-
-		return nil, errorHandler.NewAppError(
-			http.StatusBadRequest,
-			"una empresa no puede facturarse a sÃƒÂ­ misma",
-		)
-	}
 
 	//  validar access inicial
 	err = invoiceAccess.CanCreateInvoice(

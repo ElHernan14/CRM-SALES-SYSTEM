@@ -3,7 +3,6 @@ package middleware
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -16,7 +15,6 @@ type AppHandler func(w http.ResponseWriter, r *http.Request) error
 
 func ErrorMiddleware(next AppHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Print("METHOD LLEGADO", r.Method)
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
 			return

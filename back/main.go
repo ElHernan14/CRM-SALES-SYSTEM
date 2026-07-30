@@ -47,13 +47,13 @@ func main() {
 	routes.SetupRoutes(api, database, cfg)
 
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	log.Println("Server running on :8081")
+	log.Printf("Server running on :%s", cfg.ServerPort)
 
 	cors := handlers.CORS(
-		handlers.AllowedOrigins([]string{"http://localhost:5173"}),
+		handlers.AllowedOrigins(cfg.CORSOrigins),
 		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}),
 		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
 	)
 
-	log.Fatal(http.ListenAndServe(":8081", cors(r)))
+	log.Fatal(http.ListenAndServe(":"+cfg.ServerPort, cors(r)))
 }

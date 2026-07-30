@@ -116,4 +116,5 @@ INSERT INTO category_company (
 ) VALUES (
     'Tecnología e Ingeniería',
     'Empresas dedicadas al desarrollo tecnológico, ingeniería, innovación y soluciones industriales.'
-);
+)
+ON CONFLICT (name) DO NOTHING;

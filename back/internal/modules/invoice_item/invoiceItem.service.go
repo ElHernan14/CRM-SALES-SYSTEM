@@ -113,6 +113,13 @@ func (s *invoiceItemService) Create(
 		)
 	}
 
+	if buyer.CompanyID != nil && product.CompanyID == *buyer.CompanyID {
+		return nil, errorHandler.NewAppError(
+			http.StatusConflict,
+			"Una empresa no puede comprar sus propios productos",
+		)
+	}
+
 	var response *invoiceItemDTO.InvoiceItemResponse
 
 	err = core.RunInTransaction(ctx, s.db, func(tx *sql.Tx) error {
@@ -144,9 +151,16 @@ func (s *invoiceItemService) Create(
 				product.ID,
 				diff,
 			)
-			existingItem.Price = product.Price
+			if err != nil {
+				log.Println("error adjusting reserved stock:", err)
+				return errorHandler.NewAppError(
+					http.StatusInternalServerError,
+					"No se pudo ajustar el stock reservado",
+				)
+			}
+
 			existingItem.Quantity = newQty
-			existingItem.Subtotal = money.Round(product.Price * float64(newQty))
+			existingItem.Subtotal = money.Round(existingItem.Price * float64(newQty))
 
 			// Actualizo el item existente con la nueva cantidad y subtotal junto con la invoice
 			err = s.repo.Update(
@@ -323,15 +337,6 @@ func (s *invoiceItemService) Update(
 		)
 	}
 
-	//  product
-	product, err := s.productRepo.GetByID(ctx, item.ProductID)
-	if err != nil {
-		return nil, errorHandler.NewAppError(
-			http.StatusNotFound,
-			"Producto no encontrado",
-		)
-	}
-
 	err = core.RunInTransaction(ctx, s.db, func(tx *sql.Tx) error {
 
 		//  stock diff
@@ -352,14 +357,11 @@ func (s *invoiceItemService) Update(
 			)
 		}
 
-		// update price item
-		item.Price = product.Price
-
 		//  update quantity
 		item.Quantity = req.Quantity
 
-		//  subtotal
-		item.Subtotal = money.Round(product.Price * float64(item.Quantity))
+		//  subtotal based on invoice_item.price snapshot
+		item.Subtotal = money.Round(item.Price * float64(item.Quantity))
 
 		//  persist
 		err = s.repo.Update(

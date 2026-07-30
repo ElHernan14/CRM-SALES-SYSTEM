@@ -69,7 +69,8 @@ INSERT INTO category_product (
 ) VALUES (
     'Tecnología e Ingeniería',
     'Empresas dedicadas al desarrollo tecnológico, ingeniería, innovación y soluciones industriales.'
-);
+)
+ON CONFLICT (name) DO NOTHING;
 
 -- =====================================================
 -- PRODUCT TYPES
@@ -82,7 +83,8 @@ SELECT
     'Drones Industriales',
     'Vehículos aéreos no tripulados para inspección, vigilancia y monitoreo.'
 FROM category_product cp
-WHERE cp.name = 'Tecnología e Ingeniería';
+WHERE cp.name = 'Tecnología e Ingeniería'
+ON CONFLICT (category_id, name) DO NOTHING;
 
 INSERT INTO product_type (category_id, name, description)
 SELECT
@@ -90,7 +92,8 @@ SELECT
     'Robótica Industrial',
     'Robots y sistemas automatizados para procesos industriales y manufactura.'
 FROM category_product cp
-WHERE cp.name = 'Tecnología e Ingeniería';
+WHERE cp.name = 'Tecnología e Ingeniería'
+ON CONFLICT (category_id, name) DO NOTHING;
 
 INSERT INTO product_type (category_id, name, description)
 SELECT
@@ -98,7 +101,8 @@ SELECT
     'Infraestructura Inteligente',
     'Soluciones para edificios, ciudades e instalaciones inteligentes.'
 FROM category_product cp
-WHERE cp.name = 'Tecnología e Ingeniería';
+WHERE cp.name = 'Tecnología e Ingeniería'
+ON CONFLICT (category_id, name) DO NOTHING;
 
 INSERT INTO product_type (category_id, name, description)
 SELECT
@@ -106,7 +110,8 @@ SELECT
     'Sistemas de Seguridad',
     'Equipamiento y plataformas para vigilancia y protección avanzada.'
 FROM category_product cp
-WHERE cp.name = 'Tecnología e Ingeniería';
+WHERE cp.name = 'Tecnología e Ingeniería'
+ON CONFLICT (category_id, name) DO NOTHING;
 
 INSERT INTO product_type (category_id, name, description)
 SELECT
@@ -114,7 +119,8 @@ SELECT
     'Comunicaciones Satelitales',
     'Equipos y plataformas para conectividad y comunicaciones satelitales.'
 FROM category_product cp
-WHERE cp.name = 'Tecnología e Ingeniería';
+WHERE cp.name = 'Tecnología e Ingeniería'
+ON CONFLICT (category_id, name) DO NOTHING;
 
 INSERT INTO product_type (category_id, name, description)
 SELECT
@@ -122,7 +128,8 @@ SELECT
     'Energía Inteligente',
     'Tecnologías para generación, almacenamiento y gestión energética.'
 FROM category_product cp
-WHERE cp.name = 'Tecnología e Ingeniería';
+WHERE cp.name = 'Tecnología e Ingeniería'
+ON CONFLICT (category_id, name) DO NOTHING;
 
 INSERT INTO product_type (category_id, name, description)
 SELECT
@@ -130,7 +137,8 @@ SELECT
     'Automatización Industrial',
     'Soluciones para automatizar procesos industriales y operativos.'
 FROM category_product cp
-WHERE cp.name = 'Tecnología e Ingeniería';
+WHERE cp.name = 'Tecnología e Ingeniería'
+ON CONFLICT (category_id, name) DO NOTHING;
 
 INSERT INTO product_type (category_id, name, description)
 SELECT
@@ -138,7 +146,8 @@ SELECT
     'Hardware Empresarial',
     'Equipamiento tecnológico de alto rendimiento para organizaciones.'
 FROM category_product cp
-WHERE cp.name = 'Tecnología e Ingeniería';
+WHERE cp.name = 'Tecnología e Ingeniería'
+ON CONFLICT (category_id, name) DO NOTHING;
 
 INSERT INTO product_type (category_id, name, description)
 SELECT
@@ -146,7 +155,8 @@ SELECT
     'Inteligencia Artificial',
     'Plataformas y soluciones basadas en inteligencia artificial.'
 FROM category_product cp
-WHERE cp.name = 'Tecnología e Ingeniería';
+WHERE cp.name = 'Tecnología e Ingeniería'
+ON CONFLICT (category_id, name) DO NOTHING;
 
 INSERT INTO product_type (category_id, name, description)
 SELECT
@@ -154,4 +164,5 @@ SELECT
     'Investigación y Desarrollo',
     'Productos y tecnologías desarrolladas para innovación e investigación aplicada.'
 FROM category_product cp
-WHERE cp.name = 'Tecnología e Ingeniería';
+WHERE cp.name = 'Tecnología e Ingeniería'
+ON CONFLICT (category_id, name) DO NOTHING;

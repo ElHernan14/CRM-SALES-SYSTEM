@@ -102,7 +102,9 @@ func (c *MarketplaceController) GetSupplierByID(w http.ResponseWriter, r *http.R
 		return errorHandler.NewAppError(http.StatusBadRequest, "supplier_id invalido")
 	}
 
-	res, err := c.service.GetSupplierByID(r.Context(), id)
+	includeSelf := r.URL.Query().Get("include_self") == "true"
+
+	res, err := c.service.GetSupplierByID(r.Context(), id, includeSelf)
 	if err != nil {
 		return err
 	}

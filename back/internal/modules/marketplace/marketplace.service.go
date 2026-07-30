@@ -17,7 +17,7 @@ import (
 
 type MarketplaceService interface {
 	GetSuppliers(ctx context.Context, req *marketplacedto.GetSuppliersRequest) (*marketplacedto.GetSuppliersResponse, error)
-	GetSupplierByID(ctx context.Context, supplierID int) (*marketplacedto.SupplierResponse, error)
+	GetSupplierByID(ctx context.Context, supplierID int, includeSelf bool) (*marketplacedto.SupplierResponse, error)
 	EnsureCart(ctx context.Context, req *marketplacedto.EnsureMarketplaceCartRequest) (*marketplacedto.EnsureMarketplaceCartResponse, error)
 	GetCart(ctx context.Context, sellerCompanyID int) (*marketplacedto.MarketplaceCartResponse, error)
 	Checkout(ctx context.Context, req *marketplacedto.MarketplaceCheckoutRequest) (*marketplacedto.MarketplaceCheckoutResponse, error)
@@ -44,7 +44,7 @@ func NewMarketplaceService(
 func (s *marketplaceService) GetSuppliers(ctx context.Context, req *marketplacedto.GetSuppliersRequest) (*marketplacedto.GetSuppliersResponse, error) {
 	tenant := tenantHelper.GetTenant(ctx)
 	var excludedCompanyID *int
-	if tenant != nil {
+	if tenant != nil && !req.IncludeSelf {
 		excludedCompanyID = tenant.CompanyID
 	}
 
@@ -59,14 +59,14 @@ func (s *marketplaceService) GetSuppliers(ctx context.Context, req *marketplaced
 	}, nil
 }
 
-func (s *marketplaceService) GetSupplierByID(ctx context.Context, supplierID int) (*marketplacedto.SupplierResponse, error) {
+func (s *marketplaceService) GetSupplierByID(ctx context.Context, supplierID int, includeSelf bool) (*marketplacedto.SupplierResponse, error) {
 	if supplierID <= 0 {
 		return nil, errorHandler.NewAppError(http.StatusBadRequest, "supplier_id invalido")
 	}
 
 	tenant := tenantHelper.GetTenant(ctx)
 	var excludedCompanyID *int
-	if tenant != nil {
+	if tenant != nil && !includeSelf {
 		excludedCompanyID = tenant.CompanyID
 	}
 

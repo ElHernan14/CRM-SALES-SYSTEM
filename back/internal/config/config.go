@@ -4,19 +4,21 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	DBHost     string
-	DBPort     int
-	DBUser     string
-	DBPassword string
-	DBName     string
-	DBSSLMode  string
-	ServerPort string
-	UploadDir  string
+	DBHost      string
+	DBPort      int
+	DBUser      string
+	DBPassword  string
+	DBName      string
+	DBSSLMode   string
+	ServerPort  string
+	UploadDir   string
+	CORSOrigins []string
 }
 
 func LoadConfig() Config {
@@ -34,8 +36,11 @@ func LoadConfig() Config {
 		DBPassword: getEnv("DB_PASSWORD", ""),
 		DBName:     getEnv("DB_NAME", "postgres"),
 		DBSSLMode:  getEnv("DB_SSLMODE", "disable"),
-		ServerPort: getEnv("SERVER_PORT", "8080"),
+		ServerPort: getEnv("SERVER_PORT", "8081"),
 		UploadDir:  getEnv("UPLOAD_DIR", "C:/upload/files"),
+		CORSOrigins: splitCSV(
+			getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:5173"),
+		),
 	}
 }
 
@@ -45,4 +50,18 @@ func getEnv(key, defaultValue string) string {
 		return defaultValue
 	}
 	return value
+}
+
+func splitCSV(value string) []string {
+	parts := strings.Split(value, ",")
+	values := make([]string, 0, len(parts))
+
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed != "" {
+			values = append(values, trimmed)
+		}
+	}
+
+	return values
 }

@@ -1,212 +1,128 @@
-INSERT INTO permission (name) VALUES
+-- Idempotent roles and permissions seed.
+-- Safe to run more than once after INIT.sql.
 
--- ===== CLIENTS =====
-('client:view'),
-('client:create'),
-('client:read'),
-('client:update'),
-('client:delete'),
+INSERT INTO permission (name, description) VALUES
+('user:create', 'Create users'),
 
--- ===== COMPANIES =====
-('company:view'),
-('company:create'),
-('company:read'),
-('company:update'),
-('company:delete'),
+('client:view', 'View clients'),
+('client:create', 'Create clients'),
+('client:read', 'Read clients'),
+('client:update', 'Update clients'),
+('client:delete', 'Delete clients'),
+('client:view:all', 'View all clients'),
+('client:view:company', 'View company clients'),
 
--- ===== PRODUCTS =====
-('product:view'),
-('product:create'),
-('product:read'),
-('product:update'),
-('product:delete'),
+('company:view', 'View companies'),
+('company:create', 'Create companies'),
+('company:read', 'Read company'),
+('company:update', 'Update company'),
+('company:delete', 'Delete company'),
 
--- ===== INVOICES =====
-('invoice:view'),
-('invoice:create'),
-('invoice:read'),
-('invoice:update'),
-('invoice:delete'),
-('invoice:pay'),
-('invoice:cancel'),
+('product:view', 'View products'),
+('product:create', 'Create products'),
+('product:read', 'Read products'),
+('product:update', 'Update products'),
+('product:delete', 'Delete products'),
 
--- ===== INVOICE ITEMS =====
-('invoice_item:view'),
-('invoice_item:create'),
-('invoice_item:read'),
-('invoice_item:update'),
-('invoice_item:delete');
+('invoice:view', 'View invoices'),
+('invoice:create', 'Create invoices'),
+('invoice:read', 'Read invoices'),
+('invoice:update', 'Update invoices'),
+('invoice:delete', 'Delete invoices'),
+('invoice:pay', 'Pay invoices'),
+('invoice:cancel', 'Cancel invoices'),
+('invoice:submit', 'Submit draft invoices'),
 
--- ===== rol =====
+('invoice_item:view', 'View invoice items'),
+('invoice_item:create', 'Create invoice items'),
+('invoice_item:read', 'Read invoice items'),
+('invoice_item:update', 'Update invoice items'),
+('invoice_item:delete', 'Delete invoice items'),
+
+('invoice_payment:read', 'Read invoice payments'),
+
+('store:checkout', 'Checkout store carts')
+ON CONFLICT (name) DO UPDATE
+SET description = EXCLUDED.description;
+
 INSERT INTO rol (name) VALUES
 ('super_admin'),
 ('company_user'),
-('individual_user');
+('individual_user')
+ON CONFLICT (name) DO NOTHING;
 
-
--- ===== Asignar todos los permisos al rol super_admin =====
+-- super_admin: full access.
 INSERT INTO role_permission (role_id, permission_id)
 SELECT r.id, p.id
 FROM rol r
-JOIN permission p ON 1=1
-WHERE r.name = 'super_admin';
+JOIN permission p ON TRUE
+WHERE r.name = 'super_admin'
+ON CONFLICT DO NOTHING;
 
--- ===== Asignar permisos al rol company_user =====
-INSERT INTO role_permission (role_id, permission_id)
-SELECT r.id, p.id
-FROM rol r
-JOIN permission p ON p.name IN (
-
-    -- CLIENTS
-    'client:view','client:create','client:read','client:update',
-
-    -- PRODUCTS
-    'product:view','product:create','product:read','product:update',
-
-    -- INVOICES
-    'invoice:view','invoice:create','invoice:read','invoice:update','invoice:pay',
-
-    -- INVOICE ITEMS
-    'invoice_item:view','invoice_item:create','invoice_item:read','invoice_item:update'
-
-)
-WHERE r.name = 'company_user';
-
--- ===== Asignar permisos al rol individual_user =====
+-- company_user: ERP workspace, Marketplace B2B, Store preview/purchase basics.
 INSERT INTO role_permission (role_id, permission_id)
 SELECT r.id, p.id
 FROM rol r
 JOIN permission p ON p.name IN (
+    'client:view',
+    'client:create',
+    'client:read',
+    'client:update',
+    'client:delete',
+    'client:view:company',
 
-    -- PRODUCTS
-    'product:view','product:read',
+    'company:view',
+    'company:read',
+    'company:update',
 
-    -- INVOICES
-    'invoice:view','invoice:create','invoice:read'
-
-)
-WHERE r.name = 'individual_user';
-
--- CLIENTS VIEW SCOPES
-INSERT INTO permission (name) VALUES
-('client:view:all'),
-('client:view:company');
-
--- ADMIN → acceso total
-INSERT INTO role_permission (role_id, permission_id)
-SELECT r.id, p.id
-FROM rol r
-JOIN permission p ON p.name IN (
-    'client:view:all',
-    'client:view:company'
-)
-WHERE r.name = 'super_admin';
-
-
--- 🏢 MANAGER → solo su empresa
-INSERT INTO role_permission (role_id, permission_id)
-SELECT r.id, p.id
-FROM rol r
-JOIN permission p ON p.name IN (
-    'client:view:company'
-)
-WHERE r.name = 'company_user';
-
-
--- Manager también puede eliminar productos
-INSERT INTO role_permission (role_id, permission_id)
-SELECT r.id, p.id
-FROM rol r
-JOIN permission p ON p.name IN (
+    'product:view',
+    'product:create',
+    'product:read',
+    'product:update',
     'product:delete',
-)
-WHERE r.name = 'company_user';
 
--- USER → sin acceso a clientes, solo ver productos e interactuar con sus facturas
-INSERT INTO role_permission (role_id, permission_id)
-SELECT r.id, p.id
-FROM rol r
-JOIN permission p
-ON p.name = 'invoice:pay'
-WHERE r.name = 'individual_user';
-
-INSERT INTO permission (name, description)
-VALUES
-('invoice:submit', 'Submit draft invoice'),
-
-INSERT INTO role_permission (role_id, permission_id)
-SELECT r.id, p.id
-FROM rol r
-JOIN permission p ON p.name IN (
-
-    -- INVOICES
+    'invoice:view',
+    'invoice:create',
+    'invoice:read',
+    'invoice:update',
+    'invoice:pay',
+    'invoice:cancel',
     'invoice:submit',
 
-    -- INVOICE ITEMS
-    'invoice_item:delete','invoice_item:create','invoice_item:read','invoice_item:update'
+    'invoice_item:view',
+    'invoice_item:create',
+    'invoice_item:read',
+    'invoice_item:update',
+    'invoice_item:delete',
 
-)
-WHERE r.name = 'individual_user';
-
--- submit invoice también para company_user
-INSERT INTO role_permission (role_id, permission_id)
-SELECT r.id, p.id
-FROM rol r
-JOIN permission p ON p.name IN (
-    'invoice:submit'
-)
-WHERE r.name = 'company_user';
-
---Insertar permisos adicionales de payment
-INSERT INTO permission (name, description)
-VALUES
-('invoice_payment:read', 'Read invoice payments');
-
-INSERT INTO role_permission (role_id, permission_id)
-SELECT r.id, p.id
-FROM rol r
-JOIN permission p ON p.name IN (
-
-    -- INVOICE PAYMENTS
-    'invoice_payment:read'
-
-)
-WHERE r.name IN ('company_user', 'individual_user', 'super_admin');
-
-INSERT INTO role_permission (role_id, permission_id)
-SELECT r.id, p.id
-FROM rol r
-JOIN permission p ON p.name IN (
-
-    -- INVOICE PAYMENTS
-    'invoice:cancel'
-
-)
-WHERE r.name IN ('company_user');
-
-INSERT INTO role_permission (role_id, permission_id)
-SELECT r.id, p.id
-FROM rol r
-JOIN permission p ON p.name IN (
-
-    -- INVOICE ITEM DELETE
-    'invoice_item:delete'
-
-)
-WHERE r.name IN ('company_user');
-
---Insertar permiso checkout de store
-INSERT INTO permission (name, description)
-VALUES
-('store:checkout', 'Checkout invoice draft');
-
-INSERT INTO role_permission (role_id, permission_id)
-SELECT r.id, p.id
-FROM rol r
-JOIN permission p ON p.name IN (
-
-    -- CHECKOUT INVOICE STORE
+    'invoice_payment:read',
     'store:checkout'
-
 )
-WHERE r.name IN ('individual_user', 'super_admin', 'company_user');
+WHERE r.name = 'company_user'
+ON CONFLICT DO NOTHING;
+
+-- individual_user: Store buyer and personal purchase access.
+INSERT INTO role_permission (role_id, permission_id)
+SELECT r.id, p.id
+FROM rol r
+JOIN permission p ON p.name IN (
+    'product:view',
+    'product:read',
+
+    'invoice:view',
+    'invoice:create',
+    'invoice:read',
+    'invoice:pay',
+    'invoice:submit',
+
+    'invoice_item:view',
+    'invoice_item:create',
+    'invoice_item:read',
+    'invoice_item:update',
+    'invoice_item:delete',
+
+    'invoice_payment:read',
+    'store:checkout'
+)
+WHERE r.name = 'individual_user'
+ON CONFLICT DO NOTHING;
