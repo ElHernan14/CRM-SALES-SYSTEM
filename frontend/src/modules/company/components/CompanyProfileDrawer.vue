@@ -7,6 +7,7 @@ import { toast } from 'vue-sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { getErrorMessage } from '@/shared/utils/error-handler';
 
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 
@@ -137,13 +138,8 @@ async function submit() {
     });
 
     emit('update:open', false);
-  } catch (error: any) {
-    const message =
-      error?.response?.data?.errorMessage ??
-      error?.response?.data?.message ??
-      'Unable to update company information';
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Unable to update company information'));
   }
 }
 </script>

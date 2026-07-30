@@ -1,4 +1,4 @@
-import { QueryClient } from "@tanstack/vue-query";
+import { QueryClient } from '@tanstack/vue-query';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -6,6 +6,9 @@ export const queryClient = new QueryClient({
       retry: 1,
       staleTime: 1000 * 60,
       refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: 0,
     },
   },
 });

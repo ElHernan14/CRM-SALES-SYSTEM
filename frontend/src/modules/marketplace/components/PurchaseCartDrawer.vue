@@ -16,6 +16,7 @@ import {
 import { useQueryClient } from '@tanstack/vue-query';
 
 import { Button } from '@/components/ui/button';
+import { getErrorMessage } from '@/shared/utils/error-handler';
 
 import {
   Sheet,
@@ -156,13 +157,8 @@ async function checkout() {
     emit('update:open', false);
 
     emit('checkoutCompleted', response.invoice_id);
-  } catch (error: any) {
-    const message =
-      error?.response?.data?.errorMessage ??
-      error?.response?.data?.message ??
-      'Failed to complete checkout';
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Failed to complete checkout'));
   }
 }
 
@@ -183,10 +179,8 @@ async function updateQuantity(item: MarketplaceCartItem, nextQuantity: number) {
     await synchronizeCart();
 
     toast.success('Purchase quantity updated');
-  } catch (error: any) {
-    const message = error?.response?.data?.errorMessage ?? 'Failed to update quantity';
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Failed to update quantity'));
   } finally {
     processingItemId.value = null;
   }
@@ -207,10 +201,8 @@ async function deleteItem(item: MarketplaceCartItem) {
     await synchronizeCart();
 
     toast.success('Product removed from purchase');
-  } catch (error: any) {
-    const message = error?.response?.data?.errorMessage ?? 'Failed to remove product';
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Failed to remove product'));
   } finally {
     processingItemId.value = null;
   }

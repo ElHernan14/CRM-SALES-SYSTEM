@@ -22,6 +22,7 @@ import { useCategories } from '@/modules/categories/composables/useCategories';
 import { useProductTypes } from '@/modules/product-types/composables/useProductTypes';
 
 import { useCreateProduct } from '../composables/useCreateProduct';
+import { getErrorMessage } from '@/shared/utils/error-handler';
 
 const props = defineProps<{
   open: boolean;
@@ -184,11 +185,8 @@ async function onSubmit() {
 
     emit('update:open', false);
     emit('created', product.id);
-  } catch (error: any) {
-    console.log(error);
-    const message = error?.response?.data?.errorMessage ?? 'Failed to create product';
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Failed to create product'));
   }
 }
 

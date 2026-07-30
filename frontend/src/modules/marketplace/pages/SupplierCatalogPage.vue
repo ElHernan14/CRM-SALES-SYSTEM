@@ -45,6 +45,7 @@ import { useProductTypes } from '@/modules/product-types/composables/useProductT
 
 import { getCompanyCoverUrl, getCompanyLogoUrl } from '@/shared/utils/assets';
 import { getProductImageUrl } from '@/shared/utils/assets';
+import { getErrorMessage } from '@/shared/utils/error-handler';
 
 import { getMarketplacePurchaseCart } from '../api/marketplace-purchase-cart.api';
 
@@ -126,6 +127,17 @@ const advancedFiltersCount = computed(() => {
     sortColumn.value !== 'name' ? sortColumn.value : '',
     order.value !== 'asc' ? order.value : '',
   ].filter(Boolean).length;
+});
+
+const hasActiveFilters = computed(() => {
+  return (
+    search.value.trim() !== '' ||
+    kind.value !== 'all' ||
+    categoryId.value !== 'all' ||
+    typeId.value !== 'all' ||
+    minPrice.value !== '' ||
+    maxPrice.value !== ''
+  );
 });
 
 const { data, isLoading, isError } = useStoreProducts(productParams);
@@ -222,14 +234,8 @@ async function addProductToCart(
     }
 
     return true;
-  } catch (error: any) {
-    console.log('error ', error);
-    const message =
-      error?.response?.data?.errorMessage ??
-      error?.response?.data?.message ??
-      'Failed to add product to purchase';
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Failed to add product to purchase'));
 
     return false;
   } finally {
@@ -335,9 +341,7 @@ const isAddingToCart = computed(() => {
   );
 });
 
-function handleCheckoutCompleted(invoiceId: number) {
-  console.log('Purchase checkout completed:', invoiceId);
-
+function handleCheckoutCompleted(_invoiceId: number) {
   activeSellerCompanyId.value = null;
 }
 </script>
@@ -359,6 +363,8 @@ function handleCheckoutCompleted(invoiceId: number) {
           :src="supplierCover"
           :alt="`${supplierName} cover`"
           class="absolute inset-0 h-full w-full object-cover"
+          decoding="async"
+          fetchpriority="high"
         />
 
         <div
@@ -383,6 +389,7 @@ function handleCheckoutCompleted(invoiceId: number) {
                   :src="supplierLogo"
                   :alt="supplierName"
                   class="h-full w-full object-contain p-2"
+                  decoding="async"
                 />
 
                 <Building2 v-else class="h-7 w-7 text-muted-foreground" />
@@ -635,10 +642,18 @@ function handleCheckoutCompleted(invoiceId: number) {
 
       <EmptyState
         v-else-if="products.length === 0"
-        title="No products found"
-        description="Try changing your catalog filters."
+        :title="hasActiveFilters ? 'No products match your filters' : 'No products available'"
+        :description="
+          hasActiveFilters
+            ? 'Try changing your catalog filters.'
+            : 'This supplier has no published products yet.'
+        "
         :icon="PackageSearch"
-      />
+      >
+        <Button v-if="hasActiveFilters" variant="outline" size="sm" @click="clearFilters">
+          Clear filters
+        </Button>
+      </EmptyState>
 
       <template v-else>
         <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -662,6 +677,8 @@ function handleCheckoutCompleted(invoiceId: number) {
                   :src="getProductImageUrl(product.image_path)!"
                   :alt="product.name"
                   class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  loading="lazy"
+                  decoding="async"
                 />
 
                 <div
@@ -760,12 +777,14 @@ function handleCheckoutCompleted(invoiceId: number) {
                   :disabled="product.available_stock <= 0 || isAddingToCart"
                   @click="addToPurchase(product)"
                 >
-                  <Loader2
-                    v-if="addingProductId === product.id"
-                    class="mr-2 h-4 w-4 animate-spin"
-                  />
+                  <span class="mr-2 flex h-4 w-4 items-center justify-center">
+                    <Loader2
+                      v-if="addingProductId === product.id"
+                      class="h-4 w-4 animate-spin"
+                    />
 
-                  <ShoppingCart v-else class="mr-2 h-4 w-4" />
+                    <ShoppingCart v-else class="h-4 w-4" />
+                  </span>
 
                   {{ addingProductId === product.id ? 'Adding...' : 'Add' }}
                 </Button>

@@ -5,6 +5,7 @@ import { toast } from 'vue-sonner';
 import { useCategories } from '@/modules/categories/composables/useCategories';
 import { useProductTypes } from '@/modules/product-types/composables/useProductTypes';
 import { useUpdateProduct } from '../composables/useUpdateProduct';
+import { getErrorMessage } from '@/shared/utils/error-handler';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -196,13 +197,8 @@ async function onSubmit() {
 
     toast.success('Product updated');
     emit('update:open', false);
-  } catch (error: any) {
-    const message =
-      error?.response?.data?.errorMessage ??
-      error?.response?.data?.message ??
-      'Failed to update product';
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Failed to update product'));
   }
 }
 

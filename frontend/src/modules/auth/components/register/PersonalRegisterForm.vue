@@ -16,6 +16,7 @@ import { toast } from 'vue-sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { getErrorMessage } from '@/shared/utils/error-handler';
 
 import { useRegister } from '../../composables/useRegister';
 
@@ -119,13 +120,8 @@ async function submit() {
       password: form.password,
       phone: form.phone.trim() || undefined,
     });
-  } catch (error: any) {
-    const message =
-      error?.response?.data?.errorMessage ??
-      error?.response?.data?.message ??
-      'Unable to create your account';
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Unable to create your account'));
   }
 }
 // Validate number input for minPrice and maxPrice

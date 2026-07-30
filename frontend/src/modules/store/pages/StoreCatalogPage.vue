@@ -14,6 +14,7 @@ import {
 } from 'lucide-vue-next';
 
 import { useRoute, useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,9 +37,12 @@ import type { StoreProduct } from '../types/store-product.types';
 import { getCompanyCoverUrl, getCompanyLogoUrl } from '@/shared/utils/assets';
 
 import { useStoreBusiness } from '../composables/useStoreBusiness';
+import { useAuthStore } from '@/modules/auth/stores/auth.store';
 
 const route = useRoute();
 const router = useRouter();
+const auth = useAuthStore();
+const { user } = storeToRefs(auth);
 
 const search = ref(getQueryString(route.query.search));
 
@@ -334,6 +338,18 @@ const advancedFiltersCount = computed(() => {
   ].filter(Boolean).length;
 });
 
+const hasActiveFilters = computed(() => {
+  return (
+    debouncedSearch.value !== '' ||
+    companyId.value !== '' ||
+    categoryId.value !== 'all' ||
+    typeId.value !== 'all' ||
+    kind.value !== 'all' ||
+    minPrice.value !== '' ||
+    maxPrice.value !== ''
+  );
+});
+
 function clearFilters() {
   search.value = '';
   debouncedSearch.value = '';
@@ -362,6 +378,10 @@ function openProduct(product: StoreProduct) {
 }
 
 function addProduct(product: StoreProduct) {
+  if (user.value?.company_id && product.company_id === user.value.company_id) {
+    return;
+  }
+
   return addToCart(product, 1, true);
 }
 
@@ -943,10 +963,18 @@ function validateNumberInput(event: KeyboardEvent) {
 
       <EmptyState
         v-else-if="products.length === 0"
-        title="No products found"
-        description="Try adjusting your search or filters."
+        :title="hasActiveFilters ? 'No products match your filters' : 'No products available'"
+        :description="
+          hasActiveFilters
+            ? 'Try adjusting your search, category, business or price range.'
+            : 'Published products from Nexora businesses will appear here.'
+        "
         :icon="Search"
-      />
+      >
+        <Button v-if="hasActiveFilters" variant="outline" size="sm" @click="clearFilters">
+          Clear filters
+        </Button>
+      </EmptyState>
 
       <template v-else>
         <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -956,6 +984,7 @@ function validateNumberInput(event: KeyboardEvent) {
             :product="product"
             :adding="addingProductId === product.id"
             :actions-disabled="isAdding"
+            :is-own-company="user?.company_id === product.company_id"
             @view="openProduct"
             @add="addProduct"
           />

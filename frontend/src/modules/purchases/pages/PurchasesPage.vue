@@ -140,6 +140,10 @@ const rows = computed(() =>
   }))
 );
 
+const hasActiveFilters = computed(() => {
+  return supplierSearch.value.trim() !== '' || statusInvoice.value !== 'all';
+});
+
 /*
  * Estos KPIs representan únicamente los registros
  * de la página actualmente cargada.
@@ -454,10 +458,18 @@ function openPurchaseForPayment(purchase: PurchaseListItem) {
       <!-- Empty -->
       <EmptyState
         v-else-if="rows.length === 0"
-        title="No purchases found"
-        description="Completed marketplace checkouts will appear here."
+        :title="hasActiveFilters ? 'No purchases match your filters' : 'No purchases yet'"
+        :description="
+          hasActiveFilters
+            ? 'Try changing the supplier search or purchase status.'
+            : 'Completed marketplace checkouts will appear here.'
+        "
         :icon="ShoppingBag"
-      />
+      >
+        <Button v-if="hasActiveFilters" variant="outline" size="sm" @click="clearFilters">
+          Clear filters
+        </Button>
+      </EmptyState>
 
       <!-- Table -->
       <template v-else>

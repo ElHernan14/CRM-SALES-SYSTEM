@@ -32,6 +32,8 @@ const emit = defineEmits<{
         :src="getCompanyCoverUrl(business.cover_image)!"
         :alt="`${business.name} cover`"
         class="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+        loading="lazy"
+        decoding="async"
       />
 
       <div
@@ -59,6 +61,8 @@ const emit = defineEmits<{
             :src="getCompanyLogoUrl(business.logo)!"
             :alt="`${business.name} logo`"
             class="h-full w-full object-contain p-1.5"
+            loading="lazy"
+            decoding="async"
           />
 
           <Building2 v-else class="h-6 w-6 text-primary" />

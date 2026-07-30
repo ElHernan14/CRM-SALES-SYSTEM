@@ -35,6 +35,7 @@ import { z } from 'zod';
 import { useRouter } from 'vue-router';
 
 import { useUploadCompanyLogo } from '@/modules/company/composables/useUploadCompanyLogo';
+import { getErrorMessage } from '@/shared/utils/error-handler';
 
 const router = useRouter();
 
@@ -353,13 +354,8 @@ async function submit() {
     });
 
     currentStep.value = 3;
-  } catch (error: any) {
-    const message =
-      error?.response?.data?.errorMessage ??
-      error?.response?.data?.message ??
-      'Unable to create the business workspace';
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Unable to create the business workspace'));
   }
 }
 
@@ -372,13 +368,8 @@ async function finishBusinessSetup() {
     }
 
     await router.replace('/erp/dashboard');
-  } catch (error: any) {
-    const message =
-      error?.response?.data?.errorMessage ??
-      error?.response?.data?.message ??
-      'Unable to upload the company logo';
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Unable to upload the company logo'));
   }
 }
 

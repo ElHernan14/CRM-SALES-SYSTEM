@@ -5,6 +5,7 @@ import { toast } from 'vue-sonner';
 
 import { useUiStore } from '@/shared/stores/ui.store';
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
+import { getErrorMessage } from '@/shared/utils/error-handler';
 import { storeToRefs } from 'pinia';
 
 import type { InvoiceItem } from '../types/invoice-item.types';
@@ -188,11 +189,8 @@ async function addItem() {
 
     clearSelectedProduct();
     newItemQuantity.value = '1';
-  } catch (error: any) {
-    const message =
-      error?.response?.data?.errorMessage ?? error?.response?.data?.message ?? 'Failed to add item';
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Failed to add item'));
   }
 }
 
@@ -210,8 +208,8 @@ async function updateQuantity(item: InvoiceItem, nextQuantity: number) {
     });
 
     toast.success('Item quantity updated');
-  } catch {
-    toast.error('Failed to update item');
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Failed to update item'));
   }
 }
 
@@ -227,12 +225,16 @@ function confirmDeleteItem(item: InvoiceItem) {
     onConfirm: async () => {
       if (!props.invoiceId) return;
 
-      await deleteItemMutation.mutateAsync({
-        invoiceId: props.invoiceId,
-        itemId: item.id,
-      });
+      try {
+        await deleteItemMutation.mutateAsync({
+          invoiceId: props.invoiceId,
+          itemId: item.id,
+        });
 
-      toast.success('Item removed');
+        toast.success('Item removed');
+      } catch (error) {
+        toast.error(getErrorMessage(error, 'Failed to remove item'));
+      }
     },
   });
 }
@@ -361,12 +363,11 @@ function confirmDeleteItem(item: InvoiceItem) {
               :disabled="!selectedProduct || createItemMutation.isPending.value"
               @click="addItem"
             >
-              <Loader2
-                v-if="createItemMutation.isPending.value"
-                class="mr-2 h-4 w-4 animate-spin"
-              />
+              <span class="mr-2 flex h-4 w-4 items-center justify-center">
+                <Loader2 v-if="createItemMutation.isPending.value" class="h-4 w-4 animate-spin" />
 
-              <PackagePlus v-else class="mr-2 h-4 w-4" />
+                <PackagePlus v-else class="h-4 w-4" />
+              </span>
 
               {{ createItemMutation.isPending.value ? 'Adding...' : 'Add' }}
             </Button>

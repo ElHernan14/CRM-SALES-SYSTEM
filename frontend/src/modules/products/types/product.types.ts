@@ -27,6 +27,7 @@ export const ProductListItemSchema = z.object({
   price: z.number(),
 
   stock: z.number(),
+  reserved_stock: z.number().optional(),
   available_stock: z.number().optional(),
 
   image_path: z.string().nullable().optional(),
@@ -56,6 +57,23 @@ export const GetProductsRequestSchema = z.object({
 
   page: z.number().default(1),
   limit: z.number().default(10),
+  sort_column: z
+    .enum([
+      'id',
+      'name',
+      'description',
+      'kind',
+      'type',
+      'category',
+      'price',
+      'stock',
+      'reserved_stock',
+      'available_stock',
+      'status',
+      'created_at',
+    ])
+    .optional(),
+  order: z.enum(['asc', 'desc']).optional(),
 });
 
 export type GetProductsRequest = z.infer<typeof GetProductsRequestSchema>;
@@ -105,6 +123,7 @@ export const ProductDetailResponseSchema = z.object({
 
   price: z.number(),
   stock: z.number().optional(),
+  reserved_stock: z.number().optional(),
   available_stock: z.number().optional(),
 
   image_path: z.string().nullable().optional(),

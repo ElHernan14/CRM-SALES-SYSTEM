@@ -112,6 +112,7 @@ const params = computed(() => ({
 
   sort_column: sortColumn.value,
   order: order.value,
+  include_self: true,
 }));
 
 const { data, isLoading, isFetching, isError } = useStoreBusinesses(params);
@@ -132,6 +133,10 @@ const totalPages = computed(() => {
 
 const isRefreshing = computed(() => {
   return isFetching.value && !isLoading.value;
+});
+
+const hasActiveFilters = computed(() => {
+  return debouncedSearch.value !== '' || categoryId.value !== 'all';
 });
 
 const selectedCategory = computed(() => {
@@ -423,10 +428,18 @@ function clearFilters() {
 
       <EmptyState
         v-else-if="businesses.length === 0"
-        title="No businesses found"
-        description="Try changing the company category or search term."
+        :title="hasActiveFilters ? 'No businesses match your filters' : 'No businesses available'"
+        :description="
+          hasActiveFilters
+            ? 'Try changing the company category or search term.'
+            : 'Published supplier businesses will appear here.'
+        "
         :icon="Search"
-      />
+      >
+        <Button v-if="hasActiveFilters" variant="outline" size="sm" @click="clearFilters">
+          Clear filters
+        </Button>
+      </EmptyState>
 
       <template v-else>
         <div class="grid items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-3">

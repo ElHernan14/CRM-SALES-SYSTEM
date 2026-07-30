@@ -31,6 +31,8 @@ export const StoreBusinessesParamsSchema = z.object({
   sort_column: z.enum(['name', 'created_at', 'total_products']).optional(),
 
   order: z.enum(['asc', 'desc']).optional(),
+
+  include_self: z.boolean().optional(),
 });
 
 export type StoreBusinessesParams = z.infer<typeof StoreBusinessesParamsSchema>;

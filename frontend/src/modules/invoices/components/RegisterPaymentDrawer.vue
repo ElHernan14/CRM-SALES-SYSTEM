@@ -5,6 +5,7 @@ import { CreditCard, Loader2 } from 'lucide-vue-next';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { getErrorMessage } from '@/shared/utils/error-handler';
 
 import {
   Sheet,
@@ -90,8 +91,8 @@ async function onSubmit() {
 
     toast.success('Payment registered');
     emit('update:open', false);
-  } catch {
-    toast.error('Failed to register payment');
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Failed to register payment'));
   }
 }
 </script>

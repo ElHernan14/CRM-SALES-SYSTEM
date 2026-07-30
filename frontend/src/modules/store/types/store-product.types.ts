@@ -52,7 +52,9 @@ export const GetStoreProductsRequestSchema = z.object({
   min_price: z.number().min(0).optional(),
   max_price: z.number().min(0).optional(),
 
-  sort_column: z.enum(['name', 'created_at', 'type', 'price', 'stock']).optional(),
+  sort_column: z
+    .enum(['name', 'created_at', 'type', 'price', 'stock', 'reserved_stock', 'available_stock'])
+    .optional(),
 
   order: z.enum(['asc', 'desc']).optional(),
 });

@@ -18,6 +18,7 @@ defineProps<{
   product: StoreProduct;
   adding?: boolean;
   actionsDisabled?: boolean;
+  isOwnCompany?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -85,6 +86,8 @@ function getAvailabilityDotClass(stock: number) {
         :src="getProductImageUrl(product.image_path)!"
         :alt="product.name"
         class="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+        loading="lazy"
+        decoding="async"
       />
 
       <div
@@ -122,6 +125,13 @@ function getAvailabilityDotClass(stock: number) {
           </span>
         </p>
       </div>
+
+      <span
+        v-if="isOwnCompany"
+        class="absolute right-4 top-16 max-w-[65%] truncate rounded-full border border-primary/20 bg-background/90 px-3 py-1.5 text-xs font-semibold text-primary shadow-sm backdrop-blur"
+      >
+        Published by your business
+      </span>
     </button>
 
     <!-- PRODUCT CONTENT -->
@@ -195,7 +205,7 @@ function getAvailabilityDotClass(stock: number) {
         <Button
           type="button"
           class="shrink-0 rounded-full px-5"
-          :disabled="product.available_stock <= 0 || actionsDisabled"
+          :disabled="isOwnCompany || product.available_stock <= 0 || actionsDisabled"
           @click="emit('add', product)"
         >
           <span class="mr-2 flex h-4 w-4 items-center justify-center">
@@ -204,9 +214,13 @@ function getAvailabilityDotClass(stock: number) {
             <ShoppingBag v-else class="h-4 w-4" />
           </span>
 
-          {{ adding ? 'Adding...' : 'Add' }}
+          {{ isOwnCompany ? 'Your product' : adding ? 'Adding...' : 'Add' }}
         </Button>
       </div>
+
+      <p v-if="isOwnCompany" class="mt-3 text-xs leading-5 text-muted-foreground">
+        You can preview this product in Store, but your business cannot purchase its own catalog.
+      </p>
     </div>
   </article>
 </template>

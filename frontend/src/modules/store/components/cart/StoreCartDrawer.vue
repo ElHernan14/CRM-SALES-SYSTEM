@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/sheet';
 
 import { getProductImageUrl } from '@/shared/utils/assets';
+import { getErrorMessage } from '@/shared/utils/error-handler';
 
 import { useStoreUiStore } from '../../stores/store-ui.store';
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
@@ -138,13 +139,8 @@ async function updateQuantity(cart: StoreSellerCart, item: StoreCartItem, quanti
     });
 
     await synchronizeStoreCart();
-  } catch (error: any) {
-    const message =
-      error?.response?.data?.errorMessage ??
-      error?.response?.data?.message ??
-      'Failed to update cart quantity';
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Failed to update cart quantity'));
   } finally {
     processingItemId.value = null;
   }
@@ -163,13 +159,8 @@ async function deleteItem(cart: StoreSellerCart, item: StoreCartItem) {
     await synchronizeStoreCart();
 
     toast.success('Product removed from cart');
-  } catch (error: any) {
-    const message =
-      error?.response?.data?.errorMessage ??
-      error?.response?.data?.message ??
-      'Failed to remove product';
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Failed to remove product'));
   } finally {
     processingItemId.value = null;
   }

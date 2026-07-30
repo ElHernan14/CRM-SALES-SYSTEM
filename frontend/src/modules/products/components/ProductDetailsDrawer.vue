@@ -24,7 +24,7 @@ const emit = defineEmits<{
 
 <template>
   <Sheet :open="open" @update:open="emit('update:open', $event)">
-    <SheetContent class="w-full sm:max-w-xl">
+    <SheetContent class="w-full overflow-y-auto sm:max-w-xl">
       <SheetHeader>
         <SheetTitle>
           {{ product?.name ?? 'Product details' }}
@@ -32,10 +32,9 @@ const emit = defineEmits<{
 
         <SheetDescription> Product catalog information and inventory snapshot. </SheetDescription>
       </SheetHeader>
-
       <div
         v-if="product"
-        class="relative h-56 overflow-hidden rounded-2xl border border-border bg-muted/30"
+        class="relative mt-3 h-56 overflow-hidden rounded-2xl border border-border bg-muted/30"
       >
         <img
           v-if="getProductImageUrl(product.image_path)"
@@ -79,7 +78,23 @@ const emit = defineEmits<{
           </p>
         </div>
 
-        <div class="grid gap-4 sm:grid-cols-2">
+        <div class="grid gap-4 sm:grid-cols-3">
+          <div class="rounded-xl border border-border bg-card p-4">
+            <p class="text-xs text-muted-foreground">Kind</p>
+
+            <p class="mt-2 text-sm font-medium capitalize text-foreground">
+              {{ product.kind }}
+            </p>
+          </div>
+
+          <div class="rounded-xl border border-border bg-card p-4">
+            <p class="text-xs text-muted-foreground">Category</p>
+
+            <p class="mt-2 text-sm font-medium text-foreground">
+              {{ product.category }}
+            </p>
+          </div>
+
           <div class="rounded-xl border border-border bg-card p-4">
             <p class="text-xs text-muted-foreground">Type</p>
 
@@ -87,34 +102,87 @@ const emit = defineEmits<{
               {{ product.type }}
             </p>
           </div>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div class="rounded-xl border border-border bg-card p-4">
+            <p class="text-xs text-muted-foreground">Price</p>
+
+            <p class="mt-2 text-lg font-semibold text-foreground">${{ product.price.toFixed(2) }}</p>
+          </div>
 
           <div class="rounded-xl border border-border bg-card p-4">
             <p class="text-xs text-muted-foreground">Status</p>
 
-            <p class="mt-2 text-sm font-medium text-foreground">
-              {{ product.status === 1 ? 'Active' : 'Inactive' }}
-            </p>
-          </div>
+            <div class="mt-2">
+              <span
+                class="inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold"
+                :class="
+                  product.status === 1
+                    ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                    : 'border-border bg-muted text-muted-foreground'
+                "
+              >
+                <span
+                  class="h-1.5 w-1.5 rounded-full"
+                  :class="product.status === 1 ? 'bg-emerald-500' : 'bg-muted-foreground'"
+                />
 
-          <div class="rounded-xl border border-border bg-card p-4">
-            <p class="text-xs text-muted-foreground">Price</p>
-
-            <p class="mt-2 text-sm font-medium text-foreground">${{ product.price.toFixed(2) }}</p>
-          </div>
-
-          <div class="rounded-xl border border-border bg-card p-4">
-            <p class="text-xs text-muted-foreground">Stock</p>
-
-            <p class="mt-2 text-sm font-medium text-foreground">
-              {{ product.stock }}
-            </p>
+                {{ product.status === 1 ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
           </div>
         </div>
 
-        <div class="rounded-xl border border-border bg-muted/40 p-4">
-          <p class="text-xs text-muted-foreground">Tenant</p>
+        <div class="rounded-xl border border-border bg-card p-4">
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <p class="text-xs text-muted-foreground">Inventory snapshot</p>
 
-          <p class="mt-2 text-sm text-foreground">Company ID: {{ product.company_id }}</p>
+              <p class="mt-1 text-sm text-muted-foreground">
+                Physical stock, units reserved by drafts, and quantity available to sell.
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-4 grid gap-3 sm:grid-cols-3">
+            <div class="rounded-lg border border-border bg-muted/30 p-3">
+              <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                Stock
+              </p>
+
+              <p class="mt-1 text-xl font-semibold text-foreground">
+                {{ product.stock }}
+              </p>
+            </div>
+
+            <div class="rounded-lg border border-border bg-muted/30 p-3">
+              <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                Reserved
+              </p>
+
+              <p class="mt-1 text-xl font-semibold text-amber-600 dark:text-amber-400">
+                {{ product.reserved_stock ?? 0 }}
+              </p>
+            </div>
+
+            <div class="rounded-lg border border-border bg-muted/30 p-3">
+              <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                Available
+              </p>
+
+              <p
+                class="mt-1 text-xl font-semibold"
+                :class="
+                  (product.available_stock ?? product.stock - (product.reserved_stock ?? 0)) > 0
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-destructive'
+                "
+              >
+                {{ product.available_stock ?? product.stock - (product.reserved_stock ?? 0) }}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </SheetContent>

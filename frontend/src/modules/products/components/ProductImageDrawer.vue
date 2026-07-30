@@ -6,6 +6,7 @@ import { ImagePlus, Loader2, Upload, X } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
 import { Button } from '@/components/ui/button';
+import { getErrorMessage } from '@/shared/utils/error-handler';
 
 import {
   Sheet,
@@ -115,10 +116,8 @@ async function uploadImage() {
 
     emit('uploaded');
     emit('update:open', false);
-  } catch (error: any) {
-    const message = error?.response?.data?.errorMessage ?? 'Failed to upload product image';
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Failed to upload product image'));
   }
 }
 </script>
@@ -221,9 +220,11 @@ async function uploadImage() {
           </Button>
 
           <Button type="button" :disabled="!selectedFile || isUploading" @click="uploadImage">
-            <Loader2 v-if="isUploading" class="mr-2 h-4 w-4 animate-spin" />
+            <span class="mr-2 flex h-4 w-4 items-center justify-center">
+              <Loader2 v-if="isUploading" class="h-4 w-4 animate-spin" />
 
-            <Upload v-else class="mr-2 h-4 w-4" />
+              <Upload v-else class="h-4 w-4" />
+            </span>
 
             {{ isUploading ? 'Uploading...' : 'Upload image' }}
           </Button>

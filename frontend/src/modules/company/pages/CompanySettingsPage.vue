@@ -31,6 +31,7 @@ import EmptyState from '@/shared/components/erp/EmptyState.vue';
 import { useCompanyMe } from '@/modules/company/composables/useCompanyMe';
 
 import { getCompanyCoverUrl, getCompanyLogoUrl } from '@/shared/utils/assets';
+import { getErrorMessage } from '@/shared/utils/error-handler';
 
 const props = withDefaults(
   defineProps<{
@@ -103,13 +104,8 @@ async function uploadLogo(file: File) {
     });
 
     logoOpen.value = false;
-  } catch (error: any) {
-    const message =
-      error?.response?.data?.errorMessage ??
-      error?.response?.data?.message ??
-      'Unable to upload company logo';
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Unable to upload company logo'));
   }
 }
 
@@ -122,13 +118,8 @@ async function uploadCover(file: File) {
     });
 
     coverOpen.value = false;
-  } catch (error: any) {
-    const message =
-      error?.response?.data?.errorMessage ??
-      error?.response?.data?.message ??
-      'Unable to upload company cover';
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Unable to upload company cover'));
   }
 }
 </script>

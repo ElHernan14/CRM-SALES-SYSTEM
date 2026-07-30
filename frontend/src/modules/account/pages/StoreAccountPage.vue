@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 import EmptyState from '@/shared/components/erp/EmptyState.vue';
+import { getErrorMessage } from '@/shared/utils/error-handler';
 
 import { useClientProfile } from '../composables/useClientProfile';
 import { useUpdateClientProfile } from '../composables/useUpdateClientProfile';
@@ -209,13 +210,8 @@ async function saveProfile() {
     });
 
     editing.value = false;
-  } catch (error: any) {
-    const message =
-      error?.response?.data?.errorMessage ??
-      error?.response?.data?.message ??
-      'Unable to update your profile';
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Unable to update your profile'));
   }
 }
 

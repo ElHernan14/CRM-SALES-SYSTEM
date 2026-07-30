@@ -25,6 +25,7 @@ import {
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
 import { useClients } from '@/modules/clients/composables/useClients';
 import { useCreateInvoice } from '../composables/useCreateInvoice';
+import { getErrorMessage } from '@/shared/utils/error-handler';
 
 const props = defineProps<{
   open: boolean;
@@ -104,8 +105,8 @@ async function onSubmit() {
 
     emit('update:open', false);
     emit('created', invoice.id);
-  } catch {
-    toast.error('Failed to create invoice');
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Failed to create invoice'));
   }
 }
 </script>

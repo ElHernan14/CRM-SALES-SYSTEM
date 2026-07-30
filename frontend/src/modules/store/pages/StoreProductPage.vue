@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 
 import { useRoute, useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia';
 
 import {
   ArrowLeft,
@@ -28,9 +29,12 @@ import { getProductImageUrl } from '@/shared/utils/assets';
 
 import { useStoreProduct } from '../composables/useStoreProduct';
 import { useAddToStoreCart } from '../composables/useAddToStoreCart';
+import { useAuthStore } from '@/modules/auth/stores/auth.store';
 
 const route = useRoute();
 const router = useRouter();
+const auth = useAuthStore();
+const { user } = storeToRefs(auth);
 
 const productId = computed<number | null>(() => {
   const id = Number(route.params.productId);
@@ -58,6 +62,10 @@ const availableStock = computed(() => {
 
 const isService = computed(() => {
   return product.value?.kind === 'service';
+});
+
+const isOwnCompanyProduct = computed(() => {
+  return Boolean(user.value?.company_id && product.value?.company_id === user.value.company_id);
 });
 
 const canDecrease = computed(() => {
@@ -127,6 +135,10 @@ const availabilityClass = computed(() => {
 });
 
 const canAddToCart = computed(() => {
+  if (isOwnCompanyProduct.value) {
+    return false;
+  }
+
   if (adding.value) {
     return false;
   }
@@ -141,6 +153,10 @@ const canAddToCart = computed(() => {
 const addButtonLabel = computed(() => {
   if (adding.value) {
     return 'Adding to cart...';
+  }
+
+  if (isOwnCompanyProduct.value) {
+    return 'Your product';
   }
 
   return isService.value ? 'Add service to cart' : 'Add to cart';
@@ -447,9 +463,15 @@ function openCategory() {
                 <p class="text-sm font-semibold">Build your order</p>
 
                 <p class="mt-1 text-xs leading-5 text-muted-foreground">
-                  Select the quantity before adding this
-                  {{ isService ? 'service' : 'product' }}
-                  to your cart.
+                  <template v-if="isOwnCompanyProduct">
+                    Preview how this product appears to buyers. Self-purchase is disabled.
+                  </template>
+
+                  <template v-else>
+                    Select the quantity before adding this
+                    {{ isService ? 'service' : 'product' }}
+                    to your cart.
+                  </template>
                 </p>
               </div>
 
@@ -529,8 +551,14 @@ function openCategory() {
             <div class="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <Check class="h-3.5 w-3.5 text-primary" />
 
-              Your order will be connected to
-              {{ product.company_name }}.
+              <span v-if="isOwnCompanyProduct">
+                Published by your business. Purchasing is unavailable.
+              </span>
+
+              <span v-else>
+                Your order will be connected to
+                {{ product.company_name }}.
+              </span>
             </div>
           </div>
         </div>

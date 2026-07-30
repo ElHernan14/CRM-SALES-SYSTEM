@@ -36,6 +36,7 @@ import SectionCard from '@/shared/components/erp/SectionCard.vue';
 import EmptyState from '@/shared/components/erp/EmptyState.vue';
 import DataTable from '@/shared/components/erp/DataTable.vue';
 import DataPagination from '@/shared/components/erp/DataPagination.vue';
+import { getErrorMessage } from '@/shared/utils/error-handler';
 
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import InvoiceDetailsDrawer from '../components/InvoiceDetailsDrawer.vue';
@@ -159,6 +160,10 @@ const rows = computed(() => {
   }));
 });
 
+const hasActiveFilters = computed(() => {
+  return buyerSearch.value.trim() !== '' || statusInvoice.value !== 'all';
+});
+
 function clearFilters() {
   statusInvoice.value = 'all';
   sortColumn.value = 'created_at';
@@ -195,6 +200,22 @@ function canCancel(status: string) {
   return status === 'pending';
 }
 
+function canSubmitInvoice(row: Record<string, unknown>) {
+  return row.status_invoice === 'draft' && Number(row.total_amount) > 0;
+}
+
+function getSubmitDisabledMessage(row: Record<string, unknown>) {
+  if (row.status_invoice !== 'draft') {
+    return '';
+  }
+
+  if (Number(row.total_amount) <= 0) {
+    return 'Add at least one item before submitting this invoice.';
+  }
+
+  return '';
+}
+
 // Invoice details drawer state
 const detailsOpen = ref(false);
 const selectedInvoiceId = ref<number | null>(null);
@@ -208,6 +229,12 @@ function openInvoiceDetails(row: Record<string, unknown>) {
 const submitMutation = useSubmitInvoice();
 
 function confirmSubmitInvoice(row: Record<string, unknown>) {
+  const disabledMessage = getSubmitDisabledMessage(row);
+  if (disabledMessage) {
+    toast.info(disabledMessage);
+    return;
+  }
+
   const id = Number(row.id);
 
   ui.openConfirm({
@@ -217,9 +244,13 @@ function confirmSubmitInvoice(row: Record<string, unknown>) {
     cancelText: 'Keep draft',
     variant: 'default',
     onConfirm: async () => {
-      await submitMutation.mutateAsync(id);
+      try {
+        await submitMutation.mutateAsync(id);
 
-      toast.success('Invoice submitted');
+        toast.success('Invoice submitted');
+      } catch (error) {
+        toast.error(getErrorMessage(error, 'Unable to submit invoice.'));
+      }
     },
   });
 }
@@ -237,9 +268,13 @@ function confirmCancelInvoice(row: Record<string, unknown>) {
     cancelText: 'Keep invoice',
     variant: 'destructive',
     onConfirm: async () => {
-      await cancelMutation.mutateAsync(id);
+      try {
+        await cancelMutation.mutateAsync(id);
 
-      toast.success('Invoice cancelled');
+        toast.success('Invoice cancelled');
+      } catch (error) {
+        toast.error(getErrorMessage(error, 'Unable to cancel invoice.'));
+      }
     },
   });
 }
@@ -359,10 +394,20 @@ function handleInvoiceCreated(invoiceId: number) {
 
       <EmptyState
         v-else-if="rows.length === 0"
-        title="No invoices found"
-        description="Invoices created in this workspace will appear here."
+        :title="hasActiveFilters ? 'No invoices match your filters' : 'No invoices yet'"
+        :description="
+          hasActiveFilters
+            ? 'Try changing the buyer search or invoice status.'
+            : 'Invoices created in this workspace will appear here.'
+        "
         :icon="FileText"
-      />
+      >
+        <Button v-if="hasActiveFilters" variant="outline" size="sm" @click="clearFilters">
+          Clear filters
+        </Button>
+
+        <Button v-else size="sm" @click="createOpen = true"> Create invoice </Button>
+      </EmptyState>
 
       <template v-else>
         <DataTable
@@ -434,11 +479,19 @@ function handleInvoiceCreated(invoiceId: number) {
 
                     <DropdownMenuItem
                       v-if="row.status_invoice === 'draft'"
+                      :disabled="!canSubmitInvoice(row)"
                       @click="confirmSubmitInvoice(row)"
                     >
                       <Send class="mr-2 h-4 w-4" />
                       Submit invoice
                     </DropdownMenuItem>
+
+                    <p
+                      v-if="getSubmitDisabledMessage(row)"
+                      class="max-w-64 px-2 py-1 text-xs leading-5 text-muted-foreground"
+                    >
+                      {{ getSubmitDisabledMessage(row) }}
+                    </p>
 
                     <DropdownMenuItem @click="openInvoicePayments(row)">
                       <CreditCard class="mr-2 h-4 w-4" />
@@ -543,11 +596,19 @@ function handleInvoiceCreated(invoiceId: number) {
 
                   <DropdownMenuItem
                     v-if="row.status_invoice === 'draft'"
+                    :disabled="!canSubmitInvoice(row)"
                     @click="confirmSubmitInvoice(row)"
                   >
                     <Send class="mr-2 h-4 w-4" />
                     Submit invoice
                   </DropdownMenuItem>
+
+                  <p
+                    v-if="getSubmitDisabledMessage(row)"
+                    class="max-w-64 px-2 py-1 text-xs leading-5 text-muted-foreground"
+                  >
+                    {{ getSubmitDisabledMessage(row) }}
+                  </p>
 
                   <DropdownMenuItem @click="openInvoicePayments(row)">
                     <CreditCard class="mr-2 h-4 w-4" />

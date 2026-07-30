@@ -14,14 +14,21 @@ export async function getStoreBusinesses(
   params: StoreBusinessesParams
 ): Promise<StoreBusinessesResponse> {
   const response = await http.get('/marketplace/suppliers', {
-    params,
+    params: {
+      ...params,
+      include_self: true,
+    },
   });
 
   return unwrapResponse(StoreBusinessesResponseSchema, response.data);
 }
 
 export async function getStoreBusiness(businessId: number): Promise<StoreBusiness> {
-  const response = await http.get(`/marketplace/suppliers/${businessId}`);
+  const response = await http.get(`/marketplace/suppliers/${businessId}`, {
+    params: {
+      include_self: true,
+    },
+  });
 
   return unwrapResponse(StoreBusinessSchema, response.data);
 }

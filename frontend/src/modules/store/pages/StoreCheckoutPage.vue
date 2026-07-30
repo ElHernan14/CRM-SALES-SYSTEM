@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import EmptyState from '@/shared/components/erp/EmptyState.vue';
 
 import { getProductImageUrl } from '@/shared/utils/assets';
+import { getErrorMessage } from '@/shared/utils/error-handler';
 
 import { useStoreCarts } from '../composables/useStoreCarts';
 import { useCheckoutAllStoreCarts } from '../composables/useCheckoutAllStoreCarts';
@@ -146,13 +147,8 @@ async function completeCheckout() {
         checkoutResult: response,
       },
     });
-  } catch (error: any) {
-    const message =
-      error?.response?.data?.errorMessage ??
-      error?.response?.data?.message ??
-      'Unable to complete checkout';
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Unable to complete checkout'));
   } finally {
     confirmingCheckout.value = false;
   }

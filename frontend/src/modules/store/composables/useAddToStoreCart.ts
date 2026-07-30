@@ -5,6 +5,7 @@ import { storeToRefs } from 'pinia';
 import { toast } from 'vue-sonner';
 
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
+import { getErrorMessage } from '@/shared/utils/error-handler';
 
 import { useStoreUiStore } from '../stores/store-ui.store';
 
@@ -54,6 +55,11 @@ export function useAddToStoreCart() {
 
     if (!user.value) {
       toast.error('Unable to identify your account');
+      return false;
+    }
+
+    if (user.value.company_id && product.company_id === user.value.company_id) {
+      toast.error('Your business cannot purchase its own products');
       return false;
     }
 
@@ -126,13 +132,8 @@ export function useAddToStoreCart() {
       }
 
       return true;
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.errorMessage ??
-        error?.response?.data?.message ??
-        'Failed to add product to cart';
-
-      toast.error(message);
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to add product to cart'));
 
       return false;
     } finally {

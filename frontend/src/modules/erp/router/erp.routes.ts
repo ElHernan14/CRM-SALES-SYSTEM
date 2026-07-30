@@ -1,5 +1,6 @@
 import ERPLayout from '@/modules/erp/layouts/ERPLayout.vue';
-import DashboardPage from '@/modules/dashboard/pages/DashboardPage.vue';
+
+const DashboardPage = () => import('@/modules/dashboard/pages/DashboardPage.vue');
 
 const ProductsPage = () => import('@/modules/products/pages/ProductsPage.vue');
 

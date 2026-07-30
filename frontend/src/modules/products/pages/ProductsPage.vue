@@ -30,6 +30,7 @@ import DataTable from '@/shared/components/erp/DataTable.vue';
 import DataPagination from '@/shared/components/erp/DataPagination.vue';
 import BulkActionBar from '@/shared/components/erp/BulkActionBar.vue';
 import ProductImageDrawer from '../components/ProductImageDrawer.vue';
+import { getErrorMessage } from '@/shared/utils/error-handler';
 
 import ProductsFilters from '../components/ProductsFilters.vue';
 import ProductDetailsDrawer from '../components/ProductDetailsDrawer.vue';
@@ -43,6 +44,19 @@ import { useUiStore } from '@/shared/stores/ui.store';
 import { useProducts } from '../composables/useProducts';
 import { useDeleteProduct } from '../composables/useDeleteProduct';
 import { useBulkDeleteProducts } from '../composables/useBulkDeleteProducts';
+
+type ProductSortColumn =
+  | 'id'
+  | 'name'
+  | 'kind'
+  | 'category'
+  | 'type'
+  | 'price'
+  | 'stock'
+  | 'reserved_stock'
+  | 'available_stock'
+  | 'status'
+  | 'created_at';
 
 // Store
 const auth = useAuthStore();
@@ -97,6 +111,8 @@ const typeId = ref('all');
 const minPrice = ref('');
 const maxPrice = ref('');
 const status = ref('1');
+const sortColumn = ref<ProductSortColumn>('id');
+const order = ref<'asc' | 'desc'>('desc');
 
 const productParams = computed(() => ({
   search: search.value || undefined,
@@ -117,12 +133,26 @@ const productParams = computed(() => ({
 
   page: page.value,
   limit: limit.value,
+  sort_column: sortColumn.value,
+  order: order.value,
 }));
 
-watch([search, kind, status, categoryId, typeId, minPrice, maxPrice], () => {
+watch([search, kind, status, categoryId, typeId, minPrice, maxPrice, sortColumn, order], () => {
   page.value = 1;
   selectedProductIds.value = [];
 });
+
+function handleSort(columnKey: string) {
+  const nextSortColumn = columnKey as ProductSortColumn;
+
+  if (sortColumn.value === nextSortColumn) {
+    order.value = order.value === 'asc' ? 'desc' : 'asc';
+    return;
+  }
+
+  sortColumn.value = nextSortColumn;
+  order.value = 'desc';
+}
 
 watch(page, () => {
   selectedProductIds.value = [];
@@ -133,6 +163,8 @@ function clearFilters() {
 
   kind.value = 'all';
   status.value = 'all';
+  sortColumn.value = 'id';
+  order.value = 'desc';
 
   categoryId.value = 'all';
   typeId.value = 'all';
@@ -164,11 +196,6 @@ const columns = [
     cellClass: 'whitespace-nowrap',
   },
   {
-    key: 'category',
-    label: 'Category',
-    cellClass: 'min-w-[170px]',
-  },
-  {
     key: 'type',
     label: 'Type',
     cellClass: 'min-w-[150px]',
@@ -181,6 +208,16 @@ const columns = [
   {
     key: 'stock',
     label: 'Stock',
+    cellClass: 'whitespace-nowrap',
+  },
+  {
+    key: 'reserved_stock',
+    label: 'Reserved',
+    cellClass: 'whitespace-nowrap',
+  },
+  {
+    key: 'available_stock',
+    label: 'Available',
     cellClass: 'whitespace-nowrap',
   },
   {
@@ -209,6 +246,8 @@ const rows = computed(() => {
 
       price: product.price,
       stock: product.stock,
+      reserved_stock: product.reserved_stock ?? 0,
+      available_stock: product.available_stock ?? product.stock - (product.reserved_stock ?? 0),
       status: product.status,
 
       actions: product.id,
@@ -252,6 +291,18 @@ const allSelected = computed(() => {
   if (rows.value.length === 0) return false;
 
   return rows.value.every((row) => selectedProductIds.value.includes(Number(row.id)));
+});
+
+const hasActiveFilters = computed(() => {
+  return (
+    search.value.trim() !== '' ||
+    kind.value !== 'all' ||
+    status.value !== 'all' ||
+    categoryId.value !== 'all' ||
+    typeId.value !== 'all' ||
+    minPrice.value !== '' ||
+    maxPrice.value !== ''
+  );
 });
 
 // Confirm delete product
@@ -323,13 +374,8 @@ async function executeBulkDelete() {
     );
 
     selectedProductIds.value = [];
-  } catch (error: any) {
-    const message =
-      error?.response?.data?.errorMessage ??
-      error?.response?.data?.message ??
-      'Failed to deactivate selected products';
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Failed to deactivate selected products'));
   }
 }
 </script>
@@ -412,10 +458,20 @@ async function executeBulkDelete() {
 
       <div v-else-if="rows.length === 0">
         <EmptyState
-          title="No products found"
-          description="Try changing the search filters or create a new product."
+          :title="hasActiveFilters ? 'No products match your filters' : 'No products yet'"
+          :description="
+            hasActiveFilters
+              ? 'Try changing the search term, category, type or status.'
+              : 'Create your first product to start publishing your catalog.'
+          "
           :icon="Package"
-        />
+        >
+          <Button v-if="hasActiveFilters" variant="outline" size="sm" @click="clearFilters">
+            Clear filters
+          </Button>
+
+          <Button v-else size="sm" @click="createOpen = true"> Create product </Button>
+        </EmptyState>
       </div>
 
       <DataTable
@@ -424,11 +480,25 @@ async function executeBulkDelete() {
         table-min-width="1120px"
         :columns="columns"
         :rows="rows"
+        :sort-column="sortColumn"
+        :sort-order="order"
+        :sortable-columns="[
+          'id',
+          'name',
+          'kind',
+          'type',
+          'price',
+          'stock',
+          'reserved_stock',
+          'available_stock',
+          'status',
+        ]"
         :selected-rows="selectedProductIds"
         :header-checked="allSelected"
         :selection-disabled="isBulkDeleting"
         @toggle-row="toggleProduct"
         @toggle-all="toggleAllProducts"
+        @sort="handleSort"
       >
         <!-- MOBILE -->
         <template #mobile-card="{ row }">
@@ -545,6 +615,33 @@ async function executeBulkDelete() {
                   {{ row.stock }}
                 </p>
               </div>
+
+              <div>
+                <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Reserved
+                </p>
+
+                <p class="mt-1 text-lg font-semibold text-amber-600 dark:text-amber-400">
+                  {{ row.reserved_stock }}
+                </p>
+              </div>
+
+              <div class="text-right">
+                <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Available
+                </p>
+
+                <p
+                  class="mt-1 text-lg font-semibold"
+                  :class="
+                    Number(row.available_stock) > 0
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-destructive'
+                  "
+                >
+                  {{ row.available_stock }}
+                </p>
+              </div>
             </div>
           </div>
         </template>
@@ -558,12 +655,6 @@ async function executeBulkDelete() {
           <span
             class="rounded-full border border-border bg-muted px-2 py-1 text-xs font-medium capitalize text-muted-foreground"
           >
-            {{ value }}
-          </span>
-        </template>
-
-        <template #cell-category="{ value }">
-          <span class="rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
             {{ value }}
           </span>
         </template>
@@ -589,6 +680,23 @@ async function executeBulkDelete() {
             />
 
             {{ Number(value) === 1 ? 'Active' : 'Inactive' }}
+          </span>
+        </template>
+
+        <template #cell-reserved_stock="{ value }">
+          <span class="font-semibold text-amber-600 dark:text-amber-400">
+            {{ value }}
+          </span>
+        </template>
+
+        <template #cell-available_stock="{ value }">
+          <span
+            class="font-semibold"
+            :class="
+              Number(value) > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'
+            "
+          >
+            {{ value }}
           </span>
         </template>
 

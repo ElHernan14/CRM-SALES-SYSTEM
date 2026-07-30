@@ -143,6 +143,10 @@ const isRefreshing = computed(() => {
   return isFetching.value && !isLoading.value;
 });
 
+const hasActiveFilters = computed(() => {
+  return debouncedSearch.value !== '' || statusInvoice.value !== 'all';
+});
+
 /*
  * Métricas correspondientes a la página cargada.
  * Más adelante pueden venir de un endpoint summary.
@@ -484,10 +488,18 @@ function getPaymentProgress(purchase: StorePurchase) {
 
       <EmptyState
         v-else-if="purchases.length === 0"
-        title="No purchases found"
-        description="Completed Store checkouts will appear here."
+        :title="hasActiveFilters ? 'No purchases match your filters' : 'No purchases yet'"
+        :description="
+          hasActiveFilters
+            ? 'Try changing the seller search or purchase status.'
+            : 'Completed Store checkouts will appear here.'
+        "
         :icon="ReceiptText"
-      />
+      >
+        <Button v-if="hasActiveFilters" variant="outline" size="sm" @click="clearFilters">
+          Clear filters
+        </Button>
+      </EmptyState>
 
       <!-- PURCHASE CARDS -->
       <template v-else>

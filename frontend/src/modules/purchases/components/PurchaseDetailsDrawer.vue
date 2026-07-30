@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 
 import {
   Building2,
@@ -23,6 +24,7 @@ import {
   Receipt,
   RefreshCw,
   ArrowRight,
+  ArrowUpRight,
   Send,
 } from 'lucide-vue-next';
 
@@ -39,6 +41,7 @@ import {
 } from '@/components/ui/sheet';
 
 import EmptyState from '@/shared/components/erp/EmptyState.vue';
+import { getErrorMessage } from '@/shared/utils/error-handler';
 
 import { usePayPurchase } from '../composables/usePayPurchase';
 import { usePurchasePayments } from '../composables/usePurchasePayments';
@@ -52,6 +55,8 @@ import type { PurchaseListItem } from '../types/purchase.types';
 import type { StorePurchase } from '@/modules/store/types/store-purchase.types';
 
 import { toast } from 'vue-sonner';
+
+const router = useRouter();
 
 const props = withDefaults(
   defineProps<{
@@ -423,13 +428,8 @@ async function submitPayment() {
         description: `${formatCurrency(result.remaining_amount)} remains outstanding.`,
       });
     }
-  } catch (error: any) {
-    const message =
-      error?.response?.data?.errorMessage ??
-      error?.response?.data?.message ??
-      'Failed to register payment';
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(getErrorMessage(error, 'Failed to register payment'));
   }
 }
 
@@ -494,15 +494,13 @@ async function submitCheckout() {
           ? 'The personal Store order is now awaiting payment.'
           : 'The B2B supplier invoice is now awaiting payment.',
     });
-  } catch (error: any) {
-    const message =
-      error?.response?.data?.errorMessage ??
-      error?.response?.data?.message ??
-      (props.variant === 'store'
-        ? 'Failed to submit Store order'
-        : 'Failed to submit B2B purchase');
-
-    toast.error(message);
+  } catch (error) {
+    toast.error(
+      getErrorMessage(
+        error,
+        props.variant === 'store' ? 'Failed to submit Store order' : 'Failed to submit B2B purchase'
+      )
+    );
   }
 }
 
@@ -527,6 +525,15 @@ function validateNumberInput(event: KeyboardEvent) {
   if (!isNumber && !isDot && !allowedKeys.includes(event.key)) {
     event.preventDefault();
   }
+}
+
+function openStoreProduct(productId: number) {
+  router.push({
+    name: 'store-product',
+    params: {
+      productId,
+    },
+  });
 }
 </script>
 
@@ -893,9 +900,13 @@ function validateNumberInput(event: KeyboardEvent) {
                         </div>
 
                         <div class="min-w-0">
-                          <p class="line-clamp-2 text-sm font-semibold text-foreground">
+                          <button
+                            type="button"
+                            class="line-clamp-2 text-left text-sm font-semibold text-foreground transition-colors hover:text-primary"
+                            @click="openStoreProduct(item.product_id)"
+                          >
                             {{ item.product_name }}
-                          </p>
+                          </button>
 
                           <p class="mt-1 text-xs text-muted-foreground">
                             {{ formatCurrency(item.price) }}
@@ -908,6 +919,17 @@ function validateNumberInput(event: KeyboardEvent) {
                         {{ formatCurrency(item.subtotal) }}
                       </p>
                     </div>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      class="mt-3 rounded-full px-0 text-xs text-muted-foreground hover:bg-transparent hover:text-primary"
+                      @click="openStoreProduct(item.product_id)"
+                    >
+                      View product
+                      <ArrowUpRight class="ml-1.5 h-3.5 w-3.5" />
+                    </Button>
 
                     <div
                       class="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4 sm:grid-cols-3"

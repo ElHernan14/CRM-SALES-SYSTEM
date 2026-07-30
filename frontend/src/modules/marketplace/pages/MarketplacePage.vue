@@ -59,6 +59,10 @@ const suppliers = computed(() => {
 });
 const totalPages = computed(() => data.value?.meta.total_pages ?? 1);
 
+const hasActiveFilters = computed(() => {
+  return search.value.trim() !== '' || categoryId.value !== 'all';
+});
+
 const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
 
 const companyCategories = computed(() => {
@@ -88,6 +92,14 @@ const companyCategoryTriggerLabel = computed(() => {
 
   return selectedCompanyCategory.value?.name ?? 'Company category';
 });
+
+function clearFilters() {
+  search.value = '';
+  categoryId.value = 'all';
+  sortColumn.value = 'total_products';
+  order.value = 'desc';
+  page.value = 1;
+}
 </script>
 
 <template>
@@ -199,10 +211,18 @@ const companyCategoryTriggerLabel = computed(() => {
 
     <EmptyState
       v-else-if="suppliers.length === 0"
-      title="No suppliers found"
-      description="Try changing your search criteria."
+      :title="hasActiveFilters ? 'No suppliers match your filters' : 'No suppliers available'"
+      :description="
+        hasActiveFilters
+          ? 'Try changing the supplier search or company category.'
+          : 'Verified suppliers will appear here when companies publish their catalogs.'
+      "
       :icon="SlidersHorizontal"
-    />
+    >
+      <Button v-if="hasActiveFilters" variant="outline" size="sm" @click="clearFilters">
+        Clear filters
+      </Button>
+    </EmptyState>
 
     <template v-else>
       <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
