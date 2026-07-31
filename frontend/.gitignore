@@ -26,6 +26,8 @@ dist-ssr
 
 # Others
 .env
+.env.development
+.env.production.example
 ../NOTES.txt
 ../NOTES-FRONT.txt
 ../FASES-SPRINTS-FRONTEND.docx
