@@ -16,7 +16,7 @@ tmp/
 .env
 
 # Uploads locales
-C:/upload/
+uploads/
 
 # Binarios
 *.exe
