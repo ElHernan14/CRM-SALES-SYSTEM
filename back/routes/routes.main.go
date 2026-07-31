@@ -73,7 +73,19 @@ func SetupRoutes(r *mux.Router, db *sql.DB, cfg config.Config) {
 	dashboardRepo := dashboard.NewDashboardRepository(db)
 
 	// Shared services
-	imageStorage := files.NewLocalImageStorage(cfg.UploadDir)
+	var imageStorage files.ImageStorage
+
+	if cfg.StorageDriver == "supabase" {
+		imageStorage = files.NewSupabaseImageStorage(
+			cfg.SupabaseBucket,
+			cfg.SupabaseURL,
+			cfg.SupabaseKey,
+		)
+	} else {
+		imageStorage = files.NewLocalImageStorage(
+			cfg.UploadDir,
+		)
+	}
 
 	// Services
 	authService := auth.NewAuthService(db, userRepository, clientRepo, companyRepo, authRepo, categoryCompanyRepo)

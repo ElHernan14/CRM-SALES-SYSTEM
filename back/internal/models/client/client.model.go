@@ -16,5 +16,5 @@ type Client struct {
 	CreatedAt      time.Time
 	Status         int
 	DeletedAt      *time.Time
-	CompanyName     *string
+	CompanyName    *string
 }

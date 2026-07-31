@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -10,6 +11,7 @@ import (
 )
 
 type Config struct {
+	AppEnv      string
 	DBHost      string
 	DBPort      int
 	DBUser      string
@@ -19,6 +21,12 @@ type Config struct {
 	ServerPort  string
 	UploadDir   string
 	CORSOrigins []string
+
+	StorageDriver string
+
+	SupabaseURL    string
+	SupabaseKey    string
+	SupabaseBucket string
 }
 
 func LoadConfig() Config {
@@ -27,21 +35,46 @@ func LoadConfig() Config {
 		log.Println("No .env file found, using system env")
 	}
 
-	port, _ := strconv.Atoi(getEnv("DB_PORT", "5432"))
+	port, err := strconv.Atoi(getEnv("DB_PORT", "5432"))
+	if err != nil {
+		panic("DB_PORT must be a valid integer")
+	}
 
 	return Config{
-		DBHost:     getEnv("DB_HOST", "localhost"),
-		DBPort:     port,
-		DBUser:     getEnv("DB_USER", "postgres"),
-		DBPassword: getEnv("DB_PASSWORD", ""),
-		DBName:     getEnv("DB_NAME", "postgres"),
-		DBSSLMode:  getEnv("DB_SSLMODE", "disable"),
-		ServerPort: getEnv("SERVER_PORT", "8081"),
-		UploadDir:  getEnv("UPLOAD_DIR", "C:/upload/files"),
-		CORSOrigins: splitCSV(
-			getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:5173"),
-		),
+		AppEnv:         getEnv("APP_ENV", "development"),
+		ServerPort:     getEnv("PORT", getEnv("SERVER_PORT", "8081")),
+		DBHost:         requireEnv("DB_HOST"),
+		DBPort:         port,
+		DBUser:         requireEnv("DB_USER"),
+		DBPassword:     requireEnv("DB_PASSWORD"),
+		DBName:         getEnv("DB_NAME", "postgres"),
+		DBSSLMode:      getEnv("DB_SSLMODE", "require"),
+		UploadDir:      getEnv("UPLOAD_DIR", "./uploads/files"),
+		StorageDriver:  getEnv("STORAGE_DRIVER", "local"),
+		SupabaseURL:    getEnv("SUPABASE_URL", ""),
+		SupabaseKey:    getEnv("SUPABASE_SERVICE_KEY", ""),
+		SupabaseBucket: getEnv("SUPABASE_BUCKET", "assets"),
+		CORSOrigins:    splitCSV(getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:5173")),
 	}
+}
+
+func loadLocalEnv() {
+	appEnv := getEnv("APP_ENV", "development")
+
+	if appEnv == "production" {
+		return
+	}
+
+	_ = godotenv.Load(".env")
+}
+
+func requireEnv(key string) string {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		panic(fmt.Sprintf("missing required environment variable: %s", key))
+	}
+
+	return value
 }
 
 func getEnv(key, defaultValue string) string {

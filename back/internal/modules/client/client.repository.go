@@ -60,55 +60,55 @@ func (r *clientRepository) Create(tx *sql.Tx, client *client.Client) error {
 }
 
 func (r *clientRepository) GetClients(
-    ctx context.Context,
-    companyID *int,
-    search string,
-    email string,
-    limit int,
-    offset int,
+	ctx context.Context,
+	companyID *int,
+	search string,
+	email string,
+	limit int,
+	offset int,
 ) ([]*client.Client, int, error) {
 
-    var err error
+	var err error
 
-    baseQuery := `
+	baseQuery := `
         FROM client c
         LEFT JOIN company co ON co.id = c.company_id
         WHERE 1=1
     `
 
-    args := []interface{}{}
-    i := 1
+	args := []interface{}{}
+	i := 1
 
-    // Excluir clientes de la misma empresa, pero permitir NULL
-    if companyID != nil {
-        baseQuery += fmt.Sprintf(" AND (c.company_id IS NULL OR c.company_id <> $%d)", i)
-        args = append(args, *companyID)
-        i++
-    }
+	// Excluir clientes de la misma empresa, pero permitir NULL
+	if companyID != nil {
+		baseQuery += fmt.Sprintf(" AND (c.company_id IS NULL OR c.company_id <> $%d)", i)
+		args = append(args, *companyID)
+		i++
+	}
 
-    if search != "" {
-        baseQuery += fmt.Sprintf(`
+	if search != "" {
+		baseQuery += fmt.Sprintf(`
             AND LOWER(c.first_name || ' ' || c.last_name) LIKE LOWER($%d)
         `, i)
-        args = append(args, "%"+search+"%")
-        i++
-    }
+		args = append(args, "%"+search+"%")
+		i++
+	}
 
-    if email != "" {
-        baseQuery += fmt.Sprintf(" AND LOWER(c.email) LIKE LOWER($%d)", i)
-        args = append(args, "%"+email+"%")
-        i++
-    }
+	if email != "" {
+		baseQuery += fmt.Sprintf(" AND LOWER(c.email) LIKE LOWER($%d)", i)
+		args = append(args, "%"+email+"%")
+		i++
+	}
 
-    countQuery := "SELECT COUNT(*) " + baseQuery
+	countQuery := "SELECT COUNT(*) " + baseQuery
 
-    var total int
-    err = r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total)
-    if err != nil {
-        return nil, 0, err
-    }
+	var total int
+	err = r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total)
+	if err != nil {
+		return nil, 0, err
+	}
 
-    dataQuery := `
+	dataQuery := `
         SELECT 
             c.id, 
             c.first_name, 
@@ -123,45 +123,43 @@ func (r *clientRepository) GetClients(
         ORDER BY c.last_name DESC
         LIMIT $` + fmt.Sprint(i) + ` OFFSET $` + fmt.Sprint(i+1)
 
-    args = append(args, limit, offset)
+	args = append(args, limit, offset)
 
-    rows, err := r.db.QueryContext(ctx, dataQuery, args...)
-    if err != nil {
-        return nil, 0, err
-    }
-    defer rows.Close()
+	rows, err := r.db.QueryContext(ctx, dataQuery, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
 
-    var clients []*client.Client
+	var clients []*client.Client
 
-    for rows.Next() {
-        var c client.Client
-        var companyName sql.NullString
+	for rows.Next() {
+		var c client.Client
+		var companyName sql.NullString
 
-        if err := rows.Scan(
-            &c.ID,
-            &c.FirstName,
-            &c.LastName,
-            &c.Email,
-            &c.CompanyID,
-            &companyName,
-            &c.Phone,
-            &c.Status,
-            &c.DeletedAt,
-        ); err != nil {
-            return nil, 0, err
-        }
+		if err := rows.Scan(
+			&c.ID,
+			&c.FirstName,
+			&c.LastName,
+			&c.Email,
+			&c.CompanyID,
+			&companyName,
+			&c.Phone,
+			&c.Status,
+			&c.DeletedAt,
+		); err != nil {
+			return nil, 0, err
+		}
 
-        if companyName.Valid {
-            c.CompanyName = &companyName.String
-        }
+		if companyName.Valid {
+			c.CompanyName = &companyName.String
+		}
 
-        clients = append(clients, &c)
-    }
+		clients = append(clients, &c)
+	}
 
-    return clients, total, nil
+	return clients, total, nil
 }
-
-
 
 func (r *clientRepository) GetByID(ctx context.Context, id int) (*client.Client, error) {
 

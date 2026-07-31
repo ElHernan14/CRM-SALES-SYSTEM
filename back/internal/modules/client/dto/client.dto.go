@@ -12,14 +12,14 @@ type CreateClientRequest struct {
 }
 
 type ClientResponse struct {
-	ID        int     `json:"id"`
-	FirstName string  `json:"first_name"`
-	LastName  string  `json:"last_name"`
-	Email     string  `json:"email"`
-	CompanyID *int    `json:"company_id,omitempty"`
-	Phone     string  `json:"phone"`
-	Status    int     `json:"status,omitempty"`
-	DeletedAt *string `json:"deleted_at,omitempty"`
+	ID          int     `json:"id"`
+	FirstName   string  `json:"first_name"`
+	LastName    string  `json:"last_name"`
+	Email       string  `json:"email"`
+	CompanyID   *int    `json:"company_id,omitempty"`
+	Phone       string  `json:"phone"`
+	Status      int     `json:"status,omitempty"`
+	DeletedAt   *string `json:"deleted_at,omitempty"`
 	CompanyName *string `json:"company_name,omitempty"`
 }
 

@@ -1,0 +1,17 @@
+-- Fresh-database rollback only.
+-- Drops the Nexora schema objects created by 000001_init.up.sql.
+
+DROP TABLE IF EXISTS invoice_payment CASCADE;
+DROP TABLE IF EXISTS invoice_item CASCADE;
+DROP TABLE IF EXISTS invoice CASCADE;
+DROP TABLE IF EXISTS product CASCADE;
+DROP TABLE IF EXISTS product_type CASCADE;
+DROP TABLE IF EXISTS client CASCADE;
+DROP TABLE IF EXISTS company CASCADE;
+DROP TABLE IF EXISTS category_product CASCADE;
+DROP TABLE IF EXISTS category_company CASCADE;
+DROP TABLE IF EXISTS role_permission CASCADE;
+DROP TABLE IF EXISTS user_rol CASCADE;
+DROP TABLE IF EXISTS permission CASCADE;
+DROP TABLE IF EXISTS rol CASCADE;
+DROP TABLE IF EXISTS users CASCADE;

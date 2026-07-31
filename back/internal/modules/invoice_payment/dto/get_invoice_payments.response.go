@@ -18,7 +18,7 @@ type PaymentResponse struct {
 
 	CreatedAt time.Time `json:"created_at"`
 
-	ClientName    string    `json:"client_name"`
+	ClientName string `json:"client_name"`
 }
 
 type GetInvoicePaymentsResponse struct {

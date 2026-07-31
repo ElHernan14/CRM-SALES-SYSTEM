@@ -39,9 +39,14 @@ func main() {
 	r.HandleFunc("/health", healthHandler.Check).Methods("GET")
 	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
-	r.PathPrefix("/uploads/").Handler(
-		http.StripPrefix("/uploads/", http.FileServer(http.Dir(cfg.UploadDir))),
-	)
+	if cfg.StorageDriver == "local" {
+		r.PathPrefix("/uploads/").Handler(
+			http.StripPrefix(
+				"/uploads/",
+				http.FileServer(http.Dir(cfg.UploadDir)),
+			),
+		)
+	}
 
 	api := r.PathPrefix("/api").Subrouter()
 	routes.SetupRoutes(api, database, cfg)

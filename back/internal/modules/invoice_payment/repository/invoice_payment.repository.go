@@ -195,7 +195,6 @@ func (r *invoicePaymentRepository) ListByInvoiceID(
 
 		payment.ClientName = strings.TrimSpace(clientLastName.String + " " + clientFirstName.String)
 
-
 		payments = append(
 			payments,
 			&payment,

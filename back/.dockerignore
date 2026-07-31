@@ -1,0 +1,28 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+
+# Air
+tmp/
+
+# Logs
+*.log
+
+# Variables locales
+.env
+
+# Uploads locales
+C:/upload/
+
+# Binarios
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Go
+vendor/
