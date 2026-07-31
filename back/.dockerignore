@@ -13,10 +13,18 @@ tmp/
 *.log
 
 # Variables locales
-.env
+.env.*
 
 # Uploads locales
+README.md
+
+deployment/
+
+internal/scripts/
+
 uploads/
+
+coverage/
 
 # Binarios
 *.exe
