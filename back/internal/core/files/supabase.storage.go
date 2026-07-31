@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"path/filepath"
@@ -78,6 +79,7 @@ func (s *supabaseImageStorage) SaveImage(
 		path,
 	)
 
+	log.Println("UPLOAD URL:", endpoint)
 	req, err := http.NewRequest(
 		http.MethodPost,
 		endpoint,
