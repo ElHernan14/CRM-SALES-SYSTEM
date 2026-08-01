@@ -186,7 +186,12 @@ func (s *productService) Update(ctx context.Context, id int, req *productdto.Upd
 		return nil, err
 	}
 
-	return mapProductDetailResponse(product), nil
+	updatedProduct, err := s.getOwnedProduct(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapProductDetailResponse(updatedProduct), nil
 }
 
 func (s *productService) UploadImage(ctx context.Context, id int, file multipart.File, header *multipart.FileHeader) (*productdto.UploadProductImageResponse, error) {

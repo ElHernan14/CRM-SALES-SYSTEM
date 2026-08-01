@@ -34,8 +34,8 @@ func NewProductRepository(db *sql.DB) ProductRepository {
 
 func (r *productRepository) Create(ctx context.Context, p *models.Product) error {
 	query := `
-		INSERT INTO product (company_id, name, description, kind, category_id, category, type_id, type, price, stock, image_path, status)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 1)
+		INSERT INTO product (company_id, name, description, kind, category_id, category, type_id, type, price, stock, image_path, status, deleted_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 1, NULL)
 		RETURNING id
 	`
 
@@ -190,16 +190,28 @@ func (r *productRepository) Update(ctx context.Context, p *models.Product) error
 			description = $2,
 			kind = $3,
 			category_id = $4,
-			category = $5,
-			type_id = $6,
-			type = $7,
-			price = $8,
-			stock = $9,
-			status = $10
-		WHERE id = $11
+			category = (
+				SELECT name
+				FROM category_product
+				WHERE id = $4
+			),
+			type_id = $5,
+			type = (
+				SELECT name
+				FROM product_type
+				WHERE id = $5
+			),
+			price = $6,
+			stock = $7,
+			status = $8,
+			deleted_at = CASE
+				WHEN $8 = 1 THEN NULL
+				ELSE deleted_at
+			END
+		WHERE id = $9
 	`
 
-	_, err := r.db.ExecContext(ctx, query, p.Name, p.Description, p.Kind, p.CategoryID, p.Category, p.TypeID, p.Type, p.Price, p.Stock, p.Status, p.ID)
+	_, err := r.db.ExecContext(ctx, query, p.Name, p.Description, p.Kind, p.CategoryID, p.TypeID, p.Price, p.Stock, p.Status, p.ID)
 	return err
 }
 

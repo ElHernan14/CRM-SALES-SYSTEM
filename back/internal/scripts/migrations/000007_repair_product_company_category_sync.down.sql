@@ -1,0 +1,3 @@
+-- No destructive rollback.
+-- This migration only repairs denormalized varchar values from authoritative FK tables
+-- and clears deleted_at for active products.

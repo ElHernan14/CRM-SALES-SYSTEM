@@ -27,12 +27,12 @@ func NewCompanyRepository(db *sql.DB) CompanyRepository {
 
 func (r *companyRepository) Create(tx *sql.Tx, c *company.Company) (*company.Company, error) {
 	query := `
-		INSERT INTO company (name, category_id, description, status)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO company (name, category_id, category, description, status)
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id, created_at
 	`
 
-	err := tx.QueryRow(query, c.Name, c.CategoryID, c.Description, c.Status).Scan(&c.ID, &c.CreatedAt)
+	err := tx.QueryRow(query, c.Name, c.CategoryID, c.Category, c.Description, c.Status).Scan(&c.ID, &c.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
