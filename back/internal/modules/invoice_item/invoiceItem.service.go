@@ -98,10 +98,16 @@ func (s *invoiceItemService) Create(
 
 	//  product
 	product, err := s.productRepo.GetByID(ctx, req.ProductID)
-	if err != nil {
+	if err != nil || product == nil {
 		return nil, errorHandler.NewAppError(
 			http.StatusNotFound,
 			"Producto no encontrado",
+		)
+	}
+	if product.Status != 1 || product.DeletedAt != nil {
+		return nil, errorHandler.NewAppError(
+			http.StatusConflict,
+			"El producto ya no se encuentra disponible para nuevas compras",
 		)
 	}
 
@@ -341,6 +347,21 @@ func (s *invoiceItemService) Update(
 
 		//  stock diff
 		diff := req.Quantity - item.Quantity
+		if diff > 0 {
+			product, err := s.productRepo.GetByID(ctx, item.ProductID)
+			if err != nil || product == nil {
+				return errorHandler.NewAppError(
+					http.StatusNotFound,
+					"Producto no encontrado",
+				)
+			}
+			if product.Status != 1 || product.DeletedAt != nil {
+				return errorHandler.NewAppError(
+					http.StatusConflict,
+					"El producto ya no se encuentra disponible para aumentar la cantidad",
+				)
+			}
+		}
 
 		err = s.inventoryService.AdjustReservedStock(
 			ctx,

@@ -62,4 +62,8 @@ type StoreProductDetailResponse struct {
 	AvailableStock int `json:"available_stock" example:"25"`
 
 	ImagePath *string `json:"image_path,omitempty" example:"/uploads/product/images/product_1.png"`
+
+	IsAvailable bool `json:"is_available" example:"true"`
+
+	UnavailableReason string `json:"unavailable_reason,omitempty" example:"product_unavailable"`
 }

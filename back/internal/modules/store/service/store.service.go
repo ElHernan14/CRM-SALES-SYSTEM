@@ -72,7 +72,7 @@ func (s *storeService) GetProductByID(ctx context.Context, id int) (*storedto.St
 		return nil, errorHandler.NewAppError(http.StatusBadRequest, "product_id invalido")
 	}
 
-	product, err := s.ProductRepo.GetAvailableProductByID(ctx, id)
+	product, err := s.ProductRepo.GetStoreProductByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -82,19 +82,21 @@ func (s *storeService) GetProductByID(ctx context.Context, id int) (*storedto.St
 
 	available := product.Stock - product.ReservedStock
 	return &storedto.StoreProductDetailResponse{
-		ID:             product.ID,
-		CompanyID:      product.CompanyID,
-		CompanyName:    product.CompanyName,
-		Name:           product.Name,
-		Description:    product.Description,
-		Kind:           product.Kind,
-		CategoryID:     product.CategoryID,
-		Category:       product.Category,
-		TypeID:         product.TypeID,
-		Type:           product.Type,
-		Price:          product.Price,
-		AvailableStock: available,
-		ImagePath:      product.ImagePath,
+		ID:                product.ID,
+		CompanyID:         product.CompanyID,
+		CompanyName:       product.CompanyName,
+		Name:              product.Name,
+		Description:       product.Description,
+		Kind:              product.Kind,
+		CategoryID:        product.CategoryID,
+		Category:          product.Category,
+		TypeID:            product.TypeID,
+		Type:              product.Type,
+		Price:             product.Price,
+		AvailableStock:    available,
+		ImagePath:         product.ImagePath,
+		IsAvailable:       product.IsAvailable,
+		UnavailableReason: product.UnavailableReason,
 	}, nil
 }
 

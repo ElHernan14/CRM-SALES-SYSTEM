@@ -21,7 +21,7 @@ type ProductRepository interface {
 	GetByIDForUpdate(ctx context.Context, tx *sql.Tx, id int) (*models.Product, error)
 	ListByCompanyID(ctx context.Context, companyID int, req *productdto.GetCompanyProductsRequest) ([]*models.Product, int, error)
 	ListAvailableProducts(ctx context.Context, req *storedto.GetStoreProductsRequest) ([]*models.Product, int, error)
-	GetAvailableProductByID(ctx context.Context, id int) (*models.Product, error)
+	GetStoreProductByID(ctx context.Context, id int) (*models.Product, error)
 }
 
 type productRepository struct {
@@ -428,7 +428,7 @@ func (r *productRepository) ListAvailableProducts(ctx context.Context, req *stor
 	return products, total, rows.Err()
 }
 
-func (r *productRepository) GetAvailableProductByID(ctx context.Context, id int) (*models.Product, error) {
+func (r *productRepository) GetStoreProductByID(ctx context.Context, id int) (*models.Product, error) {
 	query := `
 		SELECT
 			p.id,
@@ -444,16 +444,28 @@ func (r *productRepository) GetAvailableProductByID(ctx context.Context, id int)
 			p.price,
 			p.stock,
 			p.reserved_stock,
-			p.image_path
+			p.image_path,
+			(
+				p.status = 1
+				AND p.deleted_at IS NULL
+				AND c.status = 1
+				AND c.deleted_at IS NULL
+				AND (
+					p.kind = 'service'
+					OR (p.stock - p.reserved_stock) > 0
+				)
+			) AS is_available,
+			CASE
+				WHEN c.status <> 1 OR c.deleted_at IS NOT NULL THEN 'seller_unavailable'
+				WHEN p.status <> 1 OR p.deleted_at IS NOT NULL THEN 'product_unavailable'
+				WHEN p.kind <> 'service' AND (p.stock - p.reserved_stock) <= 0 THEN 'out_of_stock'
+				ELSE ''
+			END AS unavailable_reason
 		FROM product p
 		INNER JOIN company c ON c.id = p.company_id
 		INNER JOIN category_product cat ON cat.id = p.category_id
 		INNER JOIN product_type pt ON pt.id = p.type_id
 		WHERE p.id = $1
-		  AND p.status = 1
-		  AND p.deleted_at IS NULL
-		  AND c.status = 1
-		  AND c.deleted_at IS NULL
 	`
 
 	var p models.Product
@@ -472,6 +484,8 @@ func (r *productRepository) GetAvailableProductByID(ctx context.Context, id int)
 		&p.Stock,
 		&p.ReservedStock,
 		&p.ImagePath,
+		&p.IsAvailable,
+		&p.UnavailableReason,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
