@@ -28,6 +28,9 @@ export const StoreProductSchema = z.object({
   available_stock: z.number(),
 
   image_path: z.string().nullable().optional(),
+
+  is_available: z.boolean().optional(),
+  unavailable_reason: z.string().optional(),
 });
 
 export type StoreProduct = z.infer<typeof StoreProductSchema>;

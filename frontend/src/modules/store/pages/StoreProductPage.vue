@@ -10,6 +10,7 @@ import {
   BadgeCheck,
   Building2,
   Check,
+  CircleOff,
   ImageIcon,
   Layers3,
   Loader2,
@@ -68,11 +69,49 @@ const isOwnCompanyProduct = computed(() => {
   return Boolean(user.value?.company_id && product.value?.company_id === user.value.company_id);
 });
 
+const isProductAvailable = computed(() => {
+  return product.value?.is_available ?? true;
+});
+
+const unavailableReason = computed(() => {
+  return product.value?.unavailable_reason ?? '';
+});
+
+const unavailableTitle = computed(() => {
+  switch (unavailableReason.value) {
+    case 'out_of_stock':
+      return 'This product is currently out of stock';
+    case 'seller_unavailable':
+      return 'This seller is currently unavailable';
+    case 'product_unavailable':
+      return 'This product is no longer available';
+    default:
+      return 'This product is not available for purchase';
+  }
+});
+
+const unavailableDescription = computed(() => {
+  switch (unavailableReason.value) {
+    case 'out_of_stock':
+      return 'You can still review the product details, but new purchases are paused until stock is replenished.';
+    case 'seller_unavailable':
+      return 'The seller is not accepting new orders through the Store right now.';
+    case 'product_unavailable':
+      return 'This listing was removed from the active catalog. Previous orders remain available in your purchase history.';
+    default:
+      return 'You can review this historical product page, but it cannot be added to a cart.';
+  }
+});
+
 const canDecrease = computed(() => {
   return quantity.value > 1 && !adding.value;
 });
 
 const canIncrease = computed(() => {
+  if (!isProductAvailable.value) {
+    return false;
+  }
+
   if (adding.value) {
     return false;
   }
@@ -91,6 +130,14 @@ const totalPrice = computed(() => {
 });
 
 const availabilityLabel = computed(() => {
+  if (!isProductAvailable.value) {
+    if (unavailableReason.value === 'out_of_stock') {
+      return 'Out of stock';
+    }
+
+    return 'No longer available';
+  }
+
   if (isService.value) {
     return 'Available to request';
   }
@@ -107,6 +154,10 @@ const availabilityLabel = computed(() => {
 });
 
 const availabilityDescription = computed(() => {
+  if (!isProductAvailable.value) {
+    return unavailableDescription.value;
+  }
+
   if (isService.value) {
     return 'This service can be included in your Nexora purchase.';
   }
@@ -119,6 +170,10 @@ const availabilityDescription = computed(() => {
 });
 
 const availabilityClass = computed(() => {
+  if (!isProductAvailable.value) {
+    return 'text-destructive';
+  }
+
   if (isService.value) {
     return 'text-primary';
   }
@@ -135,6 +190,10 @@ const availabilityClass = computed(() => {
 });
 
 const canAddToCart = computed(() => {
+  if (!isProductAvailable.value) {
+    return false;
+  }
+
   if (isOwnCompanyProduct.value) {
     return false;
   }
@@ -157,6 +216,10 @@ const addButtonLabel = computed(() => {
 
   if (isOwnCompanyProduct.value) {
     return 'Your product';
+  }
+
+  if (!isProductAvailable.value) {
+    return 'Unavailable for purchase';
   }
 
   return isService.value ? 'Add service to cart' : 'Add to cart';
@@ -183,7 +246,7 @@ function increaseQuantity() {
 }
 
 async function handleAddToCart() {
-  if (!product.value) return;
+  if (!product.value || !canAddToCart.value) return;
 
   await addToCart(product.value, quantity.value, true);
 }
@@ -305,9 +368,14 @@ function openCategory() {
           </button>
 
           <span
-            class="absolute right-5 top-5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm"
+            class="absolute right-5 top-5 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm"
+            :class="
+              isProductAvailable
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-destructive text-destructive-foreground'
+            "
           >
-            {{ isService ? 'Service' : 'Product' }}
+            {{ isProductAvailable ? (isService ? 'Service' : 'Product') : 'Unavailable' }}
           </span>
 
           <div class="absolute bottom-5 left-5 right-5 flex items-end justify-between gap-4">
@@ -394,12 +462,35 @@ function openCategory() {
               'Available from a company operating throughout the Nexora commerce network.'
             }}
           </p>
+
+          <div
+            v-if="!isProductAvailable"
+            class="mt-6 rounded-[1.25rem] border border-destructive/25 bg-destructive/10 p-4"
+          >
+            <div class="flex gap-3">
+              <div
+                class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/10"
+              >
+                <CircleOff class="h-4 w-4 text-destructive" />
+              </div>
+
+              <div>
+                <p class="text-sm font-semibold text-foreground">
+                  {{ unavailableTitle }}
+                </p>
+
+                <p class="mt-1 text-sm leading-6 text-muted-foreground">
+                  {{ unavailableDescription }}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- PRICE -->
         <div class="mt-8">
           <p class="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
-            Current price
+            {{ isProductAvailable ? 'Current price' : 'Last listed price' }}
           </p>
 
           <p class="mt-2 text-4xl font-semibold tracking-[-0.04em] text-foreground">
@@ -407,8 +498,14 @@ function openCategory() {
           </p>
 
           <p class="mt-2 text-sm text-muted-foreground">
-            Price per
-            {{ isService ? 'service unit' : 'unit' }}.
+            <template v-if="isProductAvailable">
+              Price per
+              {{ isService ? 'service unit' : 'unit' }}.
+            </template>
+
+            <template v-else>
+              Historical reference from the last active listing.
+            </template>
           </p>
         </div>
 
@@ -465,6 +562,10 @@ function openCategory() {
                 <p class="mt-1 text-xs leading-5 text-muted-foreground">
                   <template v-if="isOwnCompanyProduct">
                     Preview how this product appears to buyers. Self-purchase is disabled.
+                  </template>
+
+                  <template v-else-if="!isProductAvailable">
+                    This product remains visible for reference, but it is not accepting new orders.
                   </template>
 
                   <template v-else>
@@ -553,6 +654,10 @@ function openCategory() {
 
               <span v-if="isOwnCompanyProduct">
                 Published by your business. Purchasing is unavailable.
+              </span>
+
+              <span v-else-if="!isProductAvailable">
+                Historical product page. New cart actions are unavailable.
               </span>
 
               <span v-else>

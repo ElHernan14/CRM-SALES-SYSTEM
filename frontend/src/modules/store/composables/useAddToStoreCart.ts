@@ -68,6 +68,11 @@ export function useAddToStoreCart() {
       return false;
     }
 
+    if (product.is_available === false) {
+      toast.error('This product is no longer available for purchase');
+      return false;
+    }
+
     if (product.available_stock <= 0) {
       toast.error('This product is currently unavailable');
 
