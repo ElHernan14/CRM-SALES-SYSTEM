@@ -103,6 +103,10 @@ const unavailableDescription = computed(() => {
   }
 });
 
+const isReferenceOnlyProduct = computed(() => {
+  return !isProductAvailable.value;
+});
+
 const canDecrease = computed(() => {
   return quantity.value > 1 && !adding.value;
 });
@@ -218,8 +222,12 @@ const addButtonLabel = computed(() => {
     return 'Your product';
   }
 
-  if (!isProductAvailable.value) {
-    return 'Unavailable for purchase';
+  if (isReferenceOnlyProduct.value) {
+    if (unavailableReason.value === 'out_of_stock') {
+      return 'Out of stock';
+    }
+
+    return 'No longer sold';
   }
 
   return isService.value ? 'Add service to cart' : 'Add to cart';
@@ -553,11 +561,20 @@ function openCategory() {
         </div>
 
         <!-- BUY BOX -->
-        <div class="mt-8 overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-lg">
+        <div
+          class="mt-8 overflow-hidden rounded-[1.75rem] border bg-card shadow-lg"
+          :class="
+            isReferenceOnlyProduct
+              ? 'border-destructive/25'
+              : 'border-border'
+          "
+        >
           <div class="border-b border-border bg-muted/15 px-5 py-4">
             <div class="flex items-start justify-between gap-4">
               <div>
-                <p class="text-sm font-semibold">Build your order</p>
+                <p class="text-sm font-semibold">
+                  {{ isReferenceOnlyProduct ? 'Reference only' : 'Build your order' }}
+                </p>
 
                 <p class="mt-1 text-xs leading-5 text-muted-foreground">
                   <template v-if="isOwnCompanyProduct">
@@ -565,7 +582,7 @@ function openCategory() {
                   </template>
 
                   <template v-else-if="!isProductAvailable">
-                    This product remains visible for reference, but it is not accepting new orders.
+                    This page remains available for purchase history and reference. New cart actions are disabled.
                   </template>
 
                   <template v-else>
@@ -587,7 +604,29 @@ function openCategory() {
           </div>
 
           <div class="p-5">
-            <div class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+            <div
+              v-if="isReferenceOnlyProduct"
+              class="mb-5 rounded-2xl border border-destructive/20 bg-destructive/5 p-4"
+            >
+              <div class="flex items-start gap-3">
+                <CircleOff class="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+
+                <div>
+                  <p class="text-sm font-semibold text-foreground">
+                    New purchases are disabled
+                  </p>
+
+                  <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                    Existing orders and purchase records can still reference this product, but it cannot be added to a new cart.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between"
+              :class="{ 'opacity-50': isReferenceOnlyProduct }"
+            >
               <div>
                 <p class="text-sm font-medium text-foreground">Quantity</p>
 
