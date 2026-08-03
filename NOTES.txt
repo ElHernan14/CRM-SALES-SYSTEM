@@ -1,0 +1,657 @@
+PROYECTO CARACTERISTICAS:
+
+✔ APIs con implementación de Interfaces, handler de errores, handler de responses, y validaciones.
+✔ Inyección de dependencias entre módulos
+✔ arquitectura modular
+✔ separación por capas
+✔ auth con JWT
+✔ RBAC (roles + permisos)
+✔ multi-tenant real
+✔ clean code (DTOs + interfaces)
+
+--------------------- TL;DR (la esencia) -------------------------------
+✔ LOS DATOS DEFINEN EL ACCESO NO LOS ENDPOINTS, EJEMPLO:
+    GET /invoices
+    👉 El service decide:
+        admin → ve todo
+        empresa → ve su company
+        cliente → ve lo suyo
+✔ NUNCA confiar en datos del request, SIEMPRE usar el contexto (JWT)
+✔ endpoints REST limpios
+✔ lógica en services
+✔ permisos + contexto
+✔ multi-tenant en service
+✔ DTOs claros
+✔ arquitectura modular
+
+ENDPOINTS:
+
+✔ transacciones
+✔ validación de request DTO
+✔ validación real de negocio
+✔ manejo de errores
+✔ manejo de request/response
+✔ logs
+✔ interfaces 
+✔ Tracing y Métricas 
+✔ arquitectura limpia
+✔ roles automáticos
+✔ multi-tenant
+✔ escalable
+
+ERRORES:
+
+✔ Implement middleware global de errores
+✔ validación centralizada
+✔ mensajes claros
+✔ error tipado
+✔ response consistente
+✔ reusable en TODOS los endpoints
+✔ listo para frontend real
+
+VALIDACIONES:
+
+Tenemos dos capas de seguridad:
+
+- Capa 1 (Decode): formato JSON y tipos correctos.
+
+- Capa 2 (Validator): reglas de negocio y restricciones.
+
+-----------------------------------------------------------------------------------------------
+CON EL MODULO INVOICE IMPLEMENTAMOS:
+
+✔ transacciones reales
+✔ cálculos financieros
+✔ control de estados
+✔ reglas de negocio complejas
+✔ ownership multinivel
+✔ integridad de datos
+✔ snapshot histórico
+✔ auditoría implícita
+
+--------------------------------------------------------------
+-- Invoices NO se modelan como un CRUD común.
+   Porque tienen:
+--------------------------------------------------------------
+| Concepto              | Explicación                        |
+| --------------------- | ---------------------------------- |
+| Estados               | draft, pending, paid, cancelled    |
+| Inmutabilidad parcial | no todo puede editarse             |
+| Snapshot financiero   | el precio del item no debe cambiar |
+| Totales               | subtotal, taxes, total             |
+| Pagos                 | parciales o completos              |
+| Ownership             | cliente/empresa                    |
+| Auditoría             | quién creó/pagó/canceló            |
+
+ORDEN CORRECTO
+1️⃣ Create invoice draft
+
+(simple)
+
+↓
+
+2️⃣ Add items
+
+(empieza lo bueno)
+
+↓
+
+3️⃣ Recalculate totals
+
+(muy importante)
+
+↓
+
+4️⃣ Get invoice
+
+(joins + aggregation)
+
+↓
+
+5️⃣ Pay invoice
+
+(transacciones reales)
+
+↓
+
+6️⃣ Cancel invoice
+
+
+| Estado   | Quién modifica |
+| -------- | -------------- |
+| draft    | creator owner  |
+| pending  | seller/admin   |
+| paid     | nadie          |
+| canceled | nadie          |
+
+-----------------------------------------------------------------------------------------------
+🧠  PRIMER ENFOQUE (ERP clásico)
+Seller controla invoice
+vendedor crea invoice
+vendedor agrega items
+comprador solo paga
+
+Ejemplo:
+
+factura electrónica
+proveedor → cliente
+🧠  SEGUNDO ENFOQUE (cart/marketplace)
+Buyer arma invoice
+comprador agrega productos
+comprador genera compra
+seller solo recibe
+
+Ejemplo:
+
+MercadoLibre
+Amazon
+Shopify
+🧠  Y TU SISTEMA...
+
+Por cómo lo venís diseñando:
+
+está soportando ambos
+
+🟢 STORE DOMAIN
+marketplace
+cart
+checkout
+payments
+🔵 ERP DOMAIN
+company management
+products
+clients
+invoices
+analytics
+
+🧠 🔥 ENTONCES
+
+Tu dirección correcta es:
+
+👉 URLs limpias
+👉 access complejo
+👉 dominios desacoplados
+👉 workflow services
+
+🧠 🔥 CONCLUSIÓN
+👉 Tu arquitectura actual está MUY bien
+
+para:
+
+modular monolith
+clean architecture
+domain modules
+
+😈
+
+-----------------------------------------------------------------------------------------------
+--------------------------- PRESENTATION -----------------------------
+-- ¿como se llamaría al "servicio" que ofrecería mi software SaaS a una empresa para gestión, y organzacion de clientes, pedidos, etc ?
+
+Ese servicio se conoce principalmente como CRM (Customer Relationship Management o Gestión de Relaciones con el Cliente). 
+Dependiendo de qué tan profundo sea el control de los "pedidos" y la operación interna, podrías usar diferentes nombres técnicos o comerciales:
+
+1. CRM (Gestión de Clientes y Ventas) 
+--  Es el término más preciso si tu software se enfoca en el trato con el cliente. 
+    Qué hace: Centraliza datos de contactos, sigue el historial de interacciones, gestiona el embudo de ventas y organiza las oportunidades comerciales.
+    Ejemplos: HubSpot CRM o Salesforce. 
+
+2. ERP (Planificación de Recursos Empresariales) 
+--  Si el software no solo ve al cliente, sino que también maneja el inventario, facturación, proveedores y logística de esos pedidos, entonces es un ERP. 
+    Qué hace: Gestiona los procesos internos "detrás de escena" (back-office) como la contabilidad y el stock.
+    Ejemplos: Oracle NetSuite o SAP Business One. 
+
+3. OMS (Sistema de Gestión de Pedidos)
+--- Si el corazón de tu software es específicamente el ciclo de vida del pedido (desde que entra la orden hasta que se entrega), se le llama OMS (Order Management System). 
+    Qué hace: Automatiza la entrada de pedidos, verifica stock en tiempo real y coordina el envío. 
+
+Resumen para tu propuesta comercial:
+--  Si quieres un nombre más sencillo y atractivo para tus clientes, podrías llamarlo:
+    Sistema de Gestión Comercial: Suena profesional y abarca todo el ciclo de venta.
+    Software de Gestión de Ventas y Pedidos: Es directo y el cliente entiende de inmediato para qué sirve.
+    Plataforma de Gestión Operativa: Si ayuda a organizar el día a día de la empresa. 
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Cuando un software combina CRM (clientes), OMS (pedidos) y ERP (organización/operaciones), en el mundo tecnológico se le suele llamar "Solución End-to-End" (de punta a punta), 
+porque cubre todo el ciclo de vida del negocio. Aquí tienes los nombres más adecuados según a quién se lo quieras vender:
+
+1. El nombre técnico: "ERP con módulo CRM integrado"
+    -Es la forma más precisa de describirlo. Indica que es un sistema robusto que organiza los recursos de la empresa (ERP) pero que también tiene 
+     la potencia para gestionar la relación con el cliente (CRM).
+
+2. El nombre comercial (para el marketing): "Plataforma de Gestión 360°"
+    -Este término es muy popular hoy en día. "360 grados" le dice al cliente que tu software no deja cabos sueltos:
+        -Ves al cliente antes de la venta.
+        -Gestionas el pedido durante la venta.
+        -Organizas la operación después de la venta.
+
+3. El nombre por "Nicho" (Vertical SaaS)
+    -Si tu software es para un tipo de empresa específica (por ejemplo, para restaurantes, talleres mecánicos o agencias de marketing), se le llama Software de Gestión de [Tu Nicho].
+    Ejemplo: "Sistema integral para la gestión de Distribuidoras".
+
+-- ¿Cómo podrías presentarlo en una frase?
+
+    "Somos un SaaS de gestión integral que centraliza tus clientes, automatiza tus pedidos y organiza toda tu operación en un solo lugar."
+
+Un consejo clave: Al ser "las tres cosas", el mayor reto de tu SaaS será la usabilidad. Los sistemas que hacen mucho suelen ser complejos. Si logras que sea potente pero 
+fácil de usar, tienes una mina de oro.
+
+La idea es darle un impulso significativo a los ingresos de una empresa pequeña/mediana ó si es una gran empreza optimizar los servicios a clientes y empleados.
+
+
+“Construí una plataforma multi-tenant con un ERP interno, comercio B2B entre empresas y una tienda B2C conectada al mismo inventario y motor de facturación.”
+
+
+| Estado   | Buyer    | Seller      | Admin |
+| -------- | -------- | ----------- | ----- |
+| draft    | mutate   | mutate      | full  |
+| pending  | pay/view | view/cancel | full  |
+| paid     | readonly | readonly    | full  |
+| canceled | readonly | readonly    | full  |
+
+
+
+---------------------------------------------------------------------------------------
+
+
+TO DO: 
+-- Implementar arquitectura modular completa en modules (dto, service, models, etc), todo junto.
+-- Aprender valores de memoria de cada componente/clase/struct y de los endpoints con validaciones, manejadores y lógica desarrollada (Evaluar rendimiento con lo ya implementado).
+-- Comprobar diseño arquitectura de los packages y sus componentes.
+
+- Agregar tablas inventario, envios, devoluciones.
+- Agregar gestion de clientes con analitycs de los mismos y sus pedidos.
+- Agregar graficos y  barras estadisticos de ventas y pedidos ERP.
+
+BACKLOG:
+Infraestructura
+    Dockerfile
+    docker-compose
+    variables de entorno productivas
+Seguridad
+    refresh tokens
+    rate limiting
+Observabilidad
+    logs JSON
+    Prometheus
+    OpenTelemetry
+ERP
+    dashboard
+    reportes
+    métricas
+Store
+    wishlist
+    favoritos
+    reviews
+
+
+
+------------------------------------------------------------------- STACK FRONTEND: ------------------------------------------------------
+Vue 3
+TypeScript
+Pinia
+Vue Router
+Axios
+Tailwind
+
+-- CONTEXTO AI:
+Proyecto: CRM System Sales
+
+Backend terminado.
+
+Stack backend:
+- Go
+- PostgreSQL
+- JWT
+- RBAC
+- Multi-tenant B2B/B2C
+
+Módulos implementados:
+- Auth
+- Users
+- Clients
+- Companies
+- Products
+- Invoices
+- Invoice Items
+- Invoice Payments
+- Store
+
+Quiero comenzar el frontend.
+
+Stack elegido:
+- Vue 3
+- TypeScript
+- Pinia
+- Vue Router
+- Tailwind
+
+Objetivo:
+Construir un frontend profesional para portfolio y recruiters.
+
+Quiero diseñar arquitectura, carpetas, stores, layouts, rutas y pantallas antes de escribir componentes.
+
+-- Módulos iniciales:
+
+Store
+/store
+    catálogo
+    detalle producto
+    carrito
+    checkout
+ERP
+/erp
+    dashboard
+    invoices
+    payments
+    products
+
+/
+├── landing
+├── products
+├── product-detail
+├── cart
+├── checkout
+├── login
+├── register
+│
+├── app
+│   ├── dashboard
+│   ├── invoices
+│   ├── payments
+│   ├── products
+│   ├── clients
+│   └── companies
+
+
+-- ESTO YA CONTEMPLA:
+
+Marketplace
++
+ERP
++
+CRM
++
+RBAC
++
+Multi-Tenant
+
+-- EJEMPLOS LANDING (NO AUTENTICADO):
+Stripe
+Linear
+Vercel
+Shopify
+Notion
+
+DISEÑO INSPIRACION:
+💡 Tu Estrategia de Frontend sugerida
+
+[ MULTI-TENANT CRM & COMMERCE SAAS ]
+  │
+  ├──► NAVEGACIÓN GENERAL & MULTI-TENANCY (Inspiración: VERCEL)
+  │     ├── Selectores de Workspace/Organización limpios (Top Bar).
+  │     └── Cambio de contexto instantáneo entre sucursales o marcas (Tenants).
+  │
+  ├──► DASHBOARD PRINCIPAL & METRICAS (Inspiración: STRIPE)
+  │     ├── Diseño modular tipo "Bento Box" (Cajas asimétricas pero ordenadas).
+  │     └── Micro-animaciones pulidas en gráficos financieros para transmitir solidez.
+  │
+  ├──► TABLAS DE DATOS & OPERACIONES ERP (Inspiración: SHOPIFY)
+  │     ├── Tablas densas pero legibles, enfocadas en volumen y comercio real.
+  │     └── Menú lateral colapsable y jerárquico para no abrumar al comerciante.
+  │
+  ├──► INTERFACES CRM & PIPELINES (Inspiración: NOTION)
+  │     ├── Vistas intercambiables con un clic (Tabla ◄► Kanban ◄► Calendario).
+  │     └── "Drawers" (Paneles laterales deslizantes) para editar datos sin perder contexto.
+  │
+  └──► EXPERIENCIA DE USUARIO (UX) & RENDIMIENTO (Inspiración: LINEAR)
+        ├── Atajos de teclado globales (Keyboard-first) para operarios rápidos.
+        ├── Estética "Warm Gray" (Gris cálido) para reducir la fatiga visual.
+        └── Eliminación del ruido visual (Bordes finos, contrastes solo donde importa).
+
+        ────────────────────────────
+
+Verified Suppliers
+
+────────────────────────────
+
+TechNova Inc.
+
+★★★★☆
+
+1.240 products
+
+Browse products
+
+────────────────────────────
+
+SteelWorks
+
+★★★★★
+
+480 products
+
+Browse products
+
+────────────────────────────
+
+Green Foods
+
+★★★☆☆
+
+900 products
+
+Browse products
+
+────────────────────────────
+
+Y LUEGO ENTRAS:
+Supplier
+
+Products
+
+Notebook Lenovo
+
+$1200
+
+Available 43
+
+[ Add to Purchase ]
+
+
+------------------------------------------------- Multi-Tenant CRM & Commerce SaaS Backend ----------------------------------------------------------
+
+Draft
+   │
+   ├── Add Item
+   │      └── ReserveStock()
+   │
+   ├── Update Item
+   │      ├── ReserveStock()
+   │      └── ReleaseStock()
+   │
+   ├── Delete Item
+   │      └── ReleaseStock()
+   │
+   ▼
+Pending
+   │
+   ├── Partial Pay
+   │      └── (no stock movement)
+   │
+   ├── Full Pay
+   │      └── FinalizeReservedStock()
+   │
+   └── Cancel
+          └── ReleaseStock()
+
+| Estado    | Modificar Items | Pagar | Cancelar | Inventario   |
+| --------- | --------------- | ----- | -------- | ------------ |
+| draft     | ✅               | ❌     | ✅        | Sin reservar |
+| submitted | ❌               | ✅     | ✅        | Reservado    |
+| paid      | ❌               | ❌     | ❌        | Descontado   |
+| cancelled | ❌               | ❌     | ❌        | Liberado     |
+
+
+Multi-tenant SaaS
+
+RBAC
+
+workflow
+
+ERP
+
+Store B2C
+
+Inventory Reservation
+
+Invoice State Machine
+
+Payments
+
+Financial Snapshot
+
+Ownership Validation
+
+Domain Workflows
+
+Checkout
+
+✅ Request ID
+
+✅ Observability Middleware
+
+✅ Health
+
+✅ Swagger
+
+✅ Multi-Tenant
+
+✅ RBAC
+
+✅ Invoice Workflow
+
+✅ Payments
+
+✅ Inventory
+
+✅ Store
+
+✅ ERP
+
+Auth JWT + bcrypt
+Invoice State Machine
+Payments
+Financial Snapshot
+Ownership Validation
+Roles y permisos dinámicos
+Multi-tenant SaaS B2B/B2C
+Contexto de tenant
+Access layer separada
+Workflow de submit
+Workflow de pago
+Pagos parciales
+Inventario reservado/liberado/finalizado
+Checkout store
+ERP invoices
+ERP payments
+ERP products
+Swagger
+Healthcheck
+Request ID
+Observability
+PostgreSQL  
+Transacciones
+Arquitectura modular en Go
+
+
+----------------DEPLOY-------------------------
+Frontend                   Render Static Site
+Backend Go                 Render Web Service con Docker
+Base de datos              Supabase PostgreSQL
+Archivos e imágenes        Supabase Storage
+
+-- Arquitectura:
+┌─────────────────────────────────────────────┐
+│ Render Static Site                          │
+│ Vue 3 + Vite                                │
+│                                             │
+│ VITE_API_URL                                │
+│ VITE_ASSETS_URL                             │
+└────────────────────┬────────────────────────┘
+                     │ HTTPS
+                     ▼
+┌─────────────────────────────────────────────┐
+│ Render Web Service                          │
+│ Docker                                      │
+│ Go 1.26.2                                   │
+│ gorilla/mux                                 │
+│ database/sql + lib/pq                       │
+│                                             │
+│ PORT                                        │
+│ DB_*                                        │
+│ CORS_ALLOWED_ORIGINS                        │
+└───────────────┬─────────────────┬───────────┘
+                │                 │
+                │ PostgreSQL TLS  │ archivos
+                ▼                 ▼
+┌────────────────────────┐  ┌─────────────────┐
+│ Supabase PostgreSQL    │  │ Supabase Storage│
+│ proyecto producción    │  │ imágenes        │
+└────────────────────────┘  └─────────────────┘
+
+--Dockerfile:
+golang
+↓
+descarga módulos
+↓
+compila
+↓
+genera binario
+↓
+distroless/alpine
+↓
+copia solamente
+
+backend compilado
+↓
+ejecuta
+
+--- una vez tengamos los 3 archivos necesarios, corremos en terminal:
+docker compose build (crea imagen docker)
+docker compose up (levanta imagen)
+
+
+| Backend        | Frontend           |
+| -------------- | ------------------ |
+| Router         | Vue Router         |
+| Middleware     | Router Guards      |
+| Controller     | Views              |
+| Service        | Composables        |
+| Repository     | API Layer          |
+| Shared         | Components / Utils |
+| Config         | Config             |
+| Tenant Context | Pinia Auth Store   |
+
+
+------------------------------------------------------------------------------------------------------
+Insertar ADMIN SQL:
+
+    INSERT INTO users (email, password_hash)
+    VALUES ('admin@test.com', '$2a$10$jARLyF2FnQ9yLM7RoszG0O/KCu3NAEmtv2.mzw/zZDCw6H3JX8u0q');
+    INSERT INTO user_rol (user_id, role_id)
+    VALUES (1, (SELECT id FROM roles WHERE name = 'super_admin'));
+
+
+1. Inteligencia Artificial
+2. Aprendizaje Automático
+3. Computación en la Nube
+4. Hacking Ético
+5. Análisis de Datos
+6. Certificado AWS
+7. Ciencia de Datos
+8. BIG DATA
+9. Python
+10. MBA
+

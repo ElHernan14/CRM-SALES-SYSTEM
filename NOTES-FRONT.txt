@@ -1,0 +1,399 @@
+INFRAESTRUCTURA:
+INSTALACION LIBRERIAS:
+- Vue + TS.
+    npm create vite@latest
+
+- Router
+npm install vue-router
+
+- Store
+npm install pinia
+
+- HTTP
+npm install axios
+
+- Data fetching
+npm install @tanstack/vue-query
+
+- Tablas
+npm install @tanstack/vue-table
+
+- Diseño
+npm install tailwindcss
+
+- Validaciones
+npm install zod
+npm install vee-validate
+
+- Fechas
+npm install dayjs
+
+- Utilidades
+npm install @vueuse/core
+
+- Iconos
+npm install lucide-vue-next
+
+- Gráficos
+npm install apexcharts
+npm install vue3-apexcharts
+
+-Toasts
+npm install sonner
+npm install vue-sonner
+
+-Librerias de componentes:
+npm dlx shadcn-vue@latest init
+    -Components UI:
+    npx shadcn-vue@latest add button
+    npx shadcn-vue@latest add card
+    npx shadcn-vue@latest add badge
+    npx shadcn-vue@latest add input
+    npx shadcn-vue@latest add sonner
+    npx shadcn-vue@latest add alert-dialog
+    npx shadcn-vue@latest add select
+    npx shadcn-vue@latest add dropdown-menu
+    npx shadcn-vue@latest add popover
+    npx shadcn-vue@latest add command
+
+-Identación formato:
+npm install --save-dev prettier
+
+
+--------------------------------------
+STACK:
+-Core
+    Vue 3
+    TypeScript
+    Vite
+-Routing
+    Vue Router
+-State
+    Pinia
+HTTP
+    Axios
+-Forms
+    VeeValidate
+    Zod
+-Data Fetching
+    TanStack Query Vue
+-UI
+    TailwindCSS
+-Componentes
+    Shadcn Vue
+-Tablas
+    TanStack Table
+-Gráficos
+    ApexCharts
+-Utilidades
+    VueUse
+-Fechas
+    Dayjs
+-Iconos
+    Lucide Icons
+
+TO DO:
+- Definir estilos para sonner *
+- Crear store para notifications sonner.
+- Agregar al UI store estados para sidebar, modals, y demás.
+- Definir estilos para App.vue (layout general)
+- Una vez definidas las capas, definir redirecciones en boostrap, login y guards auth.
+- Resumen de los sprints.
+- Conceptos capas de frontend.
+- Crear delete bulk product, agregar filtro estado en product
+
+---
+
+
+
+
+
+
+
+-Agregar imagenes, Caracteristicas:
+
+/public/images/landing/operations-team.webp
+→ equipo profesional trabajando en un entorno moderno, sin posar a cámara
+
+/public/images/landing/warehouse-operations.webp
+→ inventario, logística o maquinaria con estética limpia y tecnológica
+
+/public/images/landing/connected-commerce.webp
+→ comercio urbano, distribución o empaquetado moderno
+--
+modern operations team warehouse technology editorial
+modern business logistics warehouse cinematic
+ecommerce fulfillment center modern professional
+business operations team software office editorial
+industrial logistics technology blue lighting
+--
+formato horizontal;
+mínimo 1600 × 1000;
+colores neutros o azulados;
+personas trabajando de forma natural;
+espacio negativo para gradientes;
+sin logos reconocibles;
+sin textos incrustados;
+sin estética exageradamente publicitaria.
+
+Bueno voy dejando constancia de lo revisado:
+
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+-- DESCRIPCION DE LO IMPLEMENTADO:
+- Diseñé e implementé la arquitectura de autenticación y autorización del frontend para una plataforma SaaS multi-tenant.
+Construí el flujo completo de autenticación basado en JWT utilizando Vue Router Guards, Pinia para manejo de sesión, Axios Interceptors, 
+persistencia de sesión mediante bootstrap inicial, validación de contratos API con Zod y manejo centralizado de respuestas HTTP.
+(Frontend Authentication & Access Control Layer):
+
+✅ Sprint 1
+* Infraestructura Vue
+* Router
+* Pinia
+* Auth
+* Axios
+* TanStack Query
+✅ Sprint 2
+* Login
+* Guards
+* Roles
+* Permisos
+* Bootstrap
+✅ Sprint 3
+* ERP Base
+* Products
+* Categories
+* Types
+* CRUD completo
+✅ Sprint 4
+* State Machine completa
+* Sales
+* Purchases
+* Payments
+* Cart ERP
+* Multi-tenant
+* Ownership Validation
+* Dashboard base
+* UX profesional
+✅ Sprint 5
+* Marketplace
+* Store
+* Product Detail
+* Multi Seller Cart
+* Checkout
+* Store Purchases
+* Register Personal
+* Register Business
+* Identidad Nexora
+* Navegación unificada
+* Workspace Switcher
+* Theme global
+-----------------SPRINT 5 ------------------
+--STORE:
+/                       Landing pública futura
+/store                  Store pública
+/store/catalog          Catálogo público
+/store/products/:id     Producto público
+
+/login                  Login público, guestOnly
+/register               Registro público, guestOnly
+
+/store/checkout         Privado
+/store/purchases        Privado
+/store/order-success    Privado
+
+/erp/*                  Privado y empresarial
+
+---------SPRINT 6-------------------
+* DASHBOARD:
+ERP Sales
+→ ventas de la empresa
+→ puede incluir source='erp' y source='store'
+
+ERP Purchases
+→ compras organizacionales
+→ sólo source='erp'
+
+Store Purchases
+→ compras personales
+→ sólo source='store'
+
+Store Cart
+→ drafts personales
+→ sólo source='store'
+
+RESULTADO DEL DASHBOARD:
+¿Cómo está funcionando mi empresa?
+→ Business Pulse
+
+¿Qué necesita atención?
+→ Attention Center
+
+¿Qué pasó recientemente?
+→ Recent Sales + Recent Purchases
+
+¿Qué debería hacer ahora?
+→ Inventory Snapshot + Quick Actions
+
+
+------LANDING------------
+1- Nexora es un producto serio, no un proyecto académico.
+2- Combina operación empresarial y comercio en una sola plataforma.
+3- El ERP y la Store no son aplicaciones separadas: comparten empresas, productos, inventario, invoices, pagos y clientes.
+4- Puede utilizarse tanto para vender a empresas como a consumidores.
+5- La arquitectura permite imaginarlo como un SaaS real.
+
+Qué es Nexora
+↓
+Sobre qué base funciona
+↓
+Cómo circula una operación
+↓
+Cómo trabaja una empresa
+↓
+Cómo compra un cliente
+↓
+Cómo conviven B2B y B2C
+↓
+Cómo cambia una invoice
+↓
+Cómo se aíslan los tenants
+↓
+Cómo se conectan ERP, Store y Account
+↓
+Cómo empezar a usar el producto
+
+
+----------------------------------------------------------------------
+El frontend refleja el modelo de negocio, no al revés.
+
+SaaS completo con:
+
+* Multi Tenant
+* ERP
+* CRM
+* Commerce
+* Marketplace
+* Checkout
+* Payments
+* State Machine
+* RBAC
+* Ownership Validation
+* Store pública
+* Dashboard
+* Landing
+* Branding
+* UX consistente
+
+Y, lo que más me gusta del proyecto, es que todas las piezas están conectadas. 
+Una venta creada en el ERP termina apareciendo en la experiencia del comprador, 
+los pagos actualizan ambos lados, el inventario refleja el estado de la máquina de estados 
+y todo respeta el aislamiento multi-tenant. Eso transmite mucho más criterio de arquitectura que tener veinte módulos aislados.
+
+Por ejemplo, casi nadie invierte tiempo en cosas como:
+
+* definir una máquina de estados antes de hacer las pantallas;
+* separar correctamente Buyer/Seller;
+* implementar Ownership Validation;
+* pensar en multi-tenant desde el día uno;
+* hacer que el Marketplace alimente al ERP y viceversa;
+* diseñar el flujo de Checkout antes del formulario;
+* mantener consistencia visual entre todos los módulos.
+* Caché
+
+Caracteristicas:
+* State Machine
+* arquitectura
+* permisos
+* ownership
+* cache
+* invalidaciones
+* TanStack
+* sincronización entre módulos
+* separación ERP / Store
+
+El proyecto ahora es un Business Commerce Platform. "La plataforma desde donde una empresa administra todo su negocio."
+
+---------------------------------------------
+
+RECORRIDO IDEAL:
+
+Landing
+
+↓
+
+Registro Empresa
+
+↓
+
+Dashboard
+
+↓
+
+Crear Producto
+
+↓
+
+Store
+
+↓
+
+Buscar Producto
+
+↓
+
+Agregar Carrito
+
+↓
+
+Checkout
+
+↓
+
+Purchases
+
+↓
+
+Marketplace
+
+↓
+
+ERP nuevamente
+
+↓
+
+Dashboard actualizado
+
+------------------
+
+Qué quedaría para una segunda etapa productiva
+
+Cuando el proyecto ya esté desplegado y listo para entrevistas:
+
+* Inventory avanzado
+* Customers completo
+* Suppliers
+* Accounting
+* Returns
+* Fulfillment
+* Shipments
+* Subscriptions
+* Analytics avanzado
+* Audit logs
+* Notifications
+
+---
+
+DASHBOARD ERP DESEADO:
+* Sales B2B
+* Purchases B2B
+* Sales B2C
+* Revenue
+* Outstanding balances
+* Popular products
+* Available inventory
+
+
+
+https://chatgpt.com/c/6a39dd86-aa50-83e9-93a9-881d28ca4d03

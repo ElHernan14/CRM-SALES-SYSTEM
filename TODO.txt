@@ -1,0 +1,34 @@
+-TERMINAR FRONTEND NEXORA CRM
+    1. Registro personal *
+    2. Registro empresarial *
+    3. Ajustes finales de autenticación y onboarding * 
+    4. Dashboard ERP con información real *
+        * Agregar nombre de aplicacion en ERP dashboard. *
+        * Agregar info de copmany en ERP dashboard, junto con logo. *
+        * Agregar seccion de info de company *
+        * Agregar sección de perfil de cliente *
+    5. Landing pública definitiva *
+    
+-Adaptar UX y dejarla bien definida:
+        1. QA funcional de filtros y paginación * 
+        2. Revisión responsive global *
+        3. Accesibilidad y estados interactivos *
+        4. Ajuste de identidad visual y themes *
+        5. Assets, favicon y metadata *
+        6. QA final de flujos críticos * 
+        7. Dockerización *
+        8. Pipeline de integración y deploy *
+        9. README y documentación técnica *
+        10. Presentación de portfolio
+
+-Actualizar nombre de proyecto en carpetas y archivos
+-Organizar documentación de todos los doc y notes del proyecto.
+-actualizar proyectos en github.
+
+-RENOMBRAR PRINCIPAL A MAIN.
+-TERMINAR PROYECT PORTFOLIO.
+-REORGANIZAR ACTUALIZAR PERFIL LINKEDIN Y CV ACTUAL.
+-NETWORKING
+
+-AGREGAR A PORTFOLIO/PERFIL PROYECT TERMINADO KAI
+-ESCONDER DOC Y REPO KAI UNA VEZ FINALIZADO
