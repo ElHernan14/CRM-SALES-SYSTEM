@@ -1,4 +1,4 @@
-# CRM-System-Sales
+# NEXORA - BACKEND
 
 Scalable multi-tenant SaaS ERP & commerce backend built with Go following clean architecture and modular domain-driven design principles.
 
@@ -10,21 +10,21 @@ The system focuses on scalability, security, maintainability, and enterprise-gra
 
 # Features
 
-* Multi-tenant SaaS architecture
-* JWT authentication & authorization
-* Role & permission system (RBAC)
-* Company & client management
-* Product catalog & inventory management
-* Invoice draft lifecycle workflows
-* Collaborative invoice item handling
-* Inventory reservation system
-* Payment-ready invoice engine
-* Secure ownership & access scopes
-* Transaction-safe operations
-* Soft delete & audit fields
-* Centralized error handling
-* Request tracing & observability
-* RESTful API architecture
+- Multi-tenant SaaS architecture
+- JWT authentication & authorization
+- Role & permission system (RBAC)
+- Company & client management
+- Product catalog & inventory management
+- Invoice draft lifecycle workflows
+- Collaborative invoice item handling
+- Inventory reservation system
+- Payment-ready invoice engine
+- Secure ownership & access scopes
+- Transaction-safe operations
+- Soft delete & audit fields
+- Centralized error handling
+- Request tracing & observability
+- RESTful API architecture
 
 ---
 
@@ -34,13 +34,13 @@ The project follows a modular clean architecture approach designed for scalabili
 
 Each module is internally organized into independent layers:
 
-* controller
-* service
-* repository
-* dto
-* model
-* access
-* middleware
+- controller
+- service
+- repository
+- dto
+- model
+- access
+- middleware
 
 The backend currently follows a modular monolith architecture with workflow orchestration patterns for complex financial operations.
 
@@ -80,12 +80,12 @@ Inventory consistency and reserved stock operations.
 
 Shared infrastructure and cross-cutting concerns:
 
-* middleware
-* validators
-* observability
-* tracing
-* response handlers
-* access scopes
+- middleware
+- validators
+- observability
+- tracing
+- response handlers
+- access scopes
 
 ---
 
@@ -93,21 +93,21 @@ Shared infrastructure and cross-cutting concerns:
 
 ### Backend
 
-* Go
-* PostgreSQL
-* Gorilla Mux
-* JWT
-* REST APIs
+- Go
+- PostgreSQL
+- Gorilla Mux
+- JWT
+- REST APIs
 
 ### Architecture & Concepts
 
-* Clean Architecture
-* Modular Monolith
-* Workflow Orchestration
-* Multi-Tenancy
-* RBAC Authorization
-* Transaction Management
-* Observability
+- Clean Architecture
+- Modular Monolith
+- Workflow Orchestration
+- Multi-Tenancy
+- RBAC Authorization
+- Transaction Management
+- Observability
 
 ---
 
@@ -142,30 +142,33 @@ Response:
 ---
 
 ### Observability
+
 ## The system includes:
 
-* centralized logging
-* request tracing
-* execution timing
-* middleware metrics
-* structured error handling
+- centralized logging
+- request tracing
+- execution timing
+- middleware metrics
+- structured error handling
 
 # Example trace:
 
 ```[REQ] method=POST path=/invoices status=200 duration=12ms
 → SERVICE CreateInvoiceDraft
-→ REPOSITORY CreateInvoice 
+→ REPOSITORY CreateInvoice
 ```
+
 ---
 
 ### Security
-* JWT authentication
-* Role-based permissions
-* Multi-tenant access scopes
-* Ownership validation
-* Transaction-safe financial operations
-* Draft state validation
-* Soft delete strategy
+
+- JWT authentication
+- Role-based permissions
+- Multi-tenant access scopes
+- Ownership validation
+- Transaction-safe financial operations
+- Draft state validation
+- Soft delete strategy
 
 ### Project Vision
 
@@ -173,11 +176,11 @@ Response:
 
 # The architecture aims to support:
 
-* enterprise workflows
-* financial operations
-* inventory systems
-* analytics
-* workflow automation
-* real-time business management
+- enterprise workflows
+- financial operations
+- inventory systems
+- analytics
+- workflow automation
+- real-time business management
 
 # while maintaining a clean, modular, and extensible codebase.
